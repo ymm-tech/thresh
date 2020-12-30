@@ -41,7 +41,7 @@ Flutter SDK：flutter1.9.1-hotfix.6【备注：新版本后续会逐步支持】
 // 3、编译、安装成功后，手动打开thresh app，如下所示：
 ```
 
- <img src="./images/image16.png" alt="Thresh" height="420" width="200"  />   <img src="./images/image17.png" alt="Thresh" height="420" width="200"  />  <img src="./images/image18.png" alt="Thresh" height="420" width="200"  />
+ <img src="https://imagecdn.ymm56.com/ymmfile/ps-temporary/1eqpbmu67.png" alt="Thresh" height="420" width="200"  />   <img src="https://imagecdn.ymm56.com/ymmfile/ps-temporary/1eqpbmu6c.png" alt="Thresh" height="420" width="200"  />  <img src="https://imagecdn.ymm56.com/ymmfile/ps-temporary/1eqpbmu6h.png" alt="Thresh" height="420" width="200"  />
 
 #### 2.2、Thresh运行模式
 
@@ -61,7 +61,7 @@ Flutter SDK：flutter1.9.1-hotfix.6【备注：新版本后续会逐步支持】
 
 ###### 2.2.2.2、启动本地JS服务器
 
-进入项目根目录，
+进入项目根目录，然后进入example/js目录（默认demo目录）
 
 1、执行 `yarn install`命令，安装依赖文件；【如出现安装失败或其他报错，可尝试删除默认yarn.lock文件并重新执行install命令】
 
@@ -145,7 +145,7 @@ success Installed "thresh-js-cli@1.0.0" with binaries:
 
 ##### 3.1.2、创建项目工程
 
-在目标目录中执行 thresh-cli create yourAppName 命令即可创建一个新的，如：`thresh-cli create TreshTest1`，项目创建的同时会自动安装相关依赖。
+在目标目录中执行 thresh-cli create yourAppName 命令即可创建一个新的，如：`thresh-cli create ThreshTest1`，项目创建的同时会自动安装相关依赖。
 
 > **TIP**
 >
@@ -168,7 +168,7 @@ ManbangMacBook-Pro:thresh_test_demo Manbang$ thresh-cli create ThreshTest1
 > 自行创建flutter工程项目成功后并配置yaml源，Flutter 端请在 pubspec.yaml 文件中添加依赖项：
 
 ```
-thresh: "^1.0.0"
+thresh: "^0.0.4"
 ```
 
 ```
