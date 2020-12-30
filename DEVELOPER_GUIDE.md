@@ -168,7 +168,7 @@ ManbangMacBook-Pro:thresh_test_demo Manbang$ thresh-cli create ThreshTest1
 > 自行创建flutter工程项目成功后并配置yaml源，Flutter 端请在 pubspec.yaml 文件中添加依赖项：
 
 ```
-thresh: "^0.0.4"
+thresh: "^0.0.4" 或 仓库依赖（建议仓库依赖）
 ```
 
 ```
