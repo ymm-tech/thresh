@@ -1,0 +1,75 @@
+PODS:
+  - AFNetworking (4.0.1):
+    - AFNetworking/NSURLSession (= 4.0.1)
+    - AFNetworking/Reachability (= 4.0.1)
+    - AFNetworking/Security (= 4.0.1)
+    - AFNetworking/Serialization (= 4.0.1)
+    - AFNetworking/UIKit (= 4.0.1)
+  - AFNetworking/NSURLSession (4.0.1):
+    - AFNetworking/Reachability
+    - AFNetworking/Security
+    - AFNetworking/Serialization
+  - AFNetworking/Reachability (4.0.1)
+  - AFNetworking/Security (4.0.1)
+  - AFNetworking/Serialization (4.0.1)
+  - AFNetworking/UIKit (4.0.1):
+    - AFNetworking/NSURLSession
+  - Flutter (1.0.0)
+  - FMDB (2.7.5):
+    - FMDB/standard (= 2.7.5)
+  - FMDB/standard (2.7.5)
+  - MBJSCore_iOS (0.1.1):
+    - AFNetworking (= 4.0.1)
+    - SSZipArchive
+  - path_provider (0.0.1):
+    - Flutter
+  - sqflite (0.0.1):
+    - Flutter
+    - FMDB (~> 2.7.2)
+  - SSZipArchive (2.2.3)
+  - thresh (0.0.1):
+    - Flutter
+
+DEPENDENCIES:
+  - Flutter (from `.symlinks/flutter/ios`)
+  - "MBJSCore_iOS (from `git@code.amh-group.com:MBFrontend/Flutter/MBJSCore_iOS.git`)"
+  - path_provider (from `.symlinks/plugins/path_provider/ios`)
+  - sqflite (from `.symlinks/plugins/sqflite/ios`)
+  - thresh (from `.symlinks/plugins/thresh/ios`)
+
+SPEC REPOS:
+  trunk:
+    - AFNetworking
+    - FMDB
+    - SSZipArchive
+
+EXTERNAL SOURCES:
+  Flutter:
+    :path: ".symlinks/flutter/ios"
+  MBJSCore_iOS:
+    :git: "git@code.amh-group.com:MBFrontend/Flutter/MBJSCore_iOS.git"
+  path_provider:
+    :path: ".symlinks/plugins/path_provider/ios"
+  sqflite:
+    :path: ".symlinks/plugins/sqflite/ios"
+  thresh:
+    :path: ".symlinks/plugins/thresh/ios"
+
+CHECKOUT OPTIONS:
+  MBJSCore_iOS:
+    :commit: 6c3c65040feaf31b18b196754e6b3d4b61d0c7b9
+    :git: "git@code.amh-group.com:MBFrontend/Flutter/MBJSCore_iOS.git"
+
+SPEC CHECKSUMS:
+  AFNetworking: 7864c38297c79aaca1500c33288e429c3451fdce
+  Flutter: 0e3d915762c693b495b44d77113d4970485de6ec
+  FMDB: 2ce00b547f966261cd18927a3ddb07cb6f3db82a
+  MBJSCore_iOS: dcc443fe3cb07640f6cb123a2b8e877a38890abb
+  path_provider: fb74bd0465e96b594bb3b5088ee4a4e7bb1f2a9d
+  sqflite: 4001a31ff81d210346b500c55b17f4d6c7589dd0
+  SSZipArchive: 62d4947b08730e4cda640473b0066d209ff033c9
+  thresh: d32b3baea01f1bd22b93bb89ff70909aba779622
+
+PODFILE CHECKSUM: 368be30ce47cbf1b7228f01340ae78be071db846
+
+COCOAPODS: 1.9.3

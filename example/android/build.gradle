@@ -1,0 +1,41 @@
+buildscript {
+    repositories {
+        maven {url 'https://maven.aliyun.com/repository/google'}
+        maven {url 'http://maven.aliyun.com/mvn/repository/'}
+        maven {url 'http://maven.aliyun.com/nexus/content/groups/public/'}
+        google()
+        jcenter()
+        maven {url "https://jitpack.io"}
+    }
+
+    dependencies {
+        classpath 'com.android.tools.build:gradle:3.2.1'
+    }
+}
+
+allprojects {
+    repositories {
+        maven {url 'https://maven.aliyun.com/repository/google'}
+        maven {url 'http://maven.aliyun.com/mvn/repository/'}
+        maven {url 'http://maven.aliyun.com/nexus/content/groups/public/'}
+        google()
+        jcenter()
+        maven {url "https://jitpack.io"}
+    }
+
+    configurations.all {
+        resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
+    }
+}
+
+rootProject.buildDir = '../build'
+subprojects {
+    project.buildDir = "${rootProject.buildDir}/${project.name}"
+}
+subprojects {
+    project.evaluationDependsOn(':app')
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}

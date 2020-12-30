@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "jsx": "react",
+    "jsxFactory": "Thresh.createElement",
+    "lib": [ "es5", "es6", "es2017", "dom" ],
+    "target": "es5"
+  },
+  "exclude": [ "node_modules/**/*" ]
+}
