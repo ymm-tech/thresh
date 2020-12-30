@@ -188,7 +188,7 @@ iOS端宿主代码配置
 
 会出现以下示例
 
-   <img src="./images/image19.png" alt="Thresh" height="420" width="200"  />     <img src="./images/image20.png" alt="Thresh" height="420" width="200"  />
+   <img src="https://imagecdn.ymm56.com/ymmfile/ps-temporary/1eqpbmu6l.png" alt="Thresh" height="420" width="200"  />     <img src="https://imagecdn.ymm56.com/ymmfile/ps-temporary/1eqpbmu6p.png" alt="Thresh" height="420" width="200"  />
 
 至此，恭喜您项目运行成功！
 

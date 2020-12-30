@@ -6,7 +6,7 @@
 
 ### 问题反馈
 
-* 查看 [Issue 列表](https://github.com/ymm-tech/issues)或者相关评论，确认 Bug 是否已经有人提交过，如果有，请直接回复之前的反馈者；
+* 查看 [Issue 列表](https://github.com/ymm-tech/thresh/issues)或者相关评论，确认 Bug 是否已经有人提交过，如果有，请直接回复之前的反馈者；
   * 确认 Bug 是否已经被修复
   * 隔离使用场景，确认 Bug 是否由于使用方法不当导致
 * 详细描述 Bug 出现的场景，包括：
