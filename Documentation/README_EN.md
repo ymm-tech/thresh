@@ -1,6 +1,6 @@
 # Thresh — 基于JS的Flutter动态化方案
 
-[中文版文档](README.md)|[English Document](Documentation/README-EN.md)
+[中文版文档](https://github.com/ymm-tech/thresh/blob/main/README.md)|[English Document](https://github.com/ymm-tech/thresh/blob/main/Documentation/README_EN.md)
 
 Thresh provides a simple and efficient application development framework and rich components and APIs to help developers have native APP experience services in front-end development. It is a set of stable and high-performance cross-end dynamic solutions open sourced by Manbang Group .
 

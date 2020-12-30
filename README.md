@@ -1,6 +1,6 @@
 # Thresh — 基于JS的Flutter动态化方案
 
-[中文版文档](README.md)|[English Document](Documentation/README-EN.md)
+[中文版文档](README.md)|[English Document](https://github.com/ymm-tech/thresh/blob/main/Documentation/README_EN.md)
 
 Thresh提供了一个简单、高效的应用开发框架和丰富的组件及API，帮助开发者在前端开发中具有原生 APP 体验的服务，是满帮集团开源的一套稳定、高性能的跨端动态化方案。
 
