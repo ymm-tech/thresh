@@ -309,7 +309,7 @@ If you want to submit a work, or request to modify or delete the applications li
 
 If you encounter problems during use, or have good suggestions, please feel free to send us. For detailed instructions, please refer to [Contribution Guide](CONTRIBUTING.md)
 
-Friends who are interested in Thresh can join the group for communication. Dingding group:
+Friends who are interested in Thresh can join the group for communication. Dingding group:【id：31835161】
 
 ​    <img src="https://imagecdn.ymm56.com/ymmfile/ps-temporary/1eqpbmu7e.jpg" alt="Thresh" height="300" width="240" />
 

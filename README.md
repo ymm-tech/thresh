@@ -308,7 +308,7 @@ iOS端宿主代码配置
 
 如果你在使用过程中遇到问题，或者有好的建议，欢迎给我们提。详细说明请移步 [贡献指南](CONTRIBUTING.md)
 
-对Thresh有兴趣的小伙伴，可以加群交流 钉钉群：
+对Thresh有兴趣的小伙伴，可以加群交流 钉钉群：【钉钉群号：31835161】
 
 ​    <img src="https://imagecdn.ymm56.com/ymmfile/ps-temporary/1eqpbmu7e.jpg" alt="Thresh" height="300" width="240" />
 
