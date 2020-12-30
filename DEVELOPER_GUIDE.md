@@ -16,13 +16,13 @@ Flutter SDK：flutter1.9.1-hotfix.6【备注：新版本后续会逐步支持】
 
 #### 1.2、仓库说明
 
-| 仓库名称           | 地址                                                       | 开发语言              | 备注                     |
-| ------------------ | ---------------------------------------------------------- | --------------------- | ------------------------ |
-| thresh             | git@code.amh-group.com:Wireless/thresh.git                 | java / oc / dart / js | 宿主/native/dart/js-core |
-| thresh_js_template | git@code.amh-group.com:Wireless/thresh_js_lib.git          | js                    | JS 脚手架模板项目        |
-| thresh_js_cli      | git@code.amh-group.com:Wireless/thresh_js_cli.git          | js                    | JS 脚手架                |
-| MBJSCoreLib        | git@code.amh-group.com:MBFrontend/Flutter/MBJSCoreLib.git  | Java/Android          | V8简单封装库             |
-| MBJSCore_iOS       | git@code.amh-group.com:MBFrontend/Flutter/MBJSCore_iOS.git | oc/iOS                | JSCore简单封装库         |
+| 仓库名称        | 地址                                        | 开发语言              | 备注                     |
+| --------------- | ------------------------------------------- | --------------------- | ------------------------ |
+| thresh          | git@github.com:ymm-tech/thresh.git          | java / oc / dart / js | 宿主/native/dart/js-core |
+| thresh-template | git@github.com:ymm-tech/thresh-template.git | js                    | JS 脚手架模板项目        |
+| thresh-cli      | git@github.com:ymm-tech/thresh-cli.git      | js                    | JS 脚手架                |
+
+
 
 ### 2、快速接入
 
