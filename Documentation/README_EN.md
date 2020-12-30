@@ -38,7 +38,7 @@ The original intention of the Thresh project was to provide a completely cross-t
 
 In dynamic design, DSL design is particularly important. Considering the extremely strong logic dynamics and compatible isomorphic solutions, we choose JS as the development language; the core idea is to use the first of the three trees in the page rendering logic of Flutter , Constructed by JS. Among them, the JS and Flutter layer are required to complete the basic component mapping, and then the UI description is generated through the JSCore engine and passed to the UIEngine of the Dart layer. The UIEngine converts the UI description into Flutter controls, and finally renders the page.
 
-  <img src="../images/image1.png" alt="image1" height="300" width="610" />
+  <img src="https://imagecdn.ymm56.com/ymmfile/ps-temporary/1eqpbmu2c.png" alt="image1" height="300" width="610" />
 
 The dynamic Flutter framework is mainly composed of these three parts. Each part handles different logic and binding event communication to update the rendering page and event response. Its core rendering communication process: Flutter ⇋ native ⇋ js.
 
@@ -303,7 +303,7 @@ If you want to submit a work, or request to modify or delete the applications li
 
 ##### Application core scenario [Total daily average PV exceeds 10 million, js error rate is less than one in 100,000]
 
-  <img src="../images/image10.png" alt="Thresh" style="zoom: 50%;" />
+  <img src="https://imagecdn.ymm56.com/ymmfile/ps-temporary/1eqpbmu46.png" alt="Thresh" style="zoom: 50%;" />
 
 ### Sixth、Contact US
 
@@ -311,7 +311,7 @@ If you encounter problems during use, or have good suggestions, please feel free
 
 Friends who are interested in Thresh can join the group for communication. Dingding group:
 
-​    <img src="../images/qrcode.jpg" alt="Thresh" height="300" width="240" />
+​    <img src="https://imagecdn.ymm56.com/ymmfile/ps-temporary/1eqpbmu7e.jpg" alt="Thresh" height="300" width="240" />
 
 ### Seventh、Project author
 
