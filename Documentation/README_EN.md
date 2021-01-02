@@ -1,14 +1,22 @@
-# Thresh — 基于JS的Flutter动态化方案
+# Thresh — JS-based Flutter Dynamic UI Framework
 
 [中文版文档](https://github.com/ymm-tech/thresh/blob/main/README.md)|[English Document](https://github.com/ymm-tech/thresh/blob/main/Documentation/README_EN.md)
 
 Thresh provides a simple and efficient application development framework and rich components and APIs to help developers have native APP experience services in front-end development. It is a set of stable and high-performance cross-end dynamic solutions open sourced by Manbang Group .
 
-### First、Thresh Features And Overall Architecture
+### First、Main Core Highlights
+
+**1、Suitable for front-end development, zero-cost access (Develop language: JS/TS) .** 
+
+**2、Complete development and debugging panel, support HotReload, second-level compilation .**
+
+**3、Supports component level updates of Page .**
+
+### Second、Thresh Features And Overall Architecture
 
 The original intention of the Thresh project was to provide a completely cross-terminal dynamic solution based on Flutter, with performance reaching or even better than React Native, coupled with its multi-terminal rendering consistency and the upcoming Google Fuchsia system default development language is Flutter , Both show that Thresh will be full of imagination in the future, and it will also be a long-term alternative to React Native.
 
-#### 1.1、 Main features
+#### 2.1、 Main features
 
 - **Custom DSL**, strong scalability, in the future, it will automatically convert DSL based on the sketch plug-in prototype diagram
 - **Multi-terminal consistency**, with a unified rendering engine skia, better cross-terminal compatibility adaptation
@@ -16,7 +24,7 @@ The original intention of the Thresh project was to provide a completely cross-t
 - **Support component level update**, excellent experience
 - **Single-ended development**,reduce development costs
 
-#### 1.2、Dynamic Common Ideas
+#### 2.2、Dynamic Common Ideas
 
 - **Flutter compilation product replacement**
 
@@ -34,7 +42,7 @@ The original intention of the Thresh project was to provide a completely cross-t
 
   Similar to RN/Weex, through custom dynamic UI description + JS engine interpretation operation conversion ideas, and finally build pages and execute dynamic logic. This solution is very friendly to front-end development, with zero learning cost, but due to running on the JS engine, there will be some performance loss.
 
-#### 1.3、Scheme realization and ideas
+#### 2.3、Scheme realization and ideas
 
 In dynamic design, DSL design is particularly important. Considering the extremely strong logic dynamics and compatible isomorphic solutions, we choose JS as the development language; the core idea is to use the first of the three trees in the page rendering logic of Flutter , Constructed by JS. Among them, the JS and Flutter layer are required to complete the basic component mapping, and then the UI description is generated through the JSCore engine and passed to the UIEngine of the Dart layer. The UIEngine converts the UI description into Flutter controls, and finally renders the page.
 
@@ -56,13 +64,13 @@ The dynamic Flutter framework is mainly composed of these three parts. Each part
 
   Maintain JavaScript converted to Dart Engine, and support caching, asynchronous update of components; event communication and page life cycle management, etc.
 
-### Second、DEVELOPER GUIDE
+### Third、DEVELOPER GUIDE
 
 If you want to use the flutter dynamic capability provided by Thresh in your project, you can refer to the following steps to quickly create a Thresh project.
 
 A Thresh project consists of several parts: business code, thresh plugin, thresh-js library, and integration with Native host. The following will explain the code base, environment access and debugging one by one.
 
-#### 2.1、Environmental preparation
+#### 3.1、Environmental preparation
 
 Android side environment: Android Studio iOS side: XCode
 
@@ -70,19 +78,17 @@ JS: VSCode + node + npm/yarn
 
 Flutter SDK: **flutter1.9.1-hotfix.6** [Note: The new version will be gradually supported in the future [Flutter environment installation please move](https://flutter.dev/docs/get-started/install)]
 
-#### 2.2、Github description
+#### 3.2、Github description
 
-| Name               | CodePath                                                   | Development Language  | Remarks                  |
-| ------------------ | ---------------------------------------------------------- | --------------------- | ------------------------ |
-| Thresh             | git@code.amh-group.com:Wireless/thresh.git                 | java / oc / dart / js | Host/native/dart/js-core |
-| thresh_js_template | git@code.amh-group.com:Wireless/thresh_js_lib.git          | js                    | JS  template             |
-| thresh_js_cli      | git@code.amh-group.com:Wireless/thresh_js_cli.git          | js                    | JS  cli                  |
-| MBJSCoreLib        | git@code.amh-group.com:MBFrontend/Flutter/MBJSCoreLib.git  | Java/Android          | V8 Simple library        |
-| MBJSCore_iOS       | git@code.amh-group.com:MBFrontend/Flutter/MBJSCore_iOS.git | oc/iOS                | JSCore Simple library    |
+| Name            | Address                                     | Develop language      | Description               |
+| --------------- | ------------------------------------------- | --------------------- | ------------------------- |
+| thresh          | git@github.com:ymm-tech/thresh.git          | java / oc / dart / js | Host/native/dart/js-core  |
+| thresh-template | git@github.com:ymm-tech/thresh-template.git | js                    | Thresh Project Template   |
+| thresh-cli      | git@github.com:ymm-tech/thresh-cli.git      | js                    | Thresh command line tools |
 
-#### 2.3、Integration process and debugging
+#### 3.3、Integration process and debugging
 
-##### 2.3.1、Environment configuration and preparation
+##### 3.3.1、Environment configuration and preparation
 
 ```
 // 1、Enter the root directory of thresh and execute the following command line
@@ -99,11 +105,11 @@ Flutter SDK: **flutter1.9.1-hotfix.6** [Note: The new version will be gradually 
 
  <img src="https://image.ymm56.com/ymmfile/ps-temporary/1eocdasu0.jpg" alt="Thresh" height="420" width="620"  />     
 
-##### 2.3.2、Thresh operating mode and local debugging service
+##### 3.3.2、Thresh operating mode and local debugging service
 
 First load the local bundle.js package, and directly click the Start local bundle button to open the demo page in the figure above.
 
-###### 2.3.2.1、Turn on sandbox mode
+###### 3.3.2.1、Turn on sandbox mode
 
 > ```
 > Sandbox debugging mode description:
@@ -111,7 +117,7 @@ First load the local bundle.js package, and directly click the Start local bundl
 > 2. For real machine debugging, when the default address is 127.0.0.1, you need to connect to the proxy of the computer or enter the IP of the JS server (that is, the computer) directly in the LAN environment (such as 192.168.0.106)
 > ```
 
-###### 2.3.2.2、Start the local JS server
+###### 3.3.2.2、Start the local JS server
 
 Enter the project root directory,
 
@@ -169,11 +175,11 @@ Entrypoint main = bundle.js
 #So far the JS server started successfully！！！
 ```
 
-###### 2.3.2.3、Click to start the debug page
+###### 3.3.2.3、Click to start the debug page
 
 When you see the Thresh Demos page and it is successful as shown in the figure above, if there is an exception such as the local server, it should be due to other reasons such as the failure of the proxy connection.
 
-###### 2.3.2.4, engineering debugging
+###### 3.3.2.4, engineering debugging
 
 1. Hot Reload
 
@@ -183,13 +189,13 @@ When you see the Thresh Demos page and it is successful as shown in the figure a
 
    JS direct debugging currently only supports mac + simulator + safari browser, how to debug can refer to the steps on the Internet.
 
-#### 2.4、Create project engineering
+#### 3.4、Create project engineering
 
-##### 2.4.1, create a JS project project
+##### 3.4.1, create a JS project project
 
 Like most frameworks, Thresh's js-side framework also has its own scaffolding tool. Through the scaffolding tool, a Thresh js business project can be created quickly and easily. The specific process is as follows: (Take yarn as an example. If yarn is not installed, replace it with npm Equivalent command)
 
-###### 2.4.1.1, install scaffolding tools globally
+###### 3.4.1.1, install scaffolding tools globally
 
 `yarn global add thresh-js-cli`
 
@@ -205,7 +211,7 @@ success Installed "thresh-js-cli@1.0.0" with binaries:
 ✨  Done in 1.34s.
 ```
 
-###### 2.4.1.2、Create a project
+###### 3.4.1.2、Create a project
 
 You can create a new one by executing the thresh-cli create yourAppName command in the target directory, such as: `thresh-cli create TreshTest1`, and related dependencies will be automatically installed when the project is created.
 
@@ -219,18 +225,18 @@ Use ThreshTest1 as the project/module name? (y/N) y
 Create project successfully
 ```
 
-###### 2.4.1.3, start the local JS server
+###### 3.4.1.3, start the local JS server
 
 Repeat the above steps to start the local JS server, and now you can see that the JS server is successfully opened.
 
-##### 2.4.2, create a host project
+##### 3.4.2, create a host project
 
-###### 2.4.2.1, create flutter project
+###### 3.4.2.1, create flutter project
 
 > After successfully creating the flutter project by yourself and configuring the yaml source, please add dependencies in the pubspec.yaml file on the flutter side:
 
 ```
-thresh: "^1.0.0"
+thresh: "^0.0.4" or Warehouse dependency (recommended warehouse dependency)
 ```
 
 ```
@@ -246,7 +252,7 @@ iOS host code configuration
 2. Use ThreshViewController directly or create a VC inherited from ThreshViewController
 ```
 
-###### 2.4.2.2、Start flutter run
+###### 3.4.2.2、Start flutter run
 
 The following example will appear
 
@@ -254,7 +260,7 @@ The following example will appear
 
 At this point, congratulations on the successful operation of your project!
 
-### Third、 Local debugging-host sandbox debugging mode
+### Fourth、 Local debugging-host sandbox debugging mode
 
 Take Demo as an example for local debugging.
 
@@ -264,7 +270,7 @@ After cloning ThreshDemo to the local, enter the root directory and execute the 
 
 After the dependencies are added, you can directly refer to the article **Apis/Flutter** for Thresh access.
 
-### Fourth、Advanced Guide
+### Fifth、Advanced Guide
 
 * [Principles of building Flutter applications using Javascript](Documentation/使用Javascript构建Flutter应用程序的原理.md)
 
@@ -288,24 +294,24 @@ After the dependencies are added, you can directly refer to the article **Apis/F
   | [ListView](Documentation/基础组件/ListView.md)   | [NativeView](Documentation/基础组件/NativeView.md) | [NestScrollView](Documentation/基础组件/NestScrollView.md)   | [Radio](Documentation/基础组件/Radio.md)   |
   | [Refresh](Documentation/基础组件/Refreshmd)      | [ScrollView](Documentation/基础组件/ScrollView.md) | [SwipeActionsView](Documentation/基础组件/SwipeActionsView.md) | [Text](Documentation/基础组件/Text.md)     |
 
-### Fifth、Access case
+### Sixth、Access case
 
 The following are the applications compiled by Thresh collected on this site for everyone to visit and learn.
 If you want to submit a work, or request to modify or delete the applications listed here, please submit [PR]
 
- <img src="../images/logo.png" alt="运满满" style="zoom:67%;" />                                                       <img src="../images/logo.png" alt="运满满" style="zoom:67%;" />
+ <img src="https://imagecdn.ymm56.com/ymmfile/ps-temporary/1eqpbmu7c.png" alt="运满满" style="zoom:67%;" />                                                       <img src="https://imagecdn.ymm56.com/ymmfile/ps-temporary/1eqpbmu7c.png" alt="运满满" style="zoom:67%;" />
 
-### 运满满司机端                              运满满货主端
+### YMM Driver                              YMM Shipper
 
-手机配货神器。                                                     手机配货神器。
+Mobile phone distribution artifact.                 Mobile phone distribution artifact.
 
-  - [Android](https://imagecdn.ymm56.com/ymmfile/app-apk-biz/73de2567-2621-4935-855b-afc97d7a8733.apk)                                                       [iOS](https://apps.apple.com/us/app/apple-store/id766046464)  - [Android](https://imagecdn.ymm56.com/ymmfile/app-apk-biz/73de2567-2621-4935-855b-afc97d7a8733.apk)
+  -  [iOS](https://apps.apple.com/us/app/apple-store/id766046464)  - [Android](https://imagecdn.ymm56.com/ymmfile/app-apk-biz/73de2567-2621-4935-855b-afc97d7a8733.apk)                                                [iOS](https://apps.apple.com/us/app/apple-store/id766046464)  - [Android](https://imagecdn.ymm56.com/ymmfile/app-apk-biz/73de2567-2621-4935-855b-afc97d7a8733.apk)
 
 ##### Application core scenario [Total daily average PV exceeds 10 million, js error rate is less than one in 100,000]
 
   <img src="https://imagecdn.ymm56.com/ymmfile/ps-temporary/1eqpbmu46.png" alt="Thresh" style="zoom: 50%;" />
 
-### Sixth、Contact US
+### Seventh、Contact US
 
 If you encounter problems during use, or have good suggestions, please feel free to send us. For detailed instructions, please refer to [Contribution Guide](CONTRIBUTING.md)
 
@@ -313,7 +319,7 @@ Friends who are interested in Thresh can join the group for communication. Dingd
 
 ​    <img src="https://imagecdn.ymm56.com/ymmfile/ps-temporary/1eqpbmu7e.jpg" alt="Thresh" height="300" width="240" />
 
-### Seventh、Project author
+### Eighth、Project author
 
 * Weishun.xu - Core developer - [SeaShrimper](https://github.com/SeaShrimper)
 * Liang.xu - Core developer - [TroyXL](https://github.com/TroyXL)
@@ -321,11 +327,11 @@ Friends who are interested in Thresh can join the group for communication. Dingd
 * Jingdong.tang - Core developer - [JD-Tang](https://github.com/JD-Tang)
 * Junking.mao - Core developer - [maojunlong](https://github.com/maojunlong)
 
-### Eighth、Open source agreement
+### Ninth、Open source agreement
 
 Thresh follows the [MIT](https://opensource.org/licenses/MIT) open source license agreement.
 
-### Ninth、Thanks
+### Tenth、Thanks
 
 Reference and open source projects used
 

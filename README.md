@@ -4,11 +4,19 @@
 
 Thresh提供了一个简单、高效的应用开发框架和丰富的组件及API，帮助开发者在前端开发中具有原生 APP 体验的服务，是满帮集团开源的一套稳定、高性能的跨端动态化方案。
 
-### 一、Thresh特性与整体架构
+### 一、主要核心亮点
+
+**1、适用于前端开发，零成本接入（开发语言：JS/TS）** 
+
+**2、完善的开发调试面板， 支持HotReload，秒级编译**
+
+**3、页面支持组件级别更新**
+
+### 、Thresh特性与整体架构
 
 Thresh项目推出的初心是为了能提供一种基于Flutter的完全跨端动态化方案，性能能达到甚至优于React Native，再加上其多端渲染一致性以及即将推出的Google Fuchsia系统默认开发语言为Flutter，都表明Thresh未来将会充满想象力，也将极大可能会成为替代React Native等的一种长期方案。
 
-#### 1.1、 主要特性
+#### 2.1、 主要特性
 
 - **自定义DSL**，扩展性强，未来会做基于sketch插件原型图自动转换DSL
 - **多端一致性**，拥有统一的渲染引擎skia，较好的跨端兼容性适配
@@ -16,7 +24,7 @@ Thresh项目推出的初心是为了能提供一种基于Flutter的完全跨端�
 - **支持组件级别更新**，极佳的体验性
 - **单端开发**，降低开发成本
 
-#### 1.2、动态化常见思路
+#### 2.2、动态化常见思路
 
 - **Flutter编译产物替换**
 
@@ -34,8 +42,7 @@ Thresh项目推出的初心是为了能提供一种基于Flutter的完全跨端�
 
   类似于RN/Weex，通过自定义动态化UI描述 + JS引擎的解释运行转换思路，最终构建成页面和执行动态逻辑。这个方案对于前端开发非常友好，零学习成本，但是由于在JS引擎运行，会有一些性能损耗。 
 
-
-#### 1.3、方案实现与思路
+#### 2.3、方案实现与思路
 
 在动态化设计中，DSL 设计尤其重要，考虑极强的逻辑动态性以及兼容同构方案我们选定JS作为开发语言；核心思路是把 Flutter 的页面渲染逻辑中的三棵树中的第一棵，通过JS 来构造。这其中要完成JS与 Flutter 层完成基础组件映射，再通过JSCore引擎来生成UI描述，并传递给Dart层的 UIEngine，UIEngine 把UI描述转换为 Flutter 控件，最终渲染成页面。
 
@@ -57,13 +64,13 @@ Thresh项目推出的初心是为了能提供一种基于Flutter的完全跨端�
 
   维护JavaScript转换为Dart的Engine，并支持缓存，异步更新组件；事件通信以及页面的生命周期管理等。
 
-### 二、接入指南
+### 三、接入指南
 
 如果你要在项目中使用 Thresh 提供的 flutter 动态化能力，可以参考以下步骤快速创建一个Thresh 项目。
 
 一个 Thresh项目由 几个部分构成，分别是：业务代码、thresh插件、thresh-js库、与 Native宿主集成。下面将会对代码库、环境接入以及调试一一做出说明。
 
-#### 2.1、环境准备
+#### 3.1、环境准备
 
 Android 端环境 ：Android Studio  iOS 端：XCode
 
@@ -79,189 +86,9 @@ Flutter SDK：**flutter1.9.1-hotfix.6**【备注：新版本后续会逐步支�
 | thresh-template | git@github.com:ymm-tech/thresh-template.git | js                    | JS 脚手架模板项目        |
 | thresh-cli      | git@github.com:ymm-tech/thresh-cli.git      | js                    | JS 脚手架                |
 
-#### 2.3、集成流程与调试
+#### 3.3、集成流程与调试
 
-##### 2.3.1、环境配置与准备
-
-```
-// 1、进入thresh根目录下，执行以下命令行
-# flutter clean
-# flutter packages get
-# flutter packages upgrade
-// 2、进入example根目录下，执行以下命令行
-# flutter clean
-# flutter packages get
-# flutter packages upgrade
-# flutter run 
-// 3、编译、安装成功后，手动打开thresh app，如下所示：
-```
-
- <img src="https://image.ymm56.com/ymmfile/ps-temporary/1eocdasu0.jpg" alt="Thresh" height="420" width="620"  />     
-
-##### 2.3.2、Thresh运行模式与本地调试服务
-
-首先加载本地的bundle.js包，直接点击启动本地bundle 按钮，即可打开上图demo页面。
-
-###### 2.3.2.1、打开沙盒模式
-
-> ```
-> 沙盒调试模式说明：
-> 1、启动JS服务器，端口号默认12345 
-> 2、真机调试默认127.0.0.1地址时需连上电脑的代理或者局域网环境直接输入JS服务器（即电脑）的IP（如192.168.0.106）
-> ```
-
-###### 2.3.2.2、启动本地JS服务器
-
-进入项目根目录，然后进入example/js目录（默认demo目录）
-
-1、执行 `yarn install`命令，安装依赖文件；【如出现安装失败或其他报错，可尝试删除默认yarn.lock文件并重新执行install命令】
-
-2、执行 `yarn dev` 命令将会启动项目并进入本地开发模式。
-
-开发模式下会启动本地 http 服务，默认服务端口为 12345，端口号可以在根目录 /webpack/config.js 中修改。对于 js 端相关配置与打包感兴趣可以参考 **打包说明**。
-
-> **TIP**
->
-> 不建议对默认端口号进行修改，否则也需要同步修改调试宿主工程的相应端口号。
-
-项目启动后无法在浏览器中查看页面，需要在调试宿主工程中进行查看与调试。
-
-如需在实际宿主工程中沙盒调试本地代码，请执行 `yarn prod` 命令，将会以可运行于实际宿主中的方式启动本地开发模式。两种启动命令对应的 process.env.NODE_ENV 分别为 development 和 production.
-
-```javascript
-#打开JS代码仓库【演示示例工程为例： dynamic_flutter_demo】，并且进入根目录下打开命令行，执行以下命令
-#【备注：首次安装时，最好先手动删除下yarn.lock文件并且install下】 
-ManbangMacBook-Pro:dynamic_flutter_demo Manbang$ yarn install
-ManbangMacBook-Pro:dynamic_flutter_demo Manbang$ yarn prod
-yarn run v1.22.4
-warning package.json: No license field
-$ cross-env NODE_ENV=production webpack-dev-server --config webpack/webpack.config.js
-ℹ ｢wds｣: Project is running at http://0.0.0.0:12345/webpack-dev-server/
-ℹ ｢wds｣: webpack output is served from /
-ℹ ｢wds｣: Content not from webpack is served from /Users/Manbang/Documents/YMM/code_flutter/dynamic_flutter_demo/src
-ℹ ｢wdm｣: Hash: 014ee6cacc21626073f2
-Version: webpack 4.44.2
-Time: 5799ms
-Built at: 2020-10-26 3:33:35 PM
-                 Asset      Size  Chunks             Chunk Names
-/assets/test_image.png  35.6 KiB          [emitted]  
-             bundle.js   516 KiB       0  [emitted]  main
-Entrypoint main = bundle.js
-  [0] ./src/index.ts 1.62 KiB {0} [built]
-  [1] ./node_modules/@babel/runtime-corejs3/helpers/interopRequireDefault.js 147 bytes {0} [built]
-  [2] ./node_modules/@babel/runtime-corejs3/core-js-stable/instance/concat.js 64 bytes {0} [built]
-  [3] ./node_modules/core-js-pure/stable/instance/concat.js 76 bytes {0} [built]
- [50] ./node_modules/@babel/runtime-corejs3/core-js-stable/instance/for-each.js 66 bytes {0} [built]
- [51] ./node_modules/core-js-pure/stable/instance/for-each.js 529 bytes {0} [built]
- [89] ./node_modules/@babel/runtime-corejs3/core-js-stable/object/define-property.js 71 bytes {0} [built]
- [90] ./node_modules/core-js-pure/stable/object/define-property.js 83 bytes {0} [built]
- [93] ./node_modules/thresh-js/index.ts 2.49 KiB {0} [built]
- [94] ./node_modules/thresh-js/src/core/dynamicFlutter.ts 19.6 KiB {0} [built]
-[164] ./node_modules/thresh-js/src/manager/BridgeManager.ts 9.83 KiB {0} [built]
-[202] ./node_modules/thresh-js/src/manager/UtilManager.ts 11 KiB {0} [built]
-[203] ./node_modules/thresh-js/src/manager/RenderManager.ts 18.8 KiB {0} [built]
-[268] ./src/config.ts 7.24 KiB {0} [built]
-[315] ./src/pages/homePage.tsx 7.1 KiB {0} [built]
-    + 301 hidden modules
-ℹ ｢wdm｣: Compiled successfully.
-
-#至此JS服务器启动成功！！！
-```
-
-###### 2.3.2.3、点击启动调试页面
-
-当看到跟Thresh Demos 页面且如上图所示即成功，如出现本地服务器等异常，应该是代理没连成功等其他原因。
-
-###### 2.3.2.4、工程调试
-
-1. Hot Reload
-
-   当前业务开发模式支持hot reload，js有改动时，实时保存后重新编译，在宿主侧点击reload按钮重新加载即可；调试工具提供了日志工具、重新加载等，里面记录了全链路操作日志方便开发调试。
-
-2. JS调试
-
-   JS直接调试目前只支持 mac + 模拟器 + safari浏览器，如何调试可以参考网上的步骤。
-
-#### 2.4、创建项目工程
-
-##### 2.4.1、创建JS项目工程 
-
-和大部分框架一样，Thresh 的 js 端框架也有自己的脚手架工具，通过脚手架工具可以便捷快速地创建一个 Thresh js 业务工程，具体流程如下：(以 yarn 为例，如未安装 yarn，可替换为 npm 的等价命令)
-
-###### 2.4.1.1、全局安装脚手架工具
-
-`yarn global add thresh-js-cli`
-
-```
-ManbangMacBook-Pro:thresh_test_demo Manbang$ yarn global add thresh-js-cli
-yarn global v1.22.4
-[1/4] 🔍  Resolving packages...
-[2/4] 🚚  Fetching packages...
-[3/4] 🔗  Linking dependencies...
-[4/4] 🔨  Building fresh packages...
-success Installed "thresh-js-cli@1.0.0" with binaries:
-      - thresh-cli
-✨  Done in 1.34s.
-```
-
-###### 2.4.1.2、创建项目工程
-
-在目标目录中执行 thresh-cli create yourAppName 命令即可创建一个新的，如：`thresh-cli create ThreshTest1`，项目创建的同时会自动安装相关依赖。
-
-> **TIP**
->
-> `thresh-cli create` 命令创建的项目，其项目名会同时作为 package.json 中的 name 字段，并且该字段会作为项目在宿主工程中的模块名被使用。因此如项目名不是模块名，需要自行修改 package.json 中的 name 字段。
-
-```
-ManbangMacBook-Pro:thresh_test_demo Manbang$ thresh-cli create ThreshTest1
-使用ThreshTest1作为项目/模块名称? (y/N) y
-创建项目成功
-```
-
-###### 2.4.1.3、启动本地JS服务器
-
-再重复下上面的启动本地JS服务器步骤即可，至此看到打开JS服务器成功。
-
-##### 2.4.2、创建宿主工程
-
-###### 2.4.2.1、创建flutter工程
-
-> 自行创建flutter工程项目成功后并配置yaml源，Flutter 端请在 pubspec.yaml 文件中添加依赖项：
-
-```
-thresh: "^0.0.4" 或 仓库依赖（建议仓库依赖）
-```
-
-```
-Android端宿主代码配置
-1、打开已创建的工程
-Application类#onCreate：初始化engine
-ThreshFlutter.startInitialization(this);
-2、创建ThreshDemoActivity并继承ThreshActivity
-实现代码可直接参考thresh仓库分支的example里面代码
-
-iOS端宿主代码配置
-1、设置userDefaults中flutterInDebugMode字段
-2、直接使用ThreshViewController或者创建继承自ThreshViewController的VC即可
-```
-
-###### 2.4.2.2、启动flutter run 
-
-会出现以下示例
-
-​         <img src="https://image.ymm56.com/ymmfile/ps-temporary/1eocdd2i5.jpg" alt="Thresh" height="420" width="420"  />
-
-至此，恭喜您项目运行成功！
-
-### 三、本地调试 - 宿主沙盒调试模式
-
-本地调试以 Demo 作为说明示例。
-
-运行宿主 AppDemo 工程（目前以 ThreshDemo 项目为宿主 demo 工程），启动后将会直接连接到 http://127.0.0.1:12345/ 加载并执行 js 脚本，从而显示 ThreshDemo 中的页面。页面显示效果如下：
-
-将 ThreshDemo 克隆到本地后，进入根目录，依次执行 `yarn install`  `yarn dev` 命令即可启动 js demo 的本地调试，服务启动于 http://127.0.0.1:12345/.
-
-依赖项添加完成后，可直接参考 **Apis/Flutter** 一文进行 Thresh 的接入。
+接入比较简单，[请参考开发手册](DEVELOPER_GUIDE.md)
 
 ### 四、进阶指南
 
@@ -298,7 +125,7 @@ iOS端宿主代码配置
 
 手机配货神器。                                                     手机配货神器。
 
-  - [Android](https://imagecdn.ymm56.com/ymmfile/app-apk-biz/73de2567-2621-4935-855b-afc97d7a8733.apk)                                                       [iOS](https://apps.apple.com/us/app/apple-store/id766046464)  - [Android](https://imagecdn.ymm56.com/ymmfile/app-apk-biz/73de2567-2621-4935-855b-afc97d7a8733.apk)
+  -  [iOS](https://apps.apple.com/us/app/apple-store/id766046464)  - [Android](https://imagecdn.ymm56.com/ymmfile/app-apk-biz/73de2567-2621-4935-855b-afc97d7a8733.apk)                                          [iOS](https://apps.apple.com/us/app/apple-store/id766046464)  - [Android](https://imagecdn.ymm56.com/ymmfile/app-apk-biz/73de2567-2621-4935-855b-afc97d7a8733.apk)
 
 ##### 应用核心场景【总日均PV超千万，js错误率低于十万分之一】
 

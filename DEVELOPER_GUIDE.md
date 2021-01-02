@@ -12,7 +12,7 @@
 
 JS/TS：VSCode + node + npm/yarn
 
-Flutter SDK：flutter1.9.1-hotfix.6【备注：新版本后续会逐步支持】
+Flutter SDK：flutter1.9.1-hotfix.6【备注：新版本后续会逐步支持  [Flutter环境安装请移步](https://flutter.dev/docs/get-started/install)】
 
 #### 1.2、仓库说明
 
