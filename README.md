@@ -12,7 +12,7 @@ Thresh提供了一个简单、高效的应用开发框架和丰富的组件及AP
 
 **3、页面支持组件级别更新**
 
-### 、Thresh特性与整体架构
+### 二、Thresh特性与整体架构
 
 Thresh项目推出的初心是为了能提供一种基于Flutter的完全跨端动态化方案，性能能达到甚至优于React Native，再加上其多端渲染一致性以及即将推出的Google Fuchsia系统默认开发语言为Flutter，都表明Thresh未来将会充满想象力，也将极大可能会成为替代React Native等的一种长期方案。
 
