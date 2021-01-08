@@ -4,6 +4,8 @@
 
 Thresh provides a simple and efficient application development framework and rich components and APIs to help developers have native APP experience services in front-end development. It is a set of stable and high-performance cross-end dynamic solutions open sourced by Manbang Group .
 
+### Demo Download Url [Thresh_v0.0.4.apk](https://github.com/ymm-tech/thresh/tree/main/example/apk/Thresh_v0.0.4.apk)
+
 ### First、Main Core Highlights
 
 **1、Suitable for front-end development, zero-cost access (Develop language: JS/TS) .** 
@@ -14,7 +16,7 @@ Thresh provides a simple and efficient application development framework and ric
 
 ### Second、Thresh Features And Overall Architecture
 
-The original intention of the Thresh project was to provide a completely cross-terminal dynamic solution based on Flutter, with performance reaching or even better than React Native, coupled with its multi-terminal rendering consistency and the upcoming Google Fuchsia system default development language is Flutter , Both show that Thresh will be full of imagination in the future, and it will also be a long-term alternative to React Native.
+The original intention of the Thresh project was to provide a completely cross-terminal dynamic solution based on Flutter, with performance reaching or even better than React Native, coupled with its multi-terminal rendering consistency and the upcoming Google Fuchsia system default development language is Flutter , shows that Thresh will be full of imagination in the future.
 
 #### 2.1、 Main features
 

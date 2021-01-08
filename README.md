@@ -4,6 +4,8 @@
 
 Thresh提供了一个简单、高效的应用开发框架和丰富的组件及API，帮助开发者在前端开发中具有原生 APP 体验的服务，是满帮集团开源的一套稳定、高性能的跨端动态化方案。
 
+### 体验包下载地址 [Thresh_v0.0.4.apk](https://github.com/ymm-tech/thresh/tree/main/example/apk/Thresh_v0.0.4.apk)
+
 ### 一、主要核心亮点
 
 **1、适用于前端开发，零成本接入（开发语言：JS/TS）** 
@@ -14,7 +16,7 @@ Thresh提供了一个简单、高效的应用开发框架和丰富的组件及AP
 
 ### 二、Thresh特性与整体架构
 
-Thresh项目推出的初心是为了能提供一种基于Flutter的完全跨端动态化方案，性能能达到甚至优于React Native，再加上其多端渲染一致性以及即将推出的Google Fuchsia系统默认开发语言为Flutter，都表明Thresh未来将会充满想象力，也将极大可能会成为替代React Native等的一种长期方案。
+Thresh项目推出的初心是为了能提供一种基于Flutter的完全跨端动态化方案，性能能达到甚至优于React Native，再加上其多端渲染一致性以及即将推出的Google Fuchsia系统默认开发语言为Flutter，都表明Thresh未来将会充满想象力。
 
 #### 2.1、 主要特性
 
