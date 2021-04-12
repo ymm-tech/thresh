@@ -33,13 +33,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 + (instancetype)sharedInstance;
 
-- (void)startThreshWithLogger:(id<ThreshLogger>)logger
-           supportJSSingleton:(BOOL)supportJSSingleton;
+- (void)startThreshWithLogger:(id<ThreshLogger>)logger;
 
 @property (nonatomic, strong, readonly) id<ThreshLogger> logger;
-
-// 是否使用JSContext单例化（需要JS支持）
-@property (nonatomic, assign, readonly) BOOL supportJSSingleton;
 
 @end
 

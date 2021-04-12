@@ -25,6 +25,7 @@
 #import "ThreshJSCoreChannel.h"
 #import "ThreshDef.h"
 #import "ThreshJSExecutor.h"
+#import "ThreshJSTimerManager.h"
 
 @interface ThreshJSCoreChannel()
 
@@ -175,6 +176,11 @@
         __strong typeof(weakSelf) strongSelf = weakSelf;
         [strongSelf performSelectorOnMainThread:@selector(jsCallNativeWithArgs:) withObject:args waitUntilDone:YES];
     }];
+    
+    [self.jsExe registerMethod:kChannelTimerOperator complete:^{} asyncOnCall:^(NSDictionary *args) {
+        __strong typeof(weakSelf) strongSelf = weakSelf;
+        [strongSelf performSelectorOnMainThread:@selector(timerOperatorWithArgs:) withObject:args waitUntilDone:YES];
+    }];
 }
 
 - (void)jsCallNativeWithArgs:(id)arguments {
@@ -182,10 +188,9 @@
     // 回调给js结果: 通过 methodChannel_native_call_js 传递给JS
     NSDictionary *reqDic = (NSDictionary *)arguments;
     if(reqDic) {
-        NSDictionary *reqParams = [reqDic objectForKey:kChannelParams];
         id<ThreshJSChannelDelegate> obj;
-        if ([reqParams.allKeys containsObject:@"contextId"]) {
-            obj = [_delegateMap objectForKey:@([reqParams[@"contextId"] integerValue])];
+        if ([reqDic.allKeys containsObject:@"contextId"]) {
+            obj = [_delegateMap objectForKey:@([reqDic[@"contextId"] integerValue])];
         }
         if (!obj) {
             obj = _delegate;
@@ -204,8 +209,8 @@
                     params[@"methodId"] = [reqParams objectForKey:@"methodId"];
                     params[@"response"] = response;
                     ret[kChannelParams] = params;
-                    if (reqParams[@"contextId"]) {
-                        ret[@"contextId"] = reqParams[@"contextId"];
+                    if (reqDic[@"contextId"]) {
+                        ret[@"contextId"] = reqDic[@"contextId"];
                     }
 
                     ThreshInfo(@"js call native, callback...arguments: %@, response = %@", arguments, ret);
@@ -224,10 +229,9 @@
     
     NSDictionary *reqDic = (NSDictionary *)arguments;
     if(reqDic) {
-        NSDictionary *reqParams = [reqDic objectForKey:kChannelParams];
         id<ThreshJSChannelDelegate> obj;
-        if ([reqParams.allKeys containsObject:@"contextId"]) {
-            obj = [_delegateMap objectForKey:@([reqParams[@"contextId"] integerValue])];
+        if ([reqDic.allKeys containsObject:@"contextId"]) {
+            obj = [_delegateMap objectForKey:@([reqDic[@"contextId"] integerValue])];
         }
         if (!obj) {
             obj = _delegate;
@@ -237,6 +241,25 @@
         }
     } else {
         ThreshInfo(@"js call native, callback... not dic, arguments %@", arguments);
+    }
+}
+
+- (void)timerOperatorWithArgs:(id)arguments {
+    
+    NSDictionary *reqDic = (NSDictionary *)arguments;
+    if(reqDic) {
+        ThreshInfo(@"methodChannel_timer_operator method: methodChannel_timer_operator, params :%@", arguments);
+        __weak typeof(self) weakSelf = self;
+        NSMutableDictionary *argM = [arguments mutableCopy];
+        NSString *timerId = argM[@"id"];
+        if (!(timerId && [timerId isKindOfClass:[NSString class]] && timerId.length > 0)) return;
+        NSString *newId = [NSString stringWithFormat:@"%@#%@", timerId, self];
+        [argM setObject:newId forKey:@"id"];
+        [ThreshJSTimerManager operateTimer:[argM copy] block:^(NSString * _Nonnull timerId) {
+            [weakSelf invokeMothod:kChannelTimerFire args:@{@"id": [[timerId componentsSeparatedByString:@"#"] firstObject]} complete:^(NSDictionary *response) {}];
+        }];
+    } else {
+        ThreshInfo(@"timer operator failed, arguments %@", arguments);
     }
 }
 

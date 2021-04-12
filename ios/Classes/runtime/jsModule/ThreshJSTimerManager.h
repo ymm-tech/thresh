@@ -1,7 +1,7 @@
 /**
 * MIT License
 *
-* Copyright (c) 2020 ManBang Group
+* Copyright (c) 2021 ManBang Group
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
 * in the Software without restriction, including without limitation the rights
@@ -22,33 +22,16 @@
 *
 */
 
-#include "AppDelegate.h"
-#import <thresh/Thresh.h>
-#import "SettingViewController.h"
-#import "Logger.h"
-#import "NativeBridge.h"
-#import "Loader.h"
+#import <Foundation/Foundation.h>
 
-@interface AppDelegate ()
+NS_ASSUME_NONNULL_BEGIN
 
-@end
+typedef void(^timerFire)(NSString *timerId);
 
-@implementation AppDelegate
+@interface ThreshJSTimerManager : NSObject
 
-- (BOOL)application:(UIApplication *)application
-    didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
-    
-    [[ThreshAppDelegate sharedInstance] startThreshWithLogger:[Logger new]];
-    
-    SettingViewController *vc = [[SettingViewController alloc] init];
-    UINavigationController *nvc = [[UINavigationController alloc] initWithRootViewController:vc];
-    
-    self.window = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
-    self.window.backgroundColor = [UIColor whiteColor];
-    self.window.rootViewController = nvc;
-    [self.window makeKeyAndVisible];
-    
-    return YES;
-}
++ (void)operateTimer:(NSDictionary *)args block:(timerFire)block;
 
 @end
+
+NS_ASSUME_NONNULL_END

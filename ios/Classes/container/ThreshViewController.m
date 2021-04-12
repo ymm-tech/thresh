@@ -111,17 +111,18 @@ NSString *const needRefeshPageNotification = @"NotifyRefreshPageViewNotification
         static NSUInteger rootId = 0;
         rootId++;
         self.threshEngine = [[ThreshEngine alloc] initWithConfig:config flutterEngine:self.engine rootId:rootId];
-        [self initialRoute:config];
+        [self initialRoute:config contextId:self.threshEngine.contextId];
     }
     return self;
 }
 
-- (void)initialRoute:(id<ThreshProtocol>)config {
+- (void)initialRoute:(id<ThreshProtocol>)config contextId:(NSUInteger)contextId {
     
     self.pageName = safeRespondsForProtocol(config, @selector(router), @selector(pageName), nil) ? config.router.pageName : @"errorPage";
     self.moduleName = safeRespondsForProtocol(config, @selector(router), @selector(moduleName), nil) ? config.router.moduleName : @"error";
     NSString *loadUrl = safeRespondsForProtocol(config, @selector(router), @selector(routerString), nil) ? config.router.routerString : @"thresh/test-thresh-page";
-    [self setInitialRoute:loadUrl];
+    NSString *routeStr = [loadUrl containsString:@"?"] ? [loadUrl stringByAppendingFormat:@"&contextId=%@", @(contextId)] : [loadUrl stringByAppendingFormat:@"?contextId=%@", @(contextId)];
+    [self setInitialRoute:routeStr];
 }
 
 - (void)viewDidLoad {
@@ -134,7 +135,6 @@ NSString *const needRefeshPageNotification = @"NotifyRefreshPageViewNotification
     [self setFlutterViewDidRenderCallback:^{
         [weakSelf exportLifeCycle:ThreshFlutterFirstFrame ext:@{}];
     }];
-    [self.view setBackgroundColor:[UIColor whiteColor]];
     self.edgesForExtendedLayout = UIRectEdgeNone;
     
     [self addNotify];
@@ -145,8 +145,6 @@ NSString *const needRefeshPageNotification = @"NotifyRefreshPageViewNotification
     ThreshInfo(@"---viewWillAppear %@", self.pageName);
     [self.threshEngine viewWillAppear]; // 通知engine页面即将展示，内部会进行切换刷新操作
     [[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleDefault];
-    //pop黑条问题
-    [self.navigationController setNavigationBarHidden:YES animated:NO];
 }
 
 - (void)viewDidAppear:(BOOL)animated {
@@ -166,7 +164,6 @@ NSString *const needRefeshPageNotification = @"NotifyRefreshPageViewNotification
     [super viewWillDisappear:animated];
     ThreshInfo(@"---viewWillDisappear %@", self.pageName);
     [self.threshEngine viewWillDisappear]; // 通知engine页面即将消失
-    [self.navigationController setNavigationBarHidden:NO animated:NO];
     //Avoid super call intentionally.
     [[UIApplication sharedApplication] sendAction:@selector(resignFirstResponder) to:nil from:nil forEvent:nil];
 }
@@ -184,6 +181,10 @@ NSString *const needRefeshPageNotification = @"NotifyRefreshPageViewNotification
 
 - (void)sendJSEvent:(id)eventStr complete:(ThreshCompleteBlock)complete {
     [self.threshEngine sendJSEvent:eventStr complete:complete];
+}
+
+- (void)sendJSEvent:(id)eventStr args:(NSDictionary *)args complete:(ThreshCompleteBlock)complete {
+    [self.threshEngine sendJSEvent:eventStr args:args complete:complete];
 }
 
 - (void)invokeJSMethod:(NSString *)methodStr args:(id)args complete:(ThreshCompleteBlock)complete {

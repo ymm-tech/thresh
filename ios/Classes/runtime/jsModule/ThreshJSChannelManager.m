@@ -25,6 +25,7 @@
 #import "ThreshJSChannelManager.h"
 
 static NSMutableDictionary *_jsChannelDic;
+static NSMutableArray *_loadedModules; // 已装载模块
 
 @implementation ThreshJSChannelManager
 
@@ -35,14 +36,27 @@ static NSMutableDictionary *_jsChannelDic;
     dispatch_once(&onceToken, ^{
         instance = [[ThreshJSChannelManager alloc] init];
         _jsChannelDic = @{}.mutableCopy;
+        _loadedModules = @[].mutableCopy;
     });
     return instance;
 }
 
-- (ThreshJSCoreChannel *)channelWithModule:(NSString *)moduleName supportSingleContext:(BOOL)support {
+- (BOOL)loadedWithModule:(NSString *)moduleName {
+    return [_loadedModules containsObject:moduleName];
+}
+
+- (void)haveLoadedWithModule:(NSString *)moduleName {
+    @synchronized (self) {
+        if (![self loadedWithModule:moduleName]) {
+            [_loadedModules addObject:moduleName];
+        }
+    }
+}
+
+- (ThreshJSCoreChannel *)channelWithModule:(NSString *)moduleName {
     
     ThreshJSCoreChannel *channel;
-    if (moduleName && support) {
+    if (moduleName) {
         
         channel = [_jsChannelDic objectForKey:moduleName];
         if (channel == nil) {
@@ -53,6 +67,13 @@ static NSMutableDictionary *_jsChannelDic;
         channel =  [ThreshJSCoreChannel new];
     }
     return channel;
+}
+
+- (void)removeChannelWithModule:(NSString *)moduleName {
+    
+    if ([[_jsChannelDic allKeys] containsObject:moduleName]) {
+        [_jsChannelDic removeObjectForKey:moduleName];
+    }
 }
 
 @end

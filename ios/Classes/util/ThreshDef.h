@@ -53,6 +53,8 @@ static NSString * const kChannelFlutterCallNative = @"methodChannel_flutter_call
 static NSString * const kChannelJSCallNative = @"methodChannel_js_call_native";
 static NSString * const kChannelNativeCallJS = @"methodChannel_native_call_js";
 static NSString * const kChannelFireJSEvent = @"methodChannel_fire_js_event";
+static NSString * const kChannelTimerOperator = @"methodChannel_timer_operator";
+static NSString * const kChannelTimerFire = @"methodChannel_timer_fire";
 
 static NSString * const kChannelMethodName = @"method";
 static NSString * const kChannelParams = @"params";
@@ -68,6 +70,7 @@ static NSString * const kMethodBridgeRequest = @"bridgeRequest";
 static NSString * const kMethodBridgeResponse = @"bridgeResponse";
 
 static NSString * const kFlutterBridgeCallNative = @"callNative";
+static NSString * const kInvokePlatformViewMethod = @"invokeNativeViewMethod";
 
 static NSString * const kFlutterPageInActive = @"kFlutterPageInActive";
 static NSString * const kFlutterPageResume = @"kFlutterPageResume";
