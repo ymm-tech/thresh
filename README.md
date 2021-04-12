@@ -4,7 +4,7 @@
 
 Thresh提供了一个简单、高效的应用开发框架和丰富的组件及API，帮助开发者在前端开发中具有原生 APP 体验的服务，是满帮集团开源的一套稳定、高性能的跨端动态化方案。
 
-### 体验包下载地址 [Thresh_v0.0.4.apk](https://github.com/ymm-tech/thresh/tree/main/example/apk/Thresh_v0.0.4.apk)
+### 体验包下载地址 [Thresh_v0.0.6.apk](https://github.com/ymm-tech/thresh/tree/main/example/apk/Thresh_v0.0.6.apk)
 
 ### 一、主要核心亮点
 
@@ -78,7 +78,7 @@ Android 端环境 ：Android Studio  iOS 端：XCode
 
 JS：VSCode + node + npm/yarn
 
-Flutter SDK：**flutter1.9.1-hotfix.6**【备注：新版本后续会逐步支持 [Flutter环境安装请移步](https://flutter.dev/docs/get-started/install)】
+Flutter SDK：**flutter 1.22.5 **【备注：新版本后续会逐步支持 [Flutter环境安装请移步](https://flutter.dev/docs/get-started/install)】
 
 #### 2.2、仓库说明
 
@@ -110,11 +110,12 @@ Flutter SDK：**flutter1.9.1-hotfix.6**【备注：新版本后续会逐步支�
 
 * [基础组件](Documentation/基础组件/组件说明.md) 以下为基础组件文档：
 
-  | [Container](Documentation/基础组件/Container.md) | [AppBar](Documentation/基础组件/AppBar.md) | [Page](Documentation/基础组件/Page.md)            | [Button](Documentation/基础组件/Button.md) |
-  | --------------------------------------- | ----------------------------------------- | ----------------------------------------------------- | --------------------------------- |
-  | [Checkbox](Documentation/基础组件/Checkbox.md) | [Icon](Documentation/基础组件/Icon.md) | [Image](Documentation/基础组件/Image.md)          | [Input](Documentation/基础组件/Input.md) |
-  | [ListView](Documentation/基础组件/ListView.md) | [NativeView](Documentation/基础组件/NativeView.md) | [NestScrollView](Documentation/基础组件/NestScrollView.md) | [Radio](Documentation/基础组件/Radio.md) |
-  | [Refresh](Documentation/基础组件/Refreshmd) | [ScrollView](Documentation/基础组件/ScrollView.md) | [SwipeActionsView](Documentation/基础组件/SwipeActionsView.md) | [Text](Documentation/基础组件/Text.md) |
+  | [Container](Documentation/基础组件/Container.md) | [AppBar](Documentation/基础组件/AppBar.md)         | [Page](Documentation/基础组件/Page.md)                       | [Button](Documentation/基础组件/Button.md) |
+  | ------------------------------------------------ | -------------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------ |
+  | [Checkbox](Documentation/基础组件/Checkbox.md)   | [Icon](Documentation/基础组件/Icon.md)             | [Image](Documentation/基础组件/Image.md)                     | [Input](Documentation/基础组件/Input.md)   |
+  | [ListView](Documentation/基础组件/ListView.md)   | [NativeView](Documentation/基础组件/NativeView.md) | [NestScrollView](Documentation/基础组件/NestScrollView.md)   | [Radio](Documentation/基础组件/Radio.md)   |
+  | [Refresh](Documentation/基础组件/Refresh.md)     | [ScrollView](Documentation/基础组件/ScrollView.md) | [SwipeActionsView](Documentation/基础组件/SwipeActionsView.md) | [Text](Documentation/基础组件/Text.md)     |
+  | [Refresh](Documentation/基础组件/Refresh.md)     | [Refresh](Documentation/基础组件/Refresh.md)       | [Refresh](Documentation/基础组件/Refresh.md)                 |                                            |
 
 ### 五、接入案例
 
@@ -147,6 +148,7 @@ Flutter SDK：**flutter1.9.1-hotfix.6**【备注：新版本后续会逐步支�
 * 徐亮 - 核心开发者 - [TroyXL](https://github.com/TroyXL)
 * 章伟 - 核心开发者 - [snowfall]( https://github.com/snowfall)
 * 汤靖咚 - 核心开发者 - [JD-Tang](https://github.com/JD-Tang)
+* 张政 - 核心开发者 - [long831302](https://github.com/long8313002/)
 * 茆俊龙 - 主要贡献者 - [maojunlong](https://github.com/maojunlong)
 
 ### 八、开源协议

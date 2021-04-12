@@ -53,6 +53,7 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.tv_open_local).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                sharedPreferences.edit().remove("debug_local_ip").apply();
                 Intent intent = new Intent(MainActivity.this, ThreshDemoActivity.class);
                 intent.putExtra("load_mode", BundleType.ASSETS_FILE.getType()).putExtra(
                         ThreshFlutterActivityLaunchConfigs.EXTRA_INITIAL_ROUTE,
@@ -67,6 +68,7 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.tv_open_local_fragment).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                sharedPreferences.edit().remove("debug_local_ip").apply();
                 Intent intent = new Intent(MainActivity.this, ThreshDemoFragmentActivity.class);
                 intent.putExtra("load_mode", BundleType.ASSETS_FILE.getType());
                 intent.putExtra(ThreshFlutterActivityLaunchConfigs.EXTRA_INITIAL_ROUTE, "thresh/thresh-page?page=homePage");

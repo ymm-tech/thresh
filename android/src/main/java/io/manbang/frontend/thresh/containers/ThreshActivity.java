@@ -34,7 +34,6 @@ import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
-import android.text.TextUtils;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
@@ -266,7 +265,7 @@ public abstract class ThreshActivity extends AppCompatActivity implements Thresh
     /**
      * {@link ThreshFlutterActivityAndFragmentDelegate.Host} method that is used by {@link
      * ThreshFlutterActivityAndFragmentDelegate} to obtain an {@code Activity} reference as needed. This
-     * reference is used by the delegate to instantiate a {@link ThreshFlutterView}, a {@link
+     * reference is used by the delegate to instantiate a {@link io.manbang.frontend.thresh.view.ThreshFlutterView}, a {@link
      * PlatformPlugin}, and to determine if the {@code Activity} is changing configurations.
      */
     @Override

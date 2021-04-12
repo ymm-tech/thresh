@@ -77,9 +77,6 @@ public class JSManager {
         if (jsModules == null) {
             jsModules = new HashMap<>();
         }
-        if (jsModules.get(module.getModuleName()) != null) {
-            return;
-        }
         jsModules.put(module.getModuleName(), module);
         ThreshLogger.v("register JS Module : " + module.getModuleName() + "[Finish]");
     }

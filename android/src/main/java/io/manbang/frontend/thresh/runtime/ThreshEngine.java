@@ -26,6 +26,7 @@ package io.manbang.frontend.thresh.runtime;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.TextUtils;
+import android.util.Log;
 
 import com.eclipsesource.v8.JavaCallback;
 import com.eclipsesource.v8.V8Array;
@@ -93,7 +94,7 @@ public class ThreshEngine implements LifecycleListener, EngineService {
         this.contextId = contextId;
         assertBundleParams();
         jsModule = JSManager.getInstance().getJSModule(engineOptions.moduleName);
-        if (jsModule != null && !engineOptions.moduleVersion.equals(jsModule.getModuleVersion())) {
+        if (jsModuleInvalid()) {
             jsModule.destroy();
             jsModule = null;
         }
@@ -103,6 +104,22 @@ public class ThreshEngine implements LifecycleListener, EngineService {
         }
         this.mMainHandler = new Handler(Looper.getMainLooper());
         registerMethodCall();
+    }
+
+    //JSModule失效（存在但不可用）
+    private boolean jsModuleInvalid() {
+        if (jsModule == null) {
+            return false;
+        }
+        if (!engineOptions.moduleVersion.equals(jsModule.getModuleVersion())) {//版本号不一致
+            return true;
+        }
+
+        if (!jsModule.sameDebugService(engineOptions.bundleOptions)) {//服务地址不一致
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -287,14 +304,14 @@ public class ThreshEngine implements LifecycleListener, EngineService {
 
     @Override
     public void loadScript(final JSCallback callback) {
-        if(jsModule.isLoaded()){
+        if (jsModule.isLoaded()) {
             return;
         }
         loadScriptImpl(callback);
     }
 
-    private void loadScriptImpl(final JSCallback callback){
-        if(bundleLoader == null){
+    private void loadScriptImpl(final JSCallback callback) {
+        if (bundleLoader == null) {
             if (callback != null) {
                 callback.error(-1, "BundleLoader cannot null", "");
             }

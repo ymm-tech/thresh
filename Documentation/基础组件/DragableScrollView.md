@@ -111,7 +111,7 @@ export default class DragableScrollView Demo extends Widget <any, any> {
 | onDragPositionChange | `Function` | 拖拽区域位置改变后的回调，他的回调参数存在三种值：initial / max / min |        |
 
 ###  组件方法
-```
+```[Refresh](Documentation/基础组件/Refreshmd)
 /**
  * 控制拖拽区域内部滚动视图的滚动位置
  */

@@ -43,7 +43,6 @@ import io.manbang.frontend.thresh.runtime.jscore.MBJSExecutor;
 import io.manbang.frontend.thresh.runtime.jscore.bundle.BundleOptions;
 import io.manbang.frontend.thresh.runtime.jscore.runtime.JSCallback;
 import io.manbang.frontend.thresh.runtime.jscore.util.V8Util;
-import io.manbang.frontend.thresh.manager.config.ThreshConfigManager;
 import io.manbang.frontend.thresh.util.ThreshLogger;
 
 /**
@@ -60,12 +59,14 @@ public class JSModule {
     public JSThread jsThread;
     private String moduleVersion;
     private Map<String, List<JavaCallback>> javaCallBackMap = new HashMap<>();
-    private List<JSFunctionInfo> initFunInfoList= new ArrayList<>();
+    private List<JSFunctionInfo> initFunInfoList = new ArrayList<>();
+    private final BundleOptions bundleOptions;
 
     public JSModule(@NonNull String moduleName, String moduleVersion, final BundleOptions bundleOptions) {
         this.moduleName = moduleName;
         jsThread = new JSThread(moduleName);
         this.moduleVersion = moduleVersion;
+        this.bundleOptions = bundleOptions;
         runInJsThread(new Runnable() {
             @Override
             public void run() {
@@ -90,6 +91,19 @@ public class JSModule {
         return this.executor;
     }
 
+    public boolean sameDebugService(BundleOptions bundleOptions) {
+        return getDebugServiceAddress(bundleOptions).equals(getDebugServiceAddress(this.bundleOptions));
+    }
+
+    private String getDebugServiceAddress(BundleOptions bundleOptions) {
+        if (bundleOptions == null) {
+            return "";
+        }
+        if (bundleOptions.debugServerIP == null || bundleOptions.debugServerPort == null) {
+            return "";
+        }
+        return bundleOptions.debugServerIP + ":" + bundleOptions.debugServerPort;
+    }
 
     public void registerJavaMethodCallBack(final JavaCallback javaCallback, final String name) {
 
@@ -181,7 +195,7 @@ public class JSModule {
             @Override
             public void run() {
                 if (eventType.contains(method)) {
-                    executor.executeJSFunction(callJSLifecycleMethod, null, method,contextId);
+                    executor.executeJSFunction(callJSLifecycleMethod, null, method, contextId);
                     return;
                 }
                 Map<String, Object> callParams = new HashMap();
@@ -214,8 +228,8 @@ public class JSModule {
                         callback.success(result);
                     }
                     isLoaded = true;
-                    for (JSFunctionInfo info:initFunInfoList){
-                        executeJSFunction(info.contextId,info.funcName,info.callback,info.params);
+                    for (JSFunctionInfo info : initFunInfoList) {
+                        executeJSFunction(info.contextId, info.funcName, info.callback, info.params);
                     }
                     initFunInfoList.clear();
                     ThreshLogger.v("[finish]");
@@ -251,7 +265,7 @@ public class JSModule {
     public void executeJSFunction(String contextId, final String funcName, final JSCallback callback, final Map params) {
 
         if (!isLoaded()) {
-            initFunInfoList.add(new JSFunctionInfo(contextId,funcName,callback,params));
+            initFunInfoList.add(new JSFunctionInfo(contextId, funcName, callback, params));
             return;
         }
 
