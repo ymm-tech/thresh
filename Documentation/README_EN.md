@@ -290,11 +290,12 @@ After the dependencies are added, you can directly refer to the article **Apis/F
 
 * [Basic Components](Documentation/基础组件/组件说明.md) The following is the basic component documents:
 
-  | [Container](Documentation/基础组件/Container.md) | [AppBar](Documentation/基础组件/AppBar.md)         | [Page](Documentation/基础组件/Page.md)                       | [Button](Documentation/基础组件/Button.md) |
-  | ------------------------------------------------ | -------------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------ |
-  | [Checkbox](Documentation/基础组件/Checkbox.md)   | [Icon](Documentation/基础组件/Icon.md)             | [Image](Documentation/基础组件/Image.md)                     | [Input](Documentation/基础组件/Input.md)   |
-  | [ListView](Documentation/基础组件/ListView.md)   | [NativeView](Documentation/基础组件/NativeView.md) | [NestScrollView](Documentation/基础组件/NestScrollView.md)   | [Radio](Documentation/基础组件/Radio.md)   |
-  | [Refresh](Documentation/基础组件/Refreshmd)      | [ScrollView](Documentation/基础组件/ScrollView.md) | [SwipeActionsView](Documentation/基础组件/SwipeActionsView.md) | [Text](Documentation/基础组件/Text.md)     |
+  | [Container](Documentation/基础组件/Container.md)             | [AppBar](Documentation/基础组件/AppBar.md)         | [Page](Documentation/基础组件/Page.md)                       | [Button](Documentation/基础组件/Button.md) |
+  | ------------------------------------------------------------ | -------------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------ |
+  | [Checkbox](Documentation/基础组件/Checkbox.md)               | [Icon](Documentation/基础组件/Icon.md)             | [Image](Documentation/基础组件/Image.md)                     | [Input](Documentation/基础组件/Input.md)   |
+  | [ListView](Documentation/基础组件/ListView.md)               | [NativeView](Documentation/基础组件/NativeView.md) | [NestScrollView](Documentation/基础组件/NestScrollView.md)   | [Radio](Documentation/基础组件/Radio.md)   |
+  | [Refresh](Documentation/基础组件/Refreshmd)                  | [ScrollView](Documentation/基础组件/ScrollView.md) | [SwipeActionsView](Documentation/基础组件/SwipeActionsView.md) | [Text](Documentation/基础组件/Text.md)     |
+  | [DragableScrollView](Documentation/基础组件/DragableScrollView.md) | [Picker](Documentation/基础组件/Picker.md)         | [Switch](Documentation/基础组件/Switch.md)                   |                                            |
 
 ### Sixth、Access case
 

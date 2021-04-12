@@ -110,12 +110,12 @@ Flutter SDK：**flutter 1.22.5 **【备注：新版本后续会逐步支持 [Flu
 
 * [基础组件](Documentation/基础组件/组件说明.md) 以下为基础组件文档：
 
-  | [Container](Documentation/基础组件/Container.md) | [AppBar](Documentation/基础组件/AppBar.md)         | [Page](Documentation/基础组件/Page.md)                       | [Button](Documentation/基础组件/Button.md) |
-  | ------------------------------------------------ | -------------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------ |
-  | [Checkbox](Documentation/基础组件/Checkbox.md)   | [Icon](Documentation/基础组件/Icon.md)             | [Image](Documentation/基础组件/Image.md)                     | [Input](Documentation/基础组件/Input.md)   |
-  | [ListView](Documentation/基础组件/ListView.md)   | [NativeView](Documentation/基础组件/NativeView.md) | [NestScrollView](Documentation/基础组件/NestScrollView.md)   | [Radio](Documentation/基础组件/Radio.md)   |
-  | [Refresh](Documentation/基础组件/Refresh.md)     | [ScrollView](Documentation/基础组件/ScrollView.md) | [SwipeActionsView](Documentation/基础组件/SwipeActionsView.md) | [Text](Documentation/基础组件/Text.md)     |
-  | [Refresh](Documentation/基础组件/Refresh.md)     | [Refresh](Documentation/基础组件/Refresh.md)       | [Refresh](Documentation/基础组件/Refresh.md)                 |                                            |
+  | [Container](Documentation/基础组件/Container.md)             | [AppBar](Documentation/基础组件/AppBar.md)         | [Page](Documentation/基础组件/Page.md)                       | [Button](Documentation/基础组件/Button.md) |
+  | ------------------------------------------------------------ | -------------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------ |
+  | [Checkbox](Documentation/基础组件/Checkbox.md)               | [Icon](Documentation/基础组件/Icon.md)             | [Image](Documentation/基础组件/Image.md)                     | [Input](Documentation/基础组件/Input.md)   |
+  | [ListView](Documentation/基础组件/ListView.md)               | [NativeView](Documentation/基础组件/NativeView.md) | [NestScrollView](Documentation/基础组件/NestScrollView.md)   | [Radio](Documentation/基础组件/Radio.md)   |
+  | [Refresh](Documentation/基础组件/Refresh.md)                 | [ScrollView](Documentation/基础组件/ScrollView.md) | [SwipeActionsView](Documentation/基础组件/SwipeActionsView.md) | [Text](Documentation/基础组件/Text.md)     |
+  | [DragableScrollView](Documentation/基础组件/DragableScrollView.md) | [Picker](Documentation/基础组件/Picker.md)         | [Switch](Documentation/基础组件/Switch.md)                   |                                            |
 
 ### 五、接入案例
 

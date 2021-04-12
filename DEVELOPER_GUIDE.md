@@ -12,7 +12,7 @@
 
 JS/TS：VSCode + node + npm/yarn
 
-Flutter SDK：flutter1.9.1-hotfix.6【备注：新版本后续会逐步支持  [Flutter环境安装请移步](https://flutter.dev/docs/get-started/install)】
+Flutter SDK：flutter1.22.5【备注：新版本后续会逐步支持  [Flutter环境安装请移步](https://flutter.dev/docs/get-started/install)】
 
 #### 1.2、仓库说明
 
@@ -168,7 +168,7 @@ ManbangMacBook-Pro:thresh_test_demo Manbang$ thresh-cli create ThreshTest1
 > 自行创建flutter工程项目成功后并配置yaml源，Flutter 端请在 pubspec.yaml 文件中添加依赖项：
 
 ```
-thresh: "^0.0.4" 或 仓库依赖（建议仓库依赖）
+thresh: "^0.0.6" 或 仓库依赖（建议仓库依赖）
 ```
 
 ```
