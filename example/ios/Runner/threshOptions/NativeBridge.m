@@ -23,6 +23,11 @@
 */
 
 #import "NativeBridge.h"
+#import "ThreshConfig.h"
+
+@interface NativeBridge ()
+@property (nonatomic, strong) ThreshConfig *config;
+@end
 
 @implementation NativeBridge
 
@@ -44,6 +49,11 @@
     } else if (bridgeInfo[@"method"] && [bridgeInfo[@"method"] isEqualToString:@"log"]) {
         NSLog(@"%@", bridgeInfo[@"params"][@"content"]);
         callBack(@{});
+    } else if (bridgeInfo[@"method"] && [bridgeInfo[@"method"] isEqualToString:@"openSchema"]) {
+        UIViewController *rvc = [UIApplication sharedApplication].keyWindow.rootViewController;
+        self.config = [ThreshConfig new];
+        ThreshViewController *vc = [[ThreshViewController alloc] initWithConfig:self.config];
+        [((UINavigationController *)rvc) pushViewController:vc animated:YES];
     }
 }
 

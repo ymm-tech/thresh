@@ -37,7 +37,13 @@ NS_ASSUME_NONNULL_BEGIN
 
 + (ThreshJSChannelManager *)sharedMgr;
 
-- (ThreshJSCoreChannel *)channelWithModule:(NSString *)moduleName supportSingleContext:(BOOL)support;
+- (BOOL)loadedWithModule:(NSString *)moduleName;
+
+- (void)haveLoadedWithModule:(NSString *)moduleName;
+
+- (ThreshJSCoreChannel *)channelWithModule:(NSString *)moduleName;
+
+- (void)removeChannelWithModule:(NSString *)moduleName;
 
 @end
 

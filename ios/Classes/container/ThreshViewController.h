@@ -48,7 +48,8 @@ extern NSString *const needRefeshPageNotification;
 
 // 手动调用JS
 // 事件传递
-- (void)sendJSEvent:(id)eventStr complete:(ThreshCompleteBlock)complete;
+- (void)sendJSEvent:(id)eventStr complete:(ThreshCompleteBlock)complete __attribute__((deprecated("sendJSEvent:args:complete:")));
+- (void)sendJSEvent:(id)eventStr args:(NSDictionary *)args complete:(ThreshCompleteBlock)complete;
 // 方法调用
 - (void)invokeJSMethod:(NSString *)methodStr args:(id)args complete:(ThreshCompleteBlock)complete;
 

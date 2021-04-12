@@ -92,11 +92,11 @@
 
 var _interopRequireDefault = __webpack_require__(1);
 
-var _concat = _interopRequireDefault(__webpack_require__(2));
+var _defineProperty = _interopRequireDefault(__webpack_require__(2));
 
-var _forEach = _interopRequireDefault(__webpack_require__(50));
+var _forEach = _interopRequireDefault(__webpack_require__(30));
 
-var _defineProperty = _interopRequireDefault(__webpack_require__(89));
+var _concat = _interopRequireDefault(__webpack_require__(86));
 
 var _context, _context2;
 
@@ -106,9 +106,9 @@ var _context, _context2;
 
 var thresh_lib_1 = __webpack_require__(93);
 
-var config_1 = __webpack_require__(268);
+var config_1 = __webpack_require__(275);
 
-var homePage_1 = __webpack_require__(316); // 注册默认页面
+var homePage_1 = __webpack_require__(331); // 注册默认页面
 
 
 thresh_lib_1["default"].registerPage('homePage', function () {
@@ -126,8 +126,15 @@ thresh_lib_1["default"].registerPage('homePage', function () {
 (0, _forEach["default"])(_context = (0, _concat["default"])(_context2 = config_1.widgetList).call(_context2, config_1.apiList, config_1.extraPages)).call(_context, function (_a) {
   try {
     var pageName = _a.pageName,
-        pageBuilder = _a.pageBuilder;
+        pageBuilder = _a.pageBuilder,
+        useInject = _a.useInject;
     thresh_lib_1["default"].registerPage(pageName, pageBuilder);
+
+    if (useInject) {
+      thresh_lib_1["default"].injectRoute({
+        pageName: pageName
+      });
+    }
   } catch (_e2) {
     __reportError__(_e2, "", "/index.ts");
 
@@ -137,6 +144,7 @@ thresh_lib_1["default"].registerPage('homePage', function () {
 
 thresh_lib_1["default"].ready = function () {
   try {
+    // threshThemeProvider.loadAndUse('testTheme')
     // 设置 appBar 高度
     // appBar 默认高度 56
     thresh_lib_1.ui.setAppBarHeight(thresh_lib_1.ui.rpx(88)); // 运行程序
@@ -160,6 +168,7 @@ function _interopRequireDefault(obj) {
 }
 
 module.exports = _interopRequireDefault;
+module.exports["default"] = module.exports, module.exports.__esModule = true;
 
 /***/ }),
 /* 2 */
@@ -180,24 +189,31 @@ module.exports = parent;
 /* 4 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var concat = __webpack_require__(5);
+__webpack_require__(5);
+var path = __webpack_require__(24);
 
-var ArrayPrototype = Array.prototype;
+var Object = path.Object;
 
-module.exports = function (it) {
-  var own = it.concat;
-  return it === ArrayPrototype || (it instanceof Array && own === ArrayPrototype.concat) ? concat : own;
+var defineProperty = module.exports = function defineProperty(it, key, desc) {
+  return Object.defineProperty(it, key, desc);
 };
+
+if (Object.defineProperty.sham) defineProperty.sham = true;
 
 
 /***/ }),
 /* 5 */
 /***/ (function(module, exports, __webpack_require__) {
 
-__webpack_require__(6);
-var entryVirtual = __webpack_require__(49);
+var $ = __webpack_require__(6);
+var DESCRIPTORS = __webpack_require__(10);
+var objectDefinePropertyModile = __webpack_require__(28);
 
-module.exports = entryVirtual('Array').concat;
+// `Object.defineProperty` method
+// https://tc39.es/ecma262/#sec-object.defineproperty
+$({ target: 'Object', stat: true, forced: !DESCRIPTORS, sham: !DESCRIPTORS }, {
+  defineProperty: objectDefinePropertyModile.f
+});
 
 
 /***/ }),
@@ -206,80 +222,13 @@ module.exports = entryVirtual('Array').concat;
 
 "use strict";
 
-var $ = __webpack_require__(7);
-var fails = __webpack_require__(12);
-var isArray = __webpack_require__(31);
-var isObject = __webpack_require__(20);
-var toObject = __webpack_require__(32);
-var toLength = __webpack_require__(33);
-var createProperty = __webpack_require__(35);
-var arraySpeciesCreate = __webpack_require__(36);
-var arrayMethodHasSpeciesSupport = __webpack_require__(45);
-var wellKnownSymbol = __webpack_require__(37);
-var V8_VERSION = __webpack_require__(46);
-
-var IS_CONCAT_SPREADABLE = wellKnownSymbol('isConcatSpreadable');
-var MAX_SAFE_INTEGER = 0x1FFFFFFFFFFFFF;
-var MAXIMUM_ALLOWED_INDEX_EXCEEDED = 'Maximum allowed index exceeded';
-
-// We can't use this feature detection in V8 since it causes
-// deoptimization and serious performance degradation
-// https://github.com/zloirock/core-js/issues/679
-var IS_CONCAT_SPREADABLE_SUPPORT = V8_VERSION >= 51 || !fails(function () {
-  var array = [];
-  array[IS_CONCAT_SPREADABLE] = false;
-  return array.concat()[0] !== array;
-});
-
-var SPECIES_SUPPORT = arrayMethodHasSpeciesSupport('concat');
-
-var isConcatSpreadable = function (O) {
-  if (!isObject(O)) return false;
-  var spreadable = O[IS_CONCAT_SPREADABLE];
-  return spreadable !== undefined ? !!spreadable : isArray(O);
-};
-
-var FORCED = !IS_CONCAT_SPREADABLE_SUPPORT || !SPECIES_SUPPORT;
-
-// `Array.prototype.concat` method
-// https://tc39.github.io/ecma262/#sec-array.prototype.concat
-// with adding support of @@isConcatSpreadable and @@species
-$({ target: 'Array', proto: true, forced: FORCED }, {
-  concat: function concat(arg) { // eslint-disable-line no-unused-vars
-    var O = toObject(this);
-    var A = arraySpeciesCreate(O, 0);
-    var n = 0;
-    var i, k, length, len, E;
-    for (i = -1, length = arguments.length; i < length; i++) {
-      E = i === -1 ? O : arguments[i];
-      if (isConcatSpreadable(E)) {
-        len = toLength(E.length);
-        if (n + len > MAX_SAFE_INTEGER) throw TypeError(MAXIMUM_ALLOWED_INDEX_EXCEEDED);
-        for (k = 0; k < len; k++, n++) if (k in E) createProperty(A, n, E[k]);
-      } else {
-        if (n >= MAX_SAFE_INTEGER) throw TypeError(MAXIMUM_ALLOWED_INDEX_EXCEEDED);
-        createProperty(A, n++, E);
-      }
-    }
-    A.length = n;
-    return A;
-  }
-});
-
-
-/***/ }),
-/* 7 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-var global = __webpack_require__(8);
-var getOwnPropertyDescriptor = __webpack_require__(10).f;
-var isForced = __webpack_require__(24);
-var path = __webpack_require__(25);
-var bind = __webpack_require__(26);
-var createNonEnumerableProperty = __webpack_require__(28);
-var has = __webpack_require__(21);
+var global = __webpack_require__(7);
+var getOwnPropertyDescriptor = __webpack_require__(9).f;
+var isForced = __webpack_require__(23);
+var path = __webpack_require__(24);
+var bind = __webpack_require__(25);
+var createNonEnumerableProperty = __webpack_require__(27);
+var has = __webpack_require__(20);
 
 var wrapConstructor = function (NativeConstructor) {
   var Wrapper = function (a, b, c) {
@@ -373,7 +322,7 @@ module.exports = function (options, source) {
 
 
 /***/ }),
-/* 8 */
+/* 7 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global) {var check = function (it) {
@@ -382,18 +331,19 @@ module.exports = function (options, source) {
 
 // https://github.com/zloirock/core-js/issues/86#issuecomment-115759028
 module.exports =
-  // eslint-disable-next-line no-undef
+  // eslint-disable-next-line es/no-global-this -- safe
   check(typeof globalThis == 'object' && globalThis) ||
   check(typeof window == 'object' && window) ||
+  // eslint-disable-next-line no-restricted-globals -- safe
   check(typeof self == 'object' && self) ||
   check(typeof global == 'object' && global) ||
-  // eslint-disable-next-line no-new-func
-  Function('return this')();
+  // eslint-disable-next-line no-new-func -- fallback
+  (function () { return this; })() || Function('return this')();
 
-/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(9)))
+/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(8)))
 
 /***/ }),
-/* 9 */
+/* 8 */
 /***/ (function(module, exports) {
 
 var g;
@@ -419,45 +369,47 @@ module.exports = g;
 
 
 /***/ }),
-/* 10 */
+/* 9 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var DESCRIPTORS = __webpack_require__(11);
-var propertyIsEnumerableModule = __webpack_require__(13);
-var createPropertyDescriptor = __webpack_require__(14);
-var toIndexedObject = __webpack_require__(15);
-var toPrimitive = __webpack_require__(19);
-var has = __webpack_require__(21);
-var IE8_DOM_DEFINE = __webpack_require__(22);
+var DESCRIPTORS = __webpack_require__(10);
+var propertyIsEnumerableModule = __webpack_require__(12);
+var createPropertyDescriptor = __webpack_require__(13);
+var toIndexedObject = __webpack_require__(14);
+var toPrimitive = __webpack_require__(18);
+var has = __webpack_require__(20);
+var IE8_DOM_DEFINE = __webpack_require__(21);
 
-var nativeGetOwnPropertyDescriptor = Object.getOwnPropertyDescriptor;
+// eslint-disable-next-line es/no-object-getownpropertydescriptor -- safe
+var $getOwnPropertyDescriptor = Object.getOwnPropertyDescriptor;
 
 // `Object.getOwnPropertyDescriptor` method
-// https://tc39.github.io/ecma262/#sec-object.getownpropertydescriptor
-exports.f = DESCRIPTORS ? nativeGetOwnPropertyDescriptor : function getOwnPropertyDescriptor(O, P) {
+// https://tc39.es/ecma262/#sec-object.getownpropertydescriptor
+exports.f = DESCRIPTORS ? $getOwnPropertyDescriptor : function getOwnPropertyDescriptor(O, P) {
   O = toIndexedObject(O);
   P = toPrimitive(P, true);
   if (IE8_DOM_DEFINE) try {
-    return nativeGetOwnPropertyDescriptor(O, P);
+    return $getOwnPropertyDescriptor(O, P);
   } catch (error) { /* empty */ }
   if (has(O, P)) return createPropertyDescriptor(!propertyIsEnumerableModule.f.call(O, P), O[P]);
 };
 
 
 /***/ }),
-/* 11 */
+/* 10 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var fails = __webpack_require__(12);
+var fails = __webpack_require__(11);
 
-// Thank's IE8 for his funny defineProperty
+// Detect IE8's incomplete defineProperty implementation
 module.exports = !fails(function () {
+  // eslint-disable-next-line es/no-object-defineproperty -- required for testing
   return Object.defineProperty({}, 1, { get: function () { return 7; } })[1] != 7;
 });
 
 
 /***/ }),
-/* 12 */
+/* 11 */
 /***/ (function(module, exports) {
 
 module.exports = function (exec) {
@@ -470,27 +422,28 @@ module.exports = function (exec) {
 
 
 /***/ }),
-/* 13 */
+/* 12 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
-var nativePropertyIsEnumerable = {}.propertyIsEnumerable;
+var $propertyIsEnumerable = {}.propertyIsEnumerable;
+// eslint-disable-next-line es/no-object-getownpropertydescriptor -- safe
 var getOwnPropertyDescriptor = Object.getOwnPropertyDescriptor;
 
 // Nashorn ~ JDK8 bug
-var NASHORN_BUG = getOwnPropertyDescriptor && !nativePropertyIsEnumerable.call({ 1: 2 }, 1);
+var NASHORN_BUG = getOwnPropertyDescriptor && !$propertyIsEnumerable.call({ 1: 2 }, 1);
 
 // `Object.prototype.propertyIsEnumerable` method implementation
-// https://tc39.github.io/ecma262/#sec-object.prototype.propertyisenumerable
+// https://tc39.es/ecma262/#sec-object.prototype.propertyisenumerable
 exports.f = NASHORN_BUG ? function propertyIsEnumerable(V) {
   var descriptor = getOwnPropertyDescriptor(this, V);
   return !!descriptor && descriptor.enumerable;
-} : nativePropertyIsEnumerable;
+} : $propertyIsEnumerable;
 
 
 /***/ }),
-/* 14 */
+/* 13 */
 /***/ (function(module, exports) {
 
 module.exports = function (bitmap, value) {
@@ -504,12 +457,12 @@ module.exports = function (bitmap, value) {
 
 
 /***/ }),
-/* 15 */
+/* 14 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // toObject with fallback for non-array-like ES3 strings
-var IndexedObject = __webpack_require__(16);
-var requireObjectCoercible = __webpack_require__(18);
+var IndexedObject = __webpack_require__(15);
+var requireObjectCoercible = __webpack_require__(17);
 
 module.exports = function (it) {
   return IndexedObject(requireObjectCoercible(it));
@@ -517,18 +470,18 @@ module.exports = function (it) {
 
 
 /***/ }),
-/* 16 */
+/* 15 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var fails = __webpack_require__(12);
-var classof = __webpack_require__(17);
+var fails = __webpack_require__(11);
+var classof = __webpack_require__(16);
 
 var split = ''.split;
 
 // fallback for non-array-like ES3 and non-enumerable old V8 strings
 module.exports = fails(function () {
   // throws an error in rhino, see https://github.com/mozilla/rhino/issues/346
-  // eslint-disable-next-line no-prototype-builtins
+  // eslint-disable-next-line no-prototype-builtins -- safe
   return !Object('z').propertyIsEnumerable(0);
 }) ? function (it) {
   return classof(it) == 'String' ? split.call(it, '') : Object(it);
@@ -536,7 +489,7 @@ module.exports = fails(function () {
 
 
 /***/ }),
-/* 17 */
+/* 16 */
 /***/ (function(module, exports) {
 
 var toString = {}.toString;
@@ -547,11 +500,11 @@ module.exports = function (it) {
 
 
 /***/ }),
-/* 18 */
+/* 17 */
 /***/ (function(module, exports) {
 
 // `RequireObjectCoercible` abstract operation
-// https://tc39.github.io/ecma262/#sec-requireobjectcoercible
+// https://tc39.es/ecma262/#sec-requireobjectcoercible
 module.exports = function (it) {
   if (it == undefined) throw TypeError("Can't call method on " + it);
   return it;
@@ -559,13 +512,13 @@ module.exports = function (it) {
 
 
 /***/ }),
-/* 19 */
+/* 18 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var isObject = __webpack_require__(20);
+var isObject = __webpack_require__(19);
 
 // `ToPrimitive` abstract operation
-// https://tc39.github.io/ecma262/#sec-toprimitive
+// https://tc39.es/ecma262/#sec-toprimitive
 // instead of the ES6 spec version, we didn't implement @@toPrimitive case
 // and the second argument - flag - preferred type is a string
 module.exports = function (input, PREFERRED_STRING) {
@@ -579,7 +532,7 @@ module.exports = function (input, PREFERRED_STRING) {
 
 
 /***/ }),
-/* 20 */
+/* 19 */
 /***/ (function(module, exports) {
 
 module.exports = function (it) {
@@ -588,7 +541,7 @@ module.exports = function (it) {
 
 
 /***/ }),
-/* 21 */
+/* 20 */
 /***/ (function(module, exports) {
 
 var hasOwnProperty = {}.hasOwnProperty;
@@ -599,15 +552,16 @@ module.exports = function (it, key) {
 
 
 /***/ }),
-/* 22 */
+/* 21 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var DESCRIPTORS = __webpack_require__(11);
-var fails = __webpack_require__(12);
-var createElement = __webpack_require__(23);
+var DESCRIPTORS = __webpack_require__(10);
+var fails = __webpack_require__(11);
+var createElement = __webpack_require__(22);
 
 // Thank's IE8 for his funny defineProperty
 module.exports = !DESCRIPTORS && !fails(function () {
+  // eslint-disable-next-line es/no-object-defineproperty -- requied for testing
   return Object.defineProperty(createElement('div'), 'a', {
     get: function () { return 7; }
   }).a != 7;
@@ -615,11 +569,11 @@ module.exports = !DESCRIPTORS && !fails(function () {
 
 
 /***/ }),
-/* 23 */
+/* 22 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var global = __webpack_require__(8);
-var isObject = __webpack_require__(20);
+var global = __webpack_require__(7);
+var isObject = __webpack_require__(19);
 
 var document = global.document;
 // typeof document.createElement is 'object' in old IE
@@ -631,10 +585,10 @@ module.exports = function (it) {
 
 
 /***/ }),
-/* 24 */
+/* 23 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var fails = __webpack_require__(12);
+var fails = __webpack_require__(11);
 
 var replacement = /#|\.prototype\./;
 
@@ -658,17 +612,17 @@ module.exports = isForced;
 
 
 /***/ }),
-/* 25 */
+/* 24 */
 /***/ (function(module, exports) {
 
 module.exports = {};
 
 
 /***/ }),
-/* 26 */
+/* 25 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var aFunction = __webpack_require__(27);
+var aFunction = __webpack_require__(26);
 
 // optional / simple context binding
 module.exports = function (fn, that, length) {
@@ -695,7 +649,7 @@ module.exports = function (fn, that, length) {
 
 
 /***/ }),
-/* 27 */
+/* 26 */
 /***/ (function(module, exports) {
 
 module.exports = function (it) {
@@ -706,12 +660,12 @@ module.exports = function (it) {
 
 
 /***/ }),
-/* 28 */
+/* 27 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var DESCRIPTORS = __webpack_require__(11);
-var definePropertyModule = __webpack_require__(29);
-var createPropertyDescriptor = __webpack_require__(14);
+var DESCRIPTORS = __webpack_require__(10);
+var definePropertyModule = __webpack_require__(28);
+var createPropertyDescriptor = __webpack_require__(13);
 
 module.exports = DESCRIPTORS ? function (object, key, value) {
   return definePropertyModule.f(object, key, createPropertyDescriptor(1, value));
@@ -722,24 +676,25 @@ module.exports = DESCRIPTORS ? function (object, key, value) {
 
 
 /***/ }),
-/* 29 */
+/* 28 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var DESCRIPTORS = __webpack_require__(11);
-var IE8_DOM_DEFINE = __webpack_require__(22);
-var anObject = __webpack_require__(30);
-var toPrimitive = __webpack_require__(19);
+var DESCRIPTORS = __webpack_require__(10);
+var IE8_DOM_DEFINE = __webpack_require__(21);
+var anObject = __webpack_require__(29);
+var toPrimitive = __webpack_require__(18);
 
-var nativeDefineProperty = Object.defineProperty;
+// eslint-disable-next-line es/no-object-defineproperty -- safe
+var $defineProperty = Object.defineProperty;
 
 // `Object.defineProperty` method
-// https://tc39.github.io/ecma262/#sec-object.defineproperty
-exports.f = DESCRIPTORS ? nativeDefineProperty : function defineProperty(O, P, Attributes) {
+// https://tc39.es/ecma262/#sec-object.defineproperty
+exports.f = DESCRIPTORS ? $defineProperty : function defineProperty(O, P, Attributes) {
   anObject(O);
   P = toPrimitive(P, true);
   anObject(Attributes);
   if (IE8_DOM_DEFINE) try {
-    return nativeDefineProperty(O, P, Attributes);
+    return $defineProperty(O, P, Attributes);
   } catch (error) { /* empty */ }
   if ('get' in Attributes || 'set' in Attributes) throw TypeError('Accessors not supported');
   if ('value' in Attributes) O[P] = Attributes.value;
@@ -748,10 +703,10 @@ exports.f = DESCRIPTORS ? nativeDefineProperty : function defineProperty(O, P, A
 
 
 /***/ }),
-/* 30 */
+/* 29 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var isObject = __webpack_require__(20);
+var isObject = __webpack_require__(19);
 
 module.exports = function (it) {
   if (!isObject(it)) {
@@ -761,317 +716,18 @@ module.exports = function (it) {
 
 
 /***/ }),
+/* 30 */
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports = __webpack_require__(31);
+
+/***/ }),
 /* 31 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var classof = __webpack_require__(17);
-
-// `IsArray` abstract operation
-// https://tc39.github.io/ecma262/#sec-isarray
-module.exports = Array.isArray || function isArray(arg) {
-  return classof(arg) == 'Array';
-};
-
-
-/***/ }),
-/* 32 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var requireObjectCoercible = __webpack_require__(18);
-
-// `ToObject` abstract operation
-// https://tc39.github.io/ecma262/#sec-toobject
-module.exports = function (argument) {
-  return Object(requireObjectCoercible(argument));
-};
-
-
-/***/ }),
-/* 33 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var toInteger = __webpack_require__(34);
-
-var min = Math.min;
-
-// `ToLength` abstract operation
-// https://tc39.github.io/ecma262/#sec-tolength
-module.exports = function (argument) {
-  return argument > 0 ? min(toInteger(argument), 0x1FFFFFFFFFFFFF) : 0; // 2 ** 53 - 1 == 9007199254740991
-};
-
-
-/***/ }),
-/* 34 */
-/***/ (function(module, exports) {
-
-var ceil = Math.ceil;
-var floor = Math.floor;
-
-// `ToInteger` abstract operation
-// https://tc39.github.io/ecma262/#sec-tointeger
-module.exports = function (argument) {
-  return isNaN(argument = +argument) ? 0 : (argument > 0 ? floor : ceil)(argument);
-};
-
-
-/***/ }),
-/* 35 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-var toPrimitive = __webpack_require__(19);
-var definePropertyModule = __webpack_require__(29);
-var createPropertyDescriptor = __webpack_require__(14);
-
-module.exports = function (object, key, value) {
-  var propertyKey = toPrimitive(key);
-  if (propertyKey in object) definePropertyModule.f(object, propertyKey, createPropertyDescriptor(0, value));
-  else object[propertyKey] = value;
-};
-
-
-/***/ }),
-/* 36 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var isObject = __webpack_require__(20);
-var isArray = __webpack_require__(31);
-var wellKnownSymbol = __webpack_require__(37);
-
-var SPECIES = wellKnownSymbol('species');
-
-// `ArraySpeciesCreate` abstract operation
-// https://tc39.github.io/ecma262/#sec-arrayspeciescreate
-module.exports = function (originalArray, length) {
-  var C;
-  if (isArray(originalArray)) {
-    C = originalArray.constructor;
-    // cross-realm fallback
-    if (typeof C == 'function' && (C === Array || isArray(C.prototype))) C = undefined;
-    else if (isObject(C)) {
-      C = C[SPECIES];
-      if (C === null) C = undefined;
-    }
-  } return new (C === undefined ? Array : C)(length === 0 ? 0 : length);
-};
-
-
-/***/ }),
-/* 37 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var global = __webpack_require__(8);
-var shared = __webpack_require__(38);
-var has = __webpack_require__(21);
-var uid = __webpack_require__(42);
-var NATIVE_SYMBOL = __webpack_require__(43);
-var USE_SYMBOL_AS_UID = __webpack_require__(44);
-
-var WellKnownSymbolsStore = shared('wks');
-var Symbol = global.Symbol;
-var createWellKnownSymbol = USE_SYMBOL_AS_UID ? Symbol : Symbol && Symbol.withoutSetter || uid;
-
-module.exports = function (name) {
-  if (!has(WellKnownSymbolsStore, name)) {
-    if (NATIVE_SYMBOL && has(Symbol, name)) WellKnownSymbolsStore[name] = Symbol[name];
-    else WellKnownSymbolsStore[name] = createWellKnownSymbol('Symbol.' + name);
-  } return WellKnownSymbolsStore[name];
-};
-
-
-/***/ }),
-/* 38 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var IS_PURE = __webpack_require__(39);
-var store = __webpack_require__(40);
-
-(module.exports = function (key, value) {
-  return store[key] || (store[key] = value !== undefined ? value : {});
-})('versions', []).push({
-  version: '3.6.4',
-  mode: IS_PURE ? 'pure' : 'global',
-  copyright: '© 2020 Denis Pushkarev (zloirock.ru)'
-});
-
-
-/***/ }),
-/* 39 */
-/***/ (function(module, exports) {
-
-module.exports = true;
-
-
-/***/ }),
-/* 40 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var global = __webpack_require__(8);
-var setGlobal = __webpack_require__(41);
-
-var SHARED = '__core-js_shared__';
-var store = global[SHARED] || setGlobal(SHARED, {});
-
-module.exports = store;
-
-
-/***/ }),
-/* 41 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var global = __webpack_require__(8);
-var createNonEnumerableProperty = __webpack_require__(28);
-
-module.exports = function (key, value) {
-  try {
-    createNonEnumerableProperty(global, key, value);
-  } catch (error) {
-    global[key] = value;
-  } return value;
-};
-
-
-/***/ }),
-/* 42 */
-/***/ (function(module, exports) {
-
-var id = 0;
-var postfix = Math.random();
-
-module.exports = function (key) {
-  return 'Symbol(' + String(key === undefined ? '' : key) + ')_' + (++id + postfix).toString(36);
-};
-
-
-/***/ }),
-/* 43 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var fails = __webpack_require__(12);
-
-module.exports = !!Object.getOwnPropertySymbols && !fails(function () {
-  // Chrome 38 Symbol has incorrect toString conversion
-  // eslint-disable-next-line no-undef
-  return !String(Symbol());
-});
-
-
-/***/ }),
-/* 44 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var NATIVE_SYMBOL = __webpack_require__(43);
-
-module.exports = NATIVE_SYMBOL
-  // eslint-disable-next-line no-undef
-  && !Symbol.sham
-  // eslint-disable-next-line no-undef
-  && typeof Symbol.iterator == 'symbol';
-
-
-/***/ }),
-/* 45 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var fails = __webpack_require__(12);
-var wellKnownSymbol = __webpack_require__(37);
-var V8_VERSION = __webpack_require__(46);
-
-var SPECIES = wellKnownSymbol('species');
-
-module.exports = function (METHOD_NAME) {
-  // We can't use this feature detection in V8 since it causes
-  // deoptimization and serious performance degradation
-  // https://github.com/zloirock/core-js/issues/677
-  return V8_VERSION >= 51 || !fails(function () {
-    var array = [];
-    var constructor = array.constructor = {};
-    constructor[SPECIES] = function () {
-      return { foo: 1 };
-    };
-    return array[METHOD_NAME](Boolean).foo !== 1;
-  });
-};
-
-
-/***/ }),
-/* 46 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var global = __webpack_require__(8);
-var userAgent = __webpack_require__(47);
-
-var process = global.process;
-var versions = process && process.versions;
-var v8 = versions && versions.v8;
-var match, version;
-
-if (v8) {
-  match = v8.split('.');
-  version = match[0] + match[1];
-} else if (userAgent) {
-  match = userAgent.match(/Edge\/(\d+)/);
-  if (!match || match[1] >= 74) {
-    match = userAgent.match(/Chrome\/(\d+)/);
-    if (match) version = match[1];
-  }
-}
-
-module.exports = version && +version;
-
-
-/***/ }),
-/* 47 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var getBuiltIn = __webpack_require__(48);
-
-module.exports = getBuiltIn('navigator', 'userAgent') || '';
-
-
-/***/ }),
-/* 48 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var path = __webpack_require__(25);
-var global = __webpack_require__(8);
-
-var aFunction = function (variable) {
-  return typeof variable == 'function' ? variable : undefined;
-};
-
-module.exports = function (namespace, method) {
-  return arguments.length < 2 ? aFunction(path[namespace]) || aFunction(global[namespace])
-    : path[namespace] && path[namespace][method] || global[namespace] && global[namespace][method];
-};
-
-
-/***/ }),
-/* 49 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var path = __webpack_require__(25);
-
-module.exports = function (CONSTRUCTOR) {
-  return path[CONSTRUCTOR + 'Prototype'];
-};
-
-
-/***/ }),
-/* 50 */
-/***/ (function(module, exports, __webpack_require__) {
-
-module.exports = __webpack_require__(51);
-
-/***/ }),
-/* 51 */
-/***/ (function(module, exports, __webpack_require__) {
-
-__webpack_require__(52);
-var forEach = __webpack_require__(82);
-var classof = __webpack_require__(77);
+__webpack_require__(32);
+var forEach = __webpack_require__(77);
+var classof = __webpack_require__(72);
 var ArrayPrototype = Array.prototype;
 
 var DOMIterables = {
@@ -1082,22 +738,22 @@ var DOMIterables = {
 module.exports = function (it) {
   var own = it.forEach;
   return it === ArrayPrototype || (it instanceof Array && own === ArrayPrototype.forEach)
-    // eslint-disable-next-line no-prototype-builtins
+    // eslint-disable-next-line no-prototype-builtins -- safe
     || DOMIterables.hasOwnProperty(classof(it)) ? forEach : own;
 };
 
 
 /***/ }),
-/* 52 */
+/* 32 */
 /***/ (function(module, exports, __webpack_require__) {
 
-__webpack_require__(53);
-var DOMIterables = __webpack_require__(81);
-var global = __webpack_require__(8);
-var classof = __webpack_require__(77);
-var createNonEnumerableProperty = __webpack_require__(28);
-var Iterators = __webpack_require__(55);
-var wellKnownSymbol = __webpack_require__(37);
+__webpack_require__(33);
+var DOMIterables = __webpack_require__(76);
+var global = __webpack_require__(7);
+var classof = __webpack_require__(72);
+var createNonEnumerableProperty = __webpack_require__(27);
+var Iterators = __webpack_require__(35);
+var wellKnownSymbol = __webpack_require__(52);
 
 var TO_STRING_TAG = wellKnownSymbol('toStringTag');
 
@@ -1112,31 +768,31 @@ for (var COLLECTION_NAME in DOMIterables) {
 
 
 /***/ }),
-/* 53 */
+/* 33 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
-var toIndexedObject = __webpack_require__(15);
-var addToUnscopables = __webpack_require__(54);
-var Iterators = __webpack_require__(55);
-var InternalStateModule = __webpack_require__(56);
-var defineIterator = __webpack_require__(61);
+var toIndexedObject = __webpack_require__(14);
+var addToUnscopables = __webpack_require__(34);
+var Iterators = __webpack_require__(35);
+var InternalStateModule = __webpack_require__(36);
+var defineIterator = __webpack_require__(46);
 
 var ARRAY_ITERATOR = 'Array Iterator';
 var setInternalState = InternalStateModule.set;
 var getInternalState = InternalStateModule.getterFor(ARRAY_ITERATOR);
 
 // `Array.prototype.entries` method
-// https://tc39.github.io/ecma262/#sec-array.prototype.entries
+// https://tc39.es/ecma262/#sec-array.prototype.entries
 // `Array.prototype.keys` method
-// https://tc39.github.io/ecma262/#sec-array.prototype.keys
+// https://tc39.es/ecma262/#sec-array.prototype.keys
 // `Array.prototype.values` method
-// https://tc39.github.io/ecma262/#sec-array.prototype.values
+// https://tc39.es/ecma262/#sec-array.prototype.values
 // `Array.prototype[@@iterator]` method
-// https://tc39.github.io/ecma262/#sec-array.prototype-@@iterator
+// https://tc39.es/ecma262/#sec-array.prototype-@@iterator
 // `CreateArrayIterator` internal method
-// https://tc39.github.io/ecma262/#sec-createarrayiterator
+// https://tc39.es/ecma262/#sec-createarrayiterator
 module.exports = defineIterator(Array, 'Array', function (iterated, kind) {
   setInternalState(this, {
     type: ARRAY_ITERATOR,
@@ -1145,7 +801,7 @@ module.exports = defineIterator(Array, 'Array', function (iterated, kind) {
     kind: kind                         // kind
   });
 // `%ArrayIteratorPrototype%.next` method
-// https://tc39.github.io/ecma262/#sec-%arrayiteratorprototype%.next
+// https://tc39.es/ecma262/#sec-%arrayiteratorprototype%.next
 }, function () {
   var state = getInternalState(this);
   var target = state.target;
@@ -1161,41 +817,42 @@ module.exports = defineIterator(Array, 'Array', function (iterated, kind) {
 }, 'values');
 
 // argumentsList[@@iterator] is %ArrayProto_values%
-// https://tc39.github.io/ecma262/#sec-createunmappedargumentsobject
-// https://tc39.github.io/ecma262/#sec-createmappedargumentsobject
+// https://tc39.es/ecma262/#sec-createunmappedargumentsobject
+// https://tc39.es/ecma262/#sec-createmappedargumentsobject
 Iterators.Arguments = Iterators.Array;
 
-// https://tc39.github.io/ecma262/#sec-array.prototype-@@unscopables
+// https://tc39.es/ecma262/#sec-array.prototype-@@unscopables
 addToUnscopables('keys');
 addToUnscopables('values');
 addToUnscopables('entries');
 
 
 /***/ }),
-/* 54 */
+/* 34 */
 /***/ (function(module, exports) {
 
 module.exports = function () { /* empty */ };
 
 
 /***/ }),
-/* 55 */
+/* 35 */
 /***/ (function(module, exports) {
 
 module.exports = {};
 
 
 /***/ }),
-/* 56 */
+/* 36 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var NATIVE_WEAK_MAP = __webpack_require__(57);
-var global = __webpack_require__(8);
-var isObject = __webpack_require__(20);
-var createNonEnumerableProperty = __webpack_require__(28);
-var objectHas = __webpack_require__(21);
-var sharedKey = __webpack_require__(59);
-var hiddenKeys = __webpack_require__(60);
+var NATIVE_WEAK_MAP = __webpack_require__(37);
+var global = __webpack_require__(7);
+var isObject = __webpack_require__(19);
+var createNonEnumerableProperty = __webpack_require__(27);
+var objectHas = __webpack_require__(20);
+var shared = __webpack_require__(39);
+var sharedKey = __webpack_require__(41);
+var hiddenKeys = __webpack_require__(45);
 
 var WeakMap = global.WeakMap;
 var set, get, has;
@@ -1214,11 +871,12 @@ var getterFor = function (TYPE) {
 };
 
 if (NATIVE_WEAK_MAP) {
-  var store = new WeakMap();
+  var store = shared.state || (shared.state = new WeakMap());
   var wmget = store.get;
   var wmhas = store.has;
   var wmset = store.set;
   set = function (it, metadata) {
+    metadata.facade = it;
     wmset.call(store, it, metadata);
     return metadata;
   };
@@ -1232,6 +890,7 @@ if (NATIVE_WEAK_MAP) {
   var STATE = sharedKey('state');
   hiddenKeys[STATE] = true;
   set = function (it, metadata) {
+    metadata.facade = it;
     createNonEnumerableProperty(it, STATE, metadata);
     return metadata;
   };
@@ -1253,11 +912,11 @@ module.exports = {
 
 
 /***/ }),
-/* 57 */
+/* 37 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var global = __webpack_require__(8);
-var inspectSource = __webpack_require__(58);
+var global = __webpack_require__(7);
+var inspectSource = __webpack_require__(38);
 
 var WeakMap = global.WeakMap;
 
@@ -1265,10 +924,10 @@ module.exports = typeof WeakMap === 'function' && /native code/.test(inspectSour
 
 
 /***/ }),
-/* 58 */
+/* 38 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var store = __webpack_require__(40);
+var store = __webpack_require__(39);
 
 var functionToString = Function.toString;
 
@@ -1283,11 +942,40 @@ module.exports = store.inspectSource;
 
 
 /***/ }),
-/* 59 */
+/* 39 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var shared = __webpack_require__(38);
-var uid = __webpack_require__(42);
+var global = __webpack_require__(7);
+var setGlobal = __webpack_require__(40);
+
+var SHARED = '__core-js_shared__';
+var store = global[SHARED] || setGlobal(SHARED, {});
+
+module.exports = store;
+
+
+/***/ }),
+/* 40 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var global = __webpack_require__(7);
+var createNonEnumerableProperty = __webpack_require__(27);
+
+module.exports = function (key, value) {
+  try {
+    createNonEnumerableProperty(global, key, value);
+  } catch (error) {
+    global[key] = value;
+  } return value;
+};
+
+
+/***/ }),
+/* 41 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var shared = __webpack_require__(42);
+var uid = __webpack_require__(44);
 
 var keys = shared('keys');
 
@@ -1297,29 +985,64 @@ module.exports = function (key) {
 
 
 /***/ }),
-/* 60 */
+/* 42 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var IS_PURE = __webpack_require__(43);
+var store = __webpack_require__(39);
+
+(module.exports = function (key, value) {
+  return store[key] || (store[key] = value !== undefined ? value : {});
+})('versions', []).push({
+  version: '3.10.1',
+  mode: IS_PURE ? 'pure' : 'global',
+  copyright: '© 2021 Denis Pushkarev (zloirock.ru)'
+});
+
+
+/***/ }),
+/* 43 */
+/***/ (function(module, exports) {
+
+module.exports = true;
+
+
+/***/ }),
+/* 44 */
+/***/ (function(module, exports) {
+
+var id = 0;
+var postfix = Math.random();
+
+module.exports = function (key) {
+  return 'Symbol(' + String(key === undefined ? '' : key) + ')_' + (++id + postfix).toString(36);
+};
+
+
+/***/ }),
+/* 45 */
 /***/ (function(module, exports) {
 
 module.exports = {};
 
 
 /***/ }),
-/* 61 */
+/* 46 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
-var $ = __webpack_require__(7);
-var createIteratorConstructor = __webpack_require__(62);
-var getPrototypeOf = __webpack_require__(64);
-var setPrototypeOf = __webpack_require__(78);
-var setToStringTag = __webpack_require__(74);
-var createNonEnumerableProperty = __webpack_require__(28);
-var redefine = __webpack_require__(80);
-var wellKnownSymbol = __webpack_require__(37);
-var IS_PURE = __webpack_require__(39);
-var Iterators = __webpack_require__(55);
-var IteratorsCore = __webpack_require__(63);
+var $ = __webpack_require__(6);
+var createIteratorConstructor = __webpack_require__(47);
+var getPrototypeOf = __webpack_require__(49);
+var setPrototypeOf = __webpack_require__(73);
+var setToStringTag = __webpack_require__(69);
+var createNonEnumerableProperty = __webpack_require__(27);
+var redefine = __webpack_require__(75);
+var wellKnownSymbol = __webpack_require__(52);
+var IS_PURE = __webpack_require__(43);
+var Iterators = __webpack_require__(35);
+var IteratorsCore = __webpack_require__(48);
 
 var IteratorPrototype = IteratorsCore.IteratorPrototype;
 var BUGGY_SAFARI_ITERATORS = IteratorsCore.BUGGY_SAFARI_ITERATORS;
@@ -1401,16 +1124,16 @@ module.exports = function (Iterable, NAME, IteratorConstructor, next, DEFAULT, I
 
 
 /***/ }),
-/* 62 */
+/* 47 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
-var IteratorPrototype = __webpack_require__(63).IteratorPrototype;
-var create = __webpack_require__(66);
-var createPropertyDescriptor = __webpack_require__(14);
-var setToStringTag = __webpack_require__(74);
-var Iterators = __webpack_require__(55);
+var IteratorPrototype = __webpack_require__(48).IteratorPrototype;
+var create = __webpack_require__(59);
+var createPropertyDescriptor = __webpack_require__(13);
+var setToStringTag = __webpack_require__(69);
+var Iterators = __webpack_require__(35);
 
 var returnThis = function () { return this; };
 
@@ -1424,16 +1147,17 @@ module.exports = function (IteratorConstructor, NAME, next) {
 
 
 /***/ }),
-/* 63 */
+/* 48 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
-var getPrototypeOf = __webpack_require__(64);
-var createNonEnumerableProperty = __webpack_require__(28);
-var has = __webpack_require__(21);
-var wellKnownSymbol = __webpack_require__(37);
-var IS_PURE = __webpack_require__(39);
+var fails = __webpack_require__(11);
+var getPrototypeOf = __webpack_require__(49);
+var createNonEnumerableProperty = __webpack_require__(27);
+var has = __webpack_require__(20);
+var wellKnownSymbol = __webpack_require__(52);
+var IS_PURE = __webpack_require__(43);
 
 var ITERATOR = wellKnownSymbol('iterator');
 var BUGGY_SAFARI_ITERATORS = false;
@@ -1441,9 +1165,10 @@ var BUGGY_SAFARI_ITERATORS = false;
 var returnThis = function () { return this; };
 
 // `%IteratorPrototype%` object
-// https://tc39.github.io/ecma262/#sec-%iteratorprototype%-object
+// https://tc39.es/ecma262/#sec-%iteratorprototype%-object
 var IteratorPrototype, PrototypeOfArrayIteratorPrototype, arrayIterator;
 
+/* eslint-disable es/no-array-prototype-keys -- safe */
 if ([].keys) {
   arrayIterator = [].keys();
   // Safari 8 has buggy iterators w/o `next`
@@ -1454,10 +1179,16 @@ if ([].keys) {
   }
 }
 
-if (IteratorPrototype == undefined) IteratorPrototype = {};
+var NEW_ITERATOR_PROTOTYPE = IteratorPrototype == undefined || fails(function () {
+  var test = {};
+  // FF44- legacy iterators case
+  return IteratorPrototype[ITERATOR].call(test) !== test;
+});
+
+if (NEW_ITERATOR_PROTOTYPE) IteratorPrototype = {};
 
 // 25.1.2.1.1 %IteratorPrototype%[@@iterator]()
-if (!IS_PURE && !has(IteratorPrototype, ITERATOR)) {
+if ((!IS_PURE || NEW_ITERATOR_PROTOTYPE) && !has(IteratorPrototype, ITERATOR)) {
   createNonEnumerableProperty(IteratorPrototype, ITERATOR, returnThis);
 }
 
@@ -1468,19 +1199,20 @@ module.exports = {
 
 
 /***/ }),
-/* 64 */
+/* 49 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var has = __webpack_require__(21);
-var toObject = __webpack_require__(32);
-var sharedKey = __webpack_require__(59);
-var CORRECT_PROTOTYPE_GETTER = __webpack_require__(65);
+var has = __webpack_require__(20);
+var toObject = __webpack_require__(50);
+var sharedKey = __webpack_require__(41);
+var CORRECT_PROTOTYPE_GETTER = __webpack_require__(51);
 
 var IE_PROTO = sharedKey('IE_PROTO');
 var ObjectPrototype = Object.prototype;
 
 // `Object.getPrototypeOf` method
-// https://tc39.github.io/ecma262/#sec-object.getprototypeof
+// https://tc39.es/ecma262/#sec-object.getprototypeof
+// eslint-disable-next-line es/no-object-getprototypeof -- safe
 module.exports = CORRECT_PROTOTYPE_GETTER ? Object.getPrototypeOf : function (O) {
   O = toObject(O);
   if (has(O, IE_PROTO)) return O[IE_PROTO];
@@ -1491,29 +1223,161 @@ module.exports = CORRECT_PROTOTYPE_GETTER ? Object.getPrototypeOf : function (O)
 
 
 /***/ }),
-/* 65 */
+/* 50 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var fails = __webpack_require__(12);
+var requireObjectCoercible = __webpack_require__(17);
+
+// `ToObject` abstract operation
+// https://tc39.es/ecma262/#sec-toobject
+module.exports = function (argument) {
+  return Object(requireObjectCoercible(argument));
+};
+
+
+/***/ }),
+/* 51 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var fails = __webpack_require__(11);
 
 module.exports = !fails(function () {
   function F() { /* empty */ }
   F.prototype.constructor = null;
+  // eslint-disable-next-line es/no-object-getprototypeof -- required for testing
   return Object.getPrototypeOf(new F()) !== F.prototype;
 });
 
 
 /***/ }),
-/* 66 */
+/* 52 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var anObject = __webpack_require__(30);
-var defineProperties = __webpack_require__(67);
-var enumBugKeys = __webpack_require__(72);
-var hiddenKeys = __webpack_require__(60);
-var html = __webpack_require__(73);
-var documentCreateElement = __webpack_require__(23);
-var sharedKey = __webpack_require__(59);
+var global = __webpack_require__(7);
+var shared = __webpack_require__(42);
+var has = __webpack_require__(20);
+var uid = __webpack_require__(44);
+var NATIVE_SYMBOL = __webpack_require__(53);
+var USE_SYMBOL_AS_UID = __webpack_require__(58);
+
+var WellKnownSymbolsStore = shared('wks');
+var Symbol = global.Symbol;
+var createWellKnownSymbol = USE_SYMBOL_AS_UID ? Symbol : Symbol && Symbol.withoutSetter || uid;
+
+module.exports = function (name) {
+  if (!has(WellKnownSymbolsStore, name) || !(NATIVE_SYMBOL || typeof WellKnownSymbolsStore[name] == 'string')) {
+    if (NATIVE_SYMBOL && has(Symbol, name)) {
+      WellKnownSymbolsStore[name] = Symbol[name];
+    } else {
+      WellKnownSymbolsStore[name] = createWellKnownSymbol('Symbol.' + name);
+    }
+  } return WellKnownSymbolsStore[name];
+};
+
+
+/***/ }),
+/* 53 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var IS_NODE = __webpack_require__(54);
+var V8_VERSION = __webpack_require__(55);
+var fails = __webpack_require__(11);
+
+// eslint-disable-next-line es/no-object-getownpropertysymbols -- required for testing
+module.exports = !!Object.getOwnPropertySymbols && !fails(function () {
+  // eslint-disable-next-line es/no-symbol -- required for testing
+  return !Symbol.sham &&
+    // Chrome 38 Symbol has incorrect toString conversion
+    // Chrome 38-40 symbols are not inherited from DOM collections prototypes to instances
+    (IS_NODE ? V8_VERSION === 38 : V8_VERSION > 37 && V8_VERSION < 41);
+});
+
+
+/***/ }),
+/* 54 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var classof = __webpack_require__(16);
+var global = __webpack_require__(7);
+
+module.exports = classof(global.process) == 'process';
+
+
+/***/ }),
+/* 55 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var global = __webpack_require__(7);
+var userAgent = __webpack_require__(56);
+
+var process = global.process;
+var versions = process && process.versions;
+var v8 = versions && versions.v8;
+var match, version;
+
+if (v8) {
+  match = v8.split('.');
+  version = match[0] + match[1];
+} else if (userAgent) {
+  match = userAgent.match(/Edge\/(\d+)/);
+  if (!match || match[1] >= 74) {
+    match = userAgent.match(/Chrome\/(\d+)/);
+    if (match) version = match[1];
+  }
+}
+
+module.exports = version && +version;
+
+
+/***/ }),
+/* 56 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var getBuiltIn = __webpack_require__(57);
+
+module.exports = getBuiltIn('navigator', 'userAgent') || '';
+
+
+/***/ }),
+/* 57 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var path = __webpack_require__(24);
+var global = __webpack_require__(7);
+
+var aFunction = function (variable) {
+  return typeof variable == 'function' ? variable : undefined;
+};
+
+module.exports = function (namespace, method) {
+  return arguments.length < 2 ? aFunction(path[namespace]) || aFunction(global[namespace])
+    : path[namespace] && path[namespace][method] || global[namespace] && global[namespace][method];
+};
+
+
+/***/ }),
+/* 58 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/* eslint-disable es/no-symbol -- required for testing */
+var NATIVE_SYMBOL = __webpack_require__(53);
+
+module.exports = NATIVE_SYMBOL
+  && !Symbol.sham
+  && typeof Symbol.iterator == 'symbol';
+
+
+/***/ }),
+/* 59 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var anObject = __webpack_require__(29);
+var defineProperties = __webpack_require__(60);
+var enumBugKeys = __webpack_require__(67);
+var hiddenKeys = __webpack_require__(45);
+var html = __webpack_require__(68);
+var documentCreateElement = __webpack_require__(22);
+var sharedKey = __webpack_require__(41);
 
 var GT = '>';
 var LT = '<';
@@ -1561,7 +1425,7 @@ var NullProtoObjectViaIFrame = function () {
 var activeXDocument;
 var NullProtoObject = function () {
   try {
-    /* global ActiveXObject */
+    /* global ActiveXObject -- old IE */
     activeXDocument = document.domain && new ActiveXObject('htmlfile');
   } catch (error) { /* ignore */ }
   NullProtoObject = activeXDocument ? NullProtoObjectViaActiveX(activeXDocument) : NullProtoObjectViaIFrame();
@@ -1573,7 +1437,7 @@ var NullProtoObject = function () {
 hiddenKeys[IE_PROTO] = true;
 
 // `Object.create` method
-// https://tc39.github.io/ecma262/#sec-object.create
+// https://tc39.es/ecma262/#sec-object.create
 module.exports = Object.create || function create(O, Properties) {
   var result;
   if (O !== null) {
@@ -1588,16 +1452,17 @@ module.exports = Object.create || function create(O, Properties) {
 
 
 /***/ }),
-/* 67 */
+/* 60 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var DESCRIPTORS = __webpack_require__(11);
-var definePropertyModule = __webpack_require__(29);
-var anObject = __webpack_require__(30);
-var objectKeys = __webpack_require__(68);
+var DESCRIPTORS = __webpack_require__(10);
+var definePropertyModule = __webpack_require__(28);
+var anObject = __webpack_require__(29);
+var objectKeys = __webpack_require__(61);
 
 // `Object.defineProperties` method
-// https://tc39.github.io/ecma262/#sec-object.defineproperties
+// https://tc39.es/ecma262/#sec-object.defineproperties
+// eslint-disable-next-line es/no-object-defineproperties -- safe
 module.exports = DESCRIPTORS ? Object.defineProperties : function defineProperties(O, Properties) {
   anObject(O);
   var keys = objectKeys(Properties);
@@ -1610,27 +1475,28 @@ module.exports = DESCRIPTORS ? Object.defineProperties : function defineProperti
 
 
 /***/ }),
-/* 68 */
+/* 61 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var internalObjectKeys = __webpack_require__(69);
-var enumBugKeys = __webpack_require__(72);
+var internalObjectKeys = __webpack_require__(62);
+var enumBugKeys = __webpack_require__(67);
 
 // `Object.keys` method
-// https://tc39.github.io/ecma262/#sec-object.keys
+// https://tc39.es/ecma262/#sec-object.keys
+// eslint-disable-next-line es/no-object-keys -- safe
 module.exports = Object.keys || function keys(O) {
   return internalObjectKeys(O, enumBugKeys);
 };
 
 
 /***/ }),
-/* 69 */
+/* 62 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var has = __webpack_require__(21);
-var toIndexedObject = __webpack_require__(15);
-var indexOf = __webpack_require__(70).indexOf;
-var hiddenKeys = __webpack_require__(60);
+var has = __webpack_require__(20);
+var toIndexedObject = __webpack_require__(14);
+var indexOf = __webpack_require__(63).indexOf;
+var hiddenKeys = __webpack_require__(45);
 
 module.exports = function (object, names) {
   var O = toIndexedObject(object);
@@ -1647,12 +1513,12 @@ module.exports = function (object, names) {
 
 
 /***/ }),
-/* 70 */
+/* 63 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var toIndexedObject = __webpack_require__(15);
-var toLength = __webpack_require__(33);
-var toAbsoluteIndex = __webpack_require__(71);
+var toIndexedObject = __webpack_require__(14);
+var toLength = __webpack_require__(64);
+var toAbsoluteIndex = __webpack_require__(66);
 
 // `Array.prototype.{ indexOf, includes }` methods implementation
 var createMethod = function (IS_INCLUDES) {
@@ -1662,10 +1528,10 @@ var createMethod = function (IS_INCLUDES) {
     var index = toAbsoluteIndex(fromIndex, length);
     var value;
     // Array#includes uses SameValueZero equality algorithm
-    // eslint-disable-next-line no-self-compare
+    // eslint-disable-next-line no-self-compare -- NaN check
     if (IS_INCLUDES && el != el) while (length > index) {
       value = O[index++];
-      // eslint-disable-next-line no-self-compare
+      // eslint-disable-next-line no-self-compare -- NaN check
       if (value != value) return true;
     // Array#indexOf ignores holes, Array#includes - not
     } else for (;length > index; index++) {
@@ -1676,19 +1542,48 @@ var createMethod = function (IS_INCLUDES) {
 
 module.exports = {
   // `Array.prototype.includes` method
-  // https://tc39.github.io/ecma262/#sec-array.prototype.includes
+  // https://tc39.es/ecma262/#sec-array.prototype.includes
   includes: createMethod(true),
   // `Array.prototype.indexOf` method
-  // https://tc39.github.io/ecma262/#sec-array.prototype.indexof
+  // https://tc39.es/ecma262/#sec-array.prototype.indexof
   indexOf: createMethod(false)
 };
 
 
 /***/ }),
-/* 71 */
+/* 64 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var toInteger = __webpack_require__(34);
+var toInteger = __webpack_require__(65);
+
+var min = Math.min;
+
+// `ToLength` abstract operation
+// https://tc39.es/ecma262/#sec-tolength
+module.exports = function (argument) {
+  return argument > 0 ? min(toInteger(argument), 0x1FFFFFFFFFFFFF) : 0; // 2 ** 53 - 1 == 9007199254740991
+};
+
+
+/***/ }),
+/* 65 */
+/***/ (function(module, exports) {
+
+var ceil = Math.ceil;
+var floor = Math.floor;
+
+// `ToInteger` abstract operation
+// https://tc39.es/ecma262/#sec-tointeger
+module.exports = function (argument) {
+  return isNaN(argument = +argument) ? 0 : (argument > 0 ? floor : ceil)(argument);
+};
+
+
+/***/ }),
+/* 66 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var toInteger = __webpack_require__(65);
 
 var max = Math.max;
 var min = Math.min;
@@ -1703,7 +1598,7 @@ module.exports = function (index, length) {
 
 
 /***/ }),
-/* 72 */
+/* 67 */
 /***/ (function(module, exports) {
 
 // IE8- don't enum bug keys
@@ -1719,24 +1614,24 @@ module.exports = [
 
 
 /***/ }),
-/* 73 */
+/* 68 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var getBuiltIn = __webpack_require__(48);
+var getBuiltIn = __webpack_require__(57);
 
 module.exports = getBuiltIn('document', 'documentElement');
 
 
 /***/ }),
-/* 74 */
+/* 69 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var TO_STRING_TAG_SUPPORT = __webpack_require__(75);
-var defineProperty = __webpack_require__(29).f;
-var createNonEnumerableProperty = __webpack_require__(28);
-var has = __webpack_require__(21);
-var toString = __webpack_require__(76);
-var wellKnownSymbol = __webpack_require__(37);
+var TO_STRING_TAG_SUPPORT = __webpack_require__(70);
+var defineProperty = __webpack_require__(28).f;
+var createNonEnumerableProperty = __webpack_require__(27);
+var has = __webpack_require__(20);
+var toString = __webpack_require__(71);
+var wellKnownSymbol = __webpack_require__(52);
 
 var TO_STRING_TAG = wellKnownSymbol('toStringTag');
 
@@ -1754,10 +1649,10 @@ module.exports = function (it, TAG, STATIC, SET_METHOD) {
 
 
 /***/ }),
-/* 75 */
+/* 70 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var wellKnownSymbol = __webpack_require__(37);
+var wellKnownSymbol = __webpack_require__(52);
 
 var TO_STRING_TAG = wellKnownSymbol('toStringTag');
 var test = {};
@@ -1768,28 +1663,28 @@ module.exports = String(test) === '[object z]';
 
 
 /***/ }),
-/* 76 */
+/* 71 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
-var TO_STRING_TAG_SUPPORT = __webpack_require__(75);
-var classof = __webpack_require__(77);
+var TO_STRING_TAG_SUPPORT = __webpack_require__(70);
+var classof = __webpack_require__(72);
 
 // `Object.prototype.toString` method implementation
-// https://tc39.github.io/ecma262/#sec-object.prototype.tostring
+// https://tc39.es/ecma262/#sec-object.prototype.tostring
 module.exports = TO_STRING_TAG_SUPPORT ? {}.toString : function toString() {
   return '[object ' + classof(this) + ']';
 };
 
 
 /***/ }),
-/* 77 */
+/* 72 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var TO_STRING_TAG_SUPPORT = __webpack_require__(75);
-var classofRaw = __webpack_require__(17);
-var wellKnownSymbol = __webpack_require__(37);
+var TO_STRING_TAG_SUPPORT = __webpack_require__(70);
+var classofRaw = __webpack_require__(16);
+var wellKnownSymbol = __webpack_require__(52);
 
 var TO_STRING_TAG = wellKnownSymbol('toStringTag');
 // ES3 wrong here
@@ -1816,21 +1711,23 @@ module.exports = TO_STRING_TAG_SUPPORT ? classofRaw : function (it) {
 
 
 /***/ }),
-/* 78 */
+/* 73 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var anObject = __webpack_require__(30);
-var aPossiblePrototype = __webpack_require__(79);
+/* eslint-disable no-proto -- safe */
+var anObject = __webpack_require__(29);
+var aPossiblePrototype = __webpack_require__(74);
 
 // `Object.setPrototypeOf` method
-// https://tc39.github.io/ecma262/#sec-object.setprototypeof
+// https://tc39.es/ecma262/#sec-object.setprototypeof
 // Works with __proto__ only. Old v8 can't work with null proto objects.
-/* eslint-disable no-proto */
+// eslint-disable-next-line es/no-object-setprototypeof -- safe
 module.exports = Object.setPrototypeOf || ('__proto__' in {} ? function () {
   var CORRECT_SETTER = false;
   var test = {};
   var setter;
   try {
+    // eslint-disable-next-line es/no-object-getownpropertydescriptor -- safe
     setter = Object.getOwnPropertyDescriptor(Object.prototype, '__proto__').set;
     setter.call(test, []);
     CORRECT_SETTER = test instanceof Array;
@@ -1846,10 +1743,10 @@ module.exports = Object.setPrototypeOf || ('__proto__' in {} ? function () {
 
 
 /***/ }),
-/* 79 */
+/* 74 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var isObject = __webpack_require__(20);
+var isObject = __webpack_require__(19);
 
 module.exports = function (it) {
   if (!isObject(it) && it !== null) {
@@ -1859,10 +1756,10 @@ module.exports = function (it) {
 
 
 /***/ }),
-/* 80 */
+/* 75 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var createNonEnumerableProperty = __webpack_require__(28);
+var createNonEnumerableProperty = __webpack_require__(27);
 
 module.exports = function (target, key, value, options) {
   if (options && options.enumerable) target[key] = value;
@@ -1871,7 +1768,7 @@ module.exports = function (target, key, value, options) {
 
 
 /***/ }),
-/* 81 */
+/* 76 */
 /***/ (function(module, exports) {
 
 // iterable DOM collections
@@ -1912,79 +1809,80 @@ module.exports = {
 
 
 /***/ }),
-/* 82 */
+/* 77 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var parent = __webpack_require__(83);
+var parent = __webpack_require__(78);
 
 module.exports = parent;
 
 
 /***/ }),
-/* 83 */
+/* 78 */
 /***/ (function(module, exports, __webpack_require__) {
 
-__webpack_require__(84);
-var entryVirtual = __webpack_require__(49);
+__webpack_require__(79);
+var entryVirtual = __webpack_require__(85);
 
 module.exports = entryVirtual('Array').forEach;
 
 
 /***/ }),
-/* 84 */
+/* 79 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
-var $ = __webpack_require__(7);
-var forEach = __webpack_require__(85);
+var $ = __webpack_require__(6);
+var forEach = __webpack_require__(80);
 
 // `Array.prototype.forEach` method
-// https://tc39.github.io/ecma262/#sec-array.prototype.foreach
+// https://tc39.es/ecma262/#sec-array.prototype.foreach
+// eslint-disable-next-line es/no-array-prototype-foreach -- safe
 $({ target: 'Array', proto: true, forced: [].forEach != forEach }, {
   forEach: forEach
 });
 
 
 /***/ }),
-/* 85 */
+/* 80 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
-var $forEach = __webpack_require__(86).forEach;
-var arrayMethodIsStrict = __webpack_require__(87);
-var arrayMethodUsesToLength = __webpack_require__(88);
+var $forEach = __webpack_require__(81).forEach;
+var arrayMethodIsStrict = __webpack_require__(84);
 
 var STRICT_METHOD = arrayMethodIsStrict('forEach');
-var USES_TO_LENGTH = arrayMethodUsesToLength('forEach');
 
 // `Array.prototype.forEach` method implementation
-// https://tc39.github.io/ecma262/#sec-array.prototype.foreach
-module.exports = (!STRICT_METHOD || !USES_TO_LENGTH) ? function forEach(callbackfn /* , thisArg */) {
+// https://tc39.es/ecma262/#sec-array.prototype.foreach
+module.exports = !STRICT_METHOD ? function forEach(callbackfn /* , thisArg */) {
   return $forEach(this, callbackfn, arguments.length > 1 ? arguments[1] : undefined);
+// eslint-disable-next-line es/no-array-prototype-foreach -- safe
 } : [].forEach;
 
 
 /***/ }),
-/* 86 */
+/* 81 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var bind = __webpack_require__(26);
-var IndexedObject = __webpack_require__(16);
-var toObject = __webpack_require__(32);
-var toLength = __webpack_require__(33);
-var arraySpeciesCreate = __webpack_require__(36);
+var bind = __webpack_require__(25);
+var IndexedObject = __webpack_require__(15);
+var toObject = __webpack_require__(50);
+var toLength = __webpack_require__(64);
+var arraySpeciesCreate = __webpack_require__(82);
 
 var push = [].push;
 
-// `Array.prototype.{ forEach, map, filter, some, every, find, findIndex }` methods implementation
+// `Array.prototype.{ forEach, map, filter, some, every, find, findIndex, filterOut }` methods implementation
 var createMethod = function (TYPE) {
   var IS_MAP = TYPE == 1;
   var IS_FILTER = TYPE == 2;
   var IS_SOME = TYPE == 3;
   var IS_EVERY = TYPE == 4;
   var IS_FIND_INDEX = TYPE == 6;
+  var IS_FILTER_OUT = TYPE == 7;
   var NO_HOLES = TYPE == 5 || IS_FIND_INDEX;
   return function ($this, callbackfn, that, specificCreate) {
     var O = toObject($this);
@@ -1993,7 +1891,7 @@ var createMethod = function (TYPE) {
     var length = toLength(self.length);
     var index = 0;
     var create = specificCreate || arraySpeciesCreate;
-    var target = IS_MAP ? create($this, length) : IS_FILTER ? create($this, 0) : undefined;
+    var target = IS_MAP ? create($this, length) : IS_FILTER || IS_FILTER_OUT ? create($this, 0) : undefined;
     var value, result;
     for (;length > index; index++) if (NO_HOLES || index in self) {
       value = self[index];
@@ -2005,7 +1903,10 @@ var createMethod = function (TYPE) {
           case 5: return value;             // find
           case 6: return index;             // findIndex
           case 2: push.call(target, value); // filter
-        } else if (IS_EVERY) return false;  // every
+        } else switch (TYPE) {
+          case 4: return false;             // every
+          case 7: push.call(target, value); // filterOut
+        }
       }
     }
     return IS_FIND_INDEX ? -1 : IS_SOME || IS_EVERY ? IS_EVERY : target;
@@ -2014,76 +1915,126 @@ var createMethod = function (TYPE) {
 
 module.exports = {
   // `Array.prototype.forEach` method
-  // https://tc39.github.io/ecma262/#sec-array.prototype.foreach
+  // https://tc39.es/ecma262/#sec-array.prototype.foreach
   forEach: createMethod(0),
   // `Array.prototype.map` method
-  // https://tc39.github.io/ecma262/#sec-array.prototype.map
+  // https://tc39.es/ecma262/#sec-array.prototype.map
   map: createMethod(1),
   // `Array.prototype.filter` method
-  // https://tc39.github.io/ecma262/#sec-array.prototype.filter
+  // https://tc39.es/ecma262/#sec-array.prototype.filter
   filter: createMethod(2),
   // `Array.prototype.some` method
-  // https://tc39.github.io/ecma262/#sec-array.prototype.some
+  // https://tc39.es/ecma262/#sec-array.prototype.some
   some: createMethod(3),
   // `Array.prototype.every` method
-  // https://tc39.github.io/ecma262/#sec-array.prototype.every
+  // https://tc39.es/ecma262/#sec-array.prototype.every
   every: createMethod(4),
   // `Array.prototype.find` method
-  // https://tc39.github.io/ecma262/#sec-array.prototype.find
+  // https://tc39.es/ecma262/#sec-array.prototype.find
   find: createMethod(5),
   // `Array.prototype.findIndex` method
-  // https://tc39.github.io/ecma262/#sec-array.prototype.findIndex
-  findIndex: createMethod(6)
+  // https://tc39.es/ecma262/#sec-array.prototype.findIndex
+  findIndex: createMethod(6),
+  // `Array.prototype.filterOut` method
+  // https://github.com/tc39/proposal-array-filtering
+  filterOut: createMethod(7)
 };
 
 
 /***/ }),
-/* 87 */
+/* 82 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var isObject = __webpack_require__(19);
+var isArray = __webpack_require__(83);
+var wellKnownSymbol = __webpack_require__(52);
+
+var SPECIES = wellKnownSymbol('species');
+
+// `ArraySpeciesCreate` abstract operation
+// https://tc39.es/ecma262/#sec-arrayspeciescreate
+module.exports = function (originalArray, length) {
+  var C;
+  if (isArray(originalArray)) {
+    C = originalArray.constructor;
+    // cross-realm fallback
+    if (typeof C == 'function' && (C === Array || isArray(C.prototype))) C = undefined;
+    else if (isObject(C)) {
+      C = C[SPECIES];
+      if (C === null) C = undefined;
+    }
+  } return new (C === undefined ? Array : C)(length === 0 ? 0 : length);
+};
+
+
+/***/ }),
+/* 83 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var classof = __webpack_require__(16);
+
+// `IsArray` abstract operation
+// https://tc39.es/ecma262/#sec-isarray
+// eslint-disable-next-line es/no-array-isarray -- safe
+module.exports = Array.isArray || function isArray(arg) {
+  return classof(arg) == 'Array';
+};
+
+
+/***/ }),
+/* 84 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
-var fails = __webpack_require__(12);
+var fails = __webpack_require__(11);
 
 module.exports = function (METHOD_NAME, argument) {
   var method = [][METHOD_NAME];
   return !!method && fails(function () {
-    // eslint-disable-next-line no-useless-call,no-throw-literal
+    // eslint-disable-next-line no-useless-call,no-throw-literal -- required for testing
     method.call(null, argument || function () { throw 1; }, 1);
   });
 };
 
 
 /***/ }),
+/* 85 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var path = __webpack_require__(24);
+
+module.exports = function (CONSTRUCTOR) {
+  return path[CONSTRUCTOR + 'Prototype'];
+};
+
+
+/***/ }),
+/* 86 */
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports = __webpack_require__(87);
+
+/***/ }),
+/* 87 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var parent = __webpack_require__(88);
+
+module.exports = parent;
+
+
+/***/ }),
 /* 88 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var DESCRIPTORS = __webpack_require__(11);
-var fails = __webpack_require__(12);
-var has = __webpack_require__(21);
+var concat = __webpack_require__(89);
 
-var defineProperty = Object.defineProperty;
-var cache = {};
+var ArrayPrototype = Array.prototype;
 
-var thrower = function (it) { throw it; };
-
-module.exports = function (METHOD_NAME, options) {
-  if (has(cache, METHOD_NAME)) return cache[METHOD_NAME];
-  if (!options) options = {};
-  var method = [][METHOD_NAME];
-  var ACCESSORS = has(options, 'ACCESSORS') ? options.ACCESSORS : false;
-  var argument0 = has(options, 0) ? options[0] : thrower;
-  var argument1 = has(options, 1) ? options[1] : undefined;
-
-  return cache[METHOD_NAME] = !!method && !fails(function () {
-    if (ACCESSORS && !DESCRIPTORS) return true;
-    var O = { length: -1 };
-
-    if (ACCESSORS) defineProperty(O, 1, { enumerable: true, get: thrower });
-    else O[1] = 1;
-
-    method.call(O, argument0, argument1);
-  });
+module.exports = function (it) {
+  var own = it.concat;
+  return it === ArrayPrototype || (it instanceof Array && own === ArrayPrototype.concat) ? concat : own;
 };
 
 
@@ -2091,46 +2042,120 @@ module.exports = function (METHOD_NAME, options) {
 /* 89 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(90);
+__webpack_require__(90);
+var entryVirtual = __webpack_require__(85);
+
+module.exports = entryVirtual('Array').concat;
+
 
 /***/ }),
 /* 90 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var parent = __webpack_require__(91);
+"use strict";
 
-module.exports = parent;
+var $ = __webpack_require__(6);
+var fails = __webpack_require__(11);
+var isArray = __webpack_require__(83);
+var isObject = __webpack_require__(19);
+var toObject = __webpack_require__(50);
+var toLength = __webpack_require__(64);
+var createProperty = __webpack_require__(91);
+var arraySpeciesCreate = __webpack_require__(82);
+var arrayMethodHasSpeciesSupport = __webpack_require__(92);
+var wellKnownSymbol = __webpack_require__(52);
+var V8_VERSION = __webpack_require__(55);
+
+var IS_CONCAT_SPREADABLE = wellKnownSymbol('isConcatSpreadable');
+var MAX_SAFE_INTEGER = 0x1FFFFFFFFFFFFF;
+var MAXIMUM_ALLOWED_INDEX_EXCEEDED = 'Maximum allowed index exceeded';
+
+// We can't use this feature detection in V8 since it causes
+// deoptimization and serious performance degradation
+// https://github.com/zloirock/core-js/issues/679
+var IS_CONCAT_SPREADABLE_SUPPORT = V8_VERSION >= 51 || !fails(function () {
+  var array = [];
+  array[IS_CONCAT_SPREADABLE] = false;
+  return array.concat()[0] !== array;
+});
+
+var SPECIES_SUPPORT = arrayMethodHasSpeciesSupport('concat');
+
+var isConcatSpreadable = function (O) {
+  if (!isObject(O)) return false;
+  var spreadable = O[IS_CONCAT_SPREADABLE];
+  return spreadable !== undefined ? !!spreadable : isArray(O);
+};
+
+var FORCED = !IS_CONCAT_SPREADABLE_SUPPORT || !SPECIES_SUPPORT;
+
+// `Array.prototype.concat` method
+// https://tc39.es/ecma262/#sec-array.prototype.concat
+// with adding support of @@isConcatSpreadable and @@species
+$({ target: 'Array', proto: true, forced: FORCED }, {
+  // eslint-disable-next-line no-unused-vars -- required for `.length`
+  concat: function concat(arg) {
+    var O = toObject(this);
+    var A = arraySpeciesCreate(O, 0);
+    var n = 0;
+    var i, k, length, len, E;
+    for (i = -1, length = arguments.length; i < length; i++) {
+      E = i === -1 ? O : arguments[i];
+      if (isConcatSpreadable(E)) {
+        len = toLength(E.length);
+        if (n + len > MAX_SAFE_INTEGER) throw TypeError(MAXIMUM_ALLOWED_INDEX_EXCEEDED);
+        for (k = 0; k < len; k++, n++) if (k in E) createProperty(A, n, E[k]);
+      } else {
+        if (n >= MAX_SAFE_INTEGER) throw TypeError(MAXIMUM_ALLOWED_INDEX_EXCEEDED);
+        createProperty(A, n++, E);
+      }
+    }
+    A.length = n;
+    return A;
+  }
+});
 
 
 /***/ }),
 /* 91 */
 /***/ (function(module, exports, __webpack_require__) {
 
-__webpack_require__(92);
-var path = __webpack_require__(25);
+"use strict";
 
-var Object = path.Object;
+var toPrimitive = __webpack_require__(18);
+var definePropertyModule = __webpack_require__(28);
+var createPropertyDescriptor = __webpack_require__(13);
 
-var defineProperty = module.exports = function defineProperty(it, key, desc) {
-  return Object.defineProperty(it, key, desc);
+module.exports = function (object, key, value) {
+  var propertyKey = toPrimitive(key);
+  if (propertyKey in object) definePropertyModule.f(object, propertyKey, createPropertyDescriptor(0, value));
+  else object[propertyKey] = value;
 };
-
-if (Object.defineProperty.sham) defineProperty.sham = true;
 
 
 /***/ }),
 /* 92 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var $ = __webpack_require__(7);
-var DESCRIPTORS = __webpack_require__(11);
-var objectDefinePropertyModile = __webpack_require__(29);
+var fails = __webpack_require__(11);
+var wellKnownSymbol = __webpack_require__(52);
+var V8_VERSION = __webpack_require__(55);
 
-// `Object.defineProperty` method
-// https://tc39.github.io/ecma262/#sec-object.defineproperty
-$({ target: 'Object', stat: true, forced: !DESCRIPTORS, sham: !DESCRIPTORS }, {
-  defineProperty: objectDefinePropertyModile.f
-});
+var SPECIES = wellKnownSymbol('species');
+
+module.exports = function (METHOD_NAME) {
+  // We can't use this feature detection in V8 since it causes
+  // deoptimization and serious performance degradation
+  // https://github.com/zloirock/core-js/issues/677
+  return V8_VERSION >= 51 || !fails(function () {
+    var array = [];
+    var constructor = array.constructor = {};
+    constructor[SPECIES] = function () {
+      return { foo: 1 };
+    };
+    return array[METHOD_NAME](Boolean).foo !== 1;
+  });
+};
 
 
 /***/ }),
@@ -2164,20 +2189,20 @@ $({ target: 'Object', stat: true, forced: !DESCRIPTORS, sham: !DESCRIPTORS }, {
 
 var _interopRequireDefault = __webpack_require__(1);
 
-var _defineProperty = _interopRequireDefault(__webpack_require__(89));
+var _defineProperty = _interopRequireDefault(__webpack_require__(2));
 
 (0, _defineProperty["default"])(exports, "__esModule", {
   value: true
 });
-exports.injectRoute = exports.basicWidgets = exports.createElement = exports.ui = exports.Event = exports.Bridge = exports.Util = exports.Widget = void 0;
+exports.injectRoute = exports.createElement = exports.basicWidgets = exports.Event = exports.Timer = exports.ui = exports.Bridge = exports.Util = exports.Widget = void 0;
 
-var dynamicFlutter_1 = __webpack_require__(94);
+var ThreshApp_1 = __webpack_require__(94);
 
 (0, _defineProperty["default"])(exports, "injectRoute", {
   enumerable: true,
   get: function get() {
     try {
-      return dynamicFlutter_1.injectRoute;
+      return ThreshApp_1.injectRoute;
     } catch (_e) {
       __reportError__(_e, "", "/thresh-lib/index.ts");
 
@@ -2186,67 +2211,42 @@ var dynamicFlutter_1 = __webpack_require__(94);
   }
 });
 
-var Widget_1 = __webpack_require__(251);
+var Widget_1 = __webpack_require__(256);
 
 exports.Widget = Widget_1["default"];
 
-var createElement_1 = __webpack_require__(267);
+var createElement_1 = __webpack_require__(272);
 
 exports.createElement = createElement_1["default"];
 
-var basicWidget_1 = __webpack_require__(237);
+var basicWidget_1 = __webpack_require__(247);
 
 exports.basicWidgets = basicWidget_1["default"];
 
-var RenderManager_1 = __webpack_require__(203);
+var RenderManager_1 = __webpack_require__(234);
 
-var UtilManager_1 = __webpack_require__(202);
+var UtilManager_1 = __webpack_require__(233);
 
 exports.Util = UtilManager_1["default"];
 
-var UIManager_1 = __webpack_require__(234);
+var UIManager_1 = __webpack_require__(246);
 
 exports.ui = UIManager_1["default"];
 
-var BridgeManager_1 = __webpack_require__(164);
+var BridgeManager_1 = __webpack_require__(162);
 
 exports.Bridge = BridgeManager_1["default"];
 
-var EventManager_1 = __webpack_require__(236);
+var EventManager_1 = __webpack_require__(274);
 
 exports.Event = EventManager_1["default"];
-var Thresh = dynamicFlutter_1["default"];
-RenderManager_1["default"].getMediaQuery(Thresh.jsVersion); // 注册事件 - 页面显示
 
-EventManager_1["default"].register('pageOnShow', function (fromPageName) {
-  try {
-    basicWidget_1.Page.invokePageOnShow(fromPageName);
-  } catch (_e2) {
-    __reportError__(_e2, "", "/thresh-lib/index.ts");
+var TimerManager_1 = __webpack_require__(232);
 
-    throw _e2;
-  }
-}); // 注册事件 - 页面隐藏
-
-EventManager_1["default"].register('pageOnHide', function () {
-  try {
-    basicWidget_1.Page.invokePageOnHide();
-  } catch (_e3) {
-    __reportError__(_e3, "", "/thresh-lib/index.ts");
-
-    throw _e3;
-  }
-}); // 注册事件 - 当 native(主要是安卓) 发生按键或手势返回事件时，native 会阻止返回并触发该事件，将返回操作交给 js 控制
-
-EventManager_1["default"].register('nativePop', function () {
-  try {
-    Thresh.popPage();
-  } catch (_e4) {
-    __reportError__(_e4, "", "/thresh-lib/index.ts");
-
-    throw _e4;
-  }
-});
+exports.Timer = TimerManager_1["default"];
+var Thresh = ThreshApp_1["default"];
+RenderManager_1["default"].getMediaQuery(Thresh.jsVersion);
+EventManager_1["default"].registerBuiltInEvents();
 exports["default"] = Thresh;
 
 /***/ }),
@@ -2280,15 +2280,15 @@ exports["default"] = Thresh;
 
 var _interopRequireDefault = __webpack_require__(1);
 
-var _now = _interopRequireDefault(__webpack_require__(95));
+var _promise = _interopRequireDefault(__webpack_require__(95));
 
-var _defineProperty = _interopRequireDefault(__webpack_require__(89));
+var _symbol = _interopRequireDefault(__webpack_require__(124));
 
-var _iterator = _interopRequireDefault(__webpack_require__(99));
+var _iterator = _interopRequireDefault(__webpack_require__(150));
 
-var _symbol = _interopRequireDefault(__webpack_require__(107));
+var _defineProperty = _interopRequireDefault(__webpack_require__(2));
 
-var _promise = _interopRequireDefault(__webpack_require__(130));
+var _now = _interopRequireDefault(__webpack_require__(153));
 
 var __awaiter = void 0 && (void 0).__awaiter || function (thisArg, _arguments, P, generator) {
   try {
@@ -2298,13 +2298,13 @@ var __awaiter = void 0 && (void 0).__awaiter || function (thisArg, _arguments, P
           try {
             resolve(value);
           } catch (_e) {
-            __reportError__(_e, "", "/thresh-lib/src/core/dynamicFlutter.ts");
+            __reportError__(_e, "", "/thresh-lib/src/core/ThreshApp.ts");
 
             throw _e;
           }
         });
       } catch (_e2) {
-        __reportError__(_e2, "", "/thresh-lib/src/core/dynamicFlutter.ts");
+        __reportError__(_e2, "", "/thresh-lib/src/core/ThreshApp.ts");
 
         throw _e2;
       }
@@ -2320,7 +2320,7 @@ var __awaiter = void 0 && (void 0).__awaiter || function (thisArg, _arguments, P
               reject(e);
             }
           } catch (_e3) {
-            __reportError__(_e3, "", "/thresh-lib/src/core/dynamicFlutter.ts");
+            __reportError__(_e3, "", "/thresh-lib/src/core/ThreshApp.ts");
 
             throw _e3;
           }
@@ -2334,7 +2334,7 @@ var __awaiter = void 0 && (void 0).__awaiter || function (thisArg, _arguments, P
               reject(e);
             }
           } catch (_e4) {
-            __reportError__(_e4, "", "/thresh-lib/src/core/dynamicFlutter.ts");
+            __reportError__(_e4, "", "/thresh-lib/src/core/ThreshApp.ts");
 
             throw _e4;
           }
@@ -2344,7 +2344,7 @@ var __awaiter = void 0 && (void 0).__awaiter || function (thisArg, _arguments, P
           try {
             result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected);
           } catch (_e5) {
-            __reportError__(_e5, "", "/thresh-lib/src/core/dynamicFlutter.ts");
+            __reportError__(_e5, "", "/thresh-lib/src/core/ThreshApp.ts");
 
             throw _e5;
           }
@@ -2352,13 +2352,13 @@ var __awaiter = void 0 && (void 0).__awaiter || function (thisArg, _arguments, P
 
         step((generator = generator.apply(thisArg, _arguments || [])).next());
       } catch (_e6) {
-        __reportError__(_e6, "", "/thresh-lib/src/core/dynamicFlutter.ts");
+        __reportError__(_e6, "", "/thresh-lib/src/core/ThreshApp.ts");
 
         throw _e6;
       }
     });
   } catch (_e7) {
-    __reportError__(_e7, "", "/thresh-lib/src/core/dynamicFlutter.ts");
+    __reportError__(_e7, "", "/thresh-lib/src/core/ThreshApp.ts");
 
     throw _e7;
   }
@@ -2373,7 +2373,7 @@ var __generator = void 0 && (void 0).__generator || function (thisArg, body) {
           if (t[0] & 1) throw t[1];
           return t[1];
         } catch (_e8) {
-          __reportError__(_e8, "sent", "/thresh-lib/src/core/dynamicFlutter.ts");
+          __reportError__(_e8, "sent", "/thresh-lib/src/core/ThreshApp.ts");
 
           throw _e8;
         }
@@ -2393,7 +2393,7 @@ var __generator = void 0 && (void 0).__generator || function (thisArg, body) {
       try {
         return this;
       } catch (_e9) {
-        __reportError__(_e9, "", "/thresh-lib/src/core/dynamicFlutter.ts");
+        __reportError__(_e9, "", "/thresh-lib/src/core/ThreshApp.ts");
 
         throw _e9;
       }
@@ -2405,7 +2405,7 @@ var __generator = void 0 && (void 0).__generator || function (thisArg, body) {
           return step([n, v]);
         };
       } catch (_e10) {
-        __reportError__(_e10, "", "/thresh-lib/src/core/dynamicFlutter.ts");
+        __reportError__(_e10, "", "/thresh-lib/src/core/ThreshApp.ts");
 
         throw _e10;
       }
@@ -2493,7 +2493,7 @@ var __generator = void 0 && (void 0).__generator || function (thisArg, body) {
       };
     }
   } catch (_e11) {
-    __reportError__(_e11, "", "/thresh-lib/src/core/dynamicFlutter.ts");
+    __reportError__(_e11, "", "/thresh-lib/src/core/ThreshApp.ts");
 
     throw _e11;
   }
@@ -2502,48 +2502,47 @@ var __generator = void 0 && (void 0).__generator || function (thisArg, body) {
 (0, _defineProperty["default"])(exports, "__esModule", {
   value: true
 });
-exports.injectRoute = exports.DynamicFlutter = void 0;
+exports.injectRoute = exports.ThreshApp = void 0;
 
-var MethodChannel_1 = __webpack_require__(153);
+var MethodChannel_1 = __webpack_require__(157);
 
-var RenderManager_1 = __webpack_require__(203);
+var RenderManager_1 = __webpack_require__(234);
 
-var UtilManager_1 = __webpack_require__(202);
+var createElement_1 = __webpack_require__(272);
 
-var createElement_1 = __webpack_require__(267);
+var Widget_1 = __webpack_require__(256);
 
-var Widget_1 = __webpack_require__(251);
+var VNode_1 = __webpack_require__(204);
 
-var VNode_1 = __webpack_require__(219);
+var AppContainer_1 = __webpack_require__(210);
 
-var AppContainer_1 = __webpack_require__(225);
+var ThreshAppContext_1 = __webpack_require__(273);
 
-var initGlobal_1 = __webpack_require__(235);
+var Util_1 = __webpack_require__(173);
 
-var Util_1 = __webpack_require__(165);
+var bus_1 = __webpack_require__(226);
+
+var EventManager_1 = __webpack_require__(274);
 /**
- * 对外暴露所有接口的DF主类
+ * 对外暴露所有接口的threshApp主类
  */
 
 
-var DynamicFlutter =
+var ThreshApp =
 /** @class */
 function () {
   try {
-    function DynamicFlutter() {
+    function ThreshApp() {
       try {
         // 是否正在关闭 modal
-        this._modalOnHiding = false; // 应用是否存活
-
-        this._alive = true; // 是否具有根flutter页面
-
-        this.hasRootFlutterPage = true; // debugMode
+        // 如果正在关闭中，将阻止新的 modal 创建
+        this._modalIsHiding = false; // 是否调试模式
 
         this.debugMode = false; // 外部环境是否准备完成
 
-        this.envReady = false; // 是否已经 run app
+        this.envReady = false; // 三方插件
 
-        this.hasRunApp = false; // 持有 injectRoute
+        this.providers = {}; // 持有注入的路由信息
 
         this.injectRoute = injectRoute;
         this.createElement = createElement_1["default"];
@@ -2565,21 +2564,21 @@ function () {
 
         this.ready = function () {};
 
-        initGlobal_1["default"](this);
+        ThreshAppContext_1["default"].initGlobal(threshApp);
       } catch (_e12) {
-        __reportError__(_e12, "DynamicFlutter", "/thresh-lib/src/core/dynamicFlutter.ts");
+        __reportError__(_e12, "ThreshApp", "/thresh-lib/src/core/ThreshApp.ts");
 
         throw _e12;
       }
     }
 
-    (0, _defineProperty["default"])(DynamicFlutter.prototype, "jsVersion", {
+    (0, _defineProperty["default"])(ThreshApp.prototype, "jsVersion", {
       // js version
       get: function get() {
         try {
-          return '1.0.0';
+          return '1.3.0';
         } catch (_e13) {
-          __reportError__(_e13, "", "/thresh-lib/src/core/dynamicFlutter.ts");
+          __reportError__(_e13, "", "/thresh-lib/src/core/ThreshApp.ts");
 
           throw _e13;
         }
@@ -2587,14 +2586,14 @@ function () {
       enumerable: false,
       configurable: true
     });
-    (0, _defineProperty["default"])(DynamicFlutter.prototype, "pageName", {
+    (0, _defineProperty["default"])(ThreshApp.prototype, "pageName", {
       get: function get() {
         try {
-          return AppContainer_1["default"].currentPageName || (DF.injectRouteInfo || {
+          return AppContainer_1["default"].currentPageName || (threshApp.injectRouteInfo || {
             pageName: ''
           }).pageName;
         } catch (_e14) {
-          __reportError__(_e14, "", "/thresh-lib/src/core/dynamicFlutter.ts");
+          __reportError__(_e14, "", "/thresh-lib/src/core/ThreshApp.ts");
 
           throw _e14;
         }
@@ -2602,12 +2601,12 @@ function () {
       enumerable: false,
       configurable: true
     });
-    (0, _defineProperty["default"])(DynamicFlutter.prototype, "referPageName", {
+    (0, _defineProperty["default"])(ThreshApp.prototype, "referPageName", {
       get: function get() {
         try {
           return AppContainer_1["default"].referPageName || '';
         } catch (_e15) {
-          __reportError__(_e15, "", "/thresh-lib/src/core/dynamicFlutter.ts");
+          __reportError__(_e15, "", "/thresh-lib/src/core/ThreshApp.ts");
 
           throw _e15;
         }
@@ -2615,6 +2614,18 @@ function () {
       enumerable: false,
       configurable: true
     });
+
+    ThreshApp.prototype.clear = function () {
+      try {
+        AppContainer_1["default"].clear();
+        bus_1["default"].clear();
+        EventManager_1["default"].resetAndRegisterBuiltInEvents();
+      } catch (_e16) {
+        __reportError__(_e16, "", "/thresh-lib/src/core/ThreshApp.ts");
+
+        throw _e16;
+      }
+    };
     /**
      * 注册页面
      * @param {String} pageName
@@ -2622,7 +2633,8 @@ function () {
      * @param {boolean} isDefault
      */
 
-    DynamicFlutter.prototype.registerPage = function (pageName, pageBuilder, config) {
+
+    ThreshApp.prototype.registerPage = function (pageName, pageBuilder, config) {
       try {
         if (config === void 0) {
           config = {
@@ -2634,10 +2646,10 @@ function () {
         AppContainer_1["default"].addRoute(pageName, pageBuilder);
         if (config.isDefault) this._defaultPageName = pageName;
         if (config.isNotFound) this._notFoundPageName = pageName;
-      } catch (_e16) {
-        __reportError__(_e16, "", "/thresh-lib/src/core/dynamicFlutter.ts");
+      } catch (_e17) {
+        __reportError__(_e17, "", "/thresh-lib/src/core/ThreshApp.ts");
 
-        throw _e16;
+        throw _e17;
       }
     };
     /**
@@ -2648,15 +2660,13 @@ function () {
      */
 
 
-    DynamicFlutter.prototype.runApp = function () {
+    ThreshApp.prototype.runApp = function () {
       try {
-        if (!MethodChannel_1["default"].jsRunAppTime) MethodChannel_1["default"].jsRunAppTime = (0, _now["default"])();
-        if (!this._alive) return;
         this.pushPage();
-      } catch (_e17) {
-        __reportError__(_e17, "", "/thresh-lib/src/core/dynamicFlutter.ts");
+      } catch (_e18) {
+        __reportError__(_e18, "", "/thresh-lib/src/core/ThreshApp.ts");
 
-        throw _e17;
+        throw _e18;
       }
     };
     /**
@@ -2666,56 +2676,22 @@ function () {
      */
 
 
-    DynamicFlutter.prototype.pushPage = function (pageName, params) {
+    ThreshApp.prototype.pushPage = function (pageName, params) {
       try {
         if (params === void 0) {
           params = {};
         }
 
-        if (!this._alive) return;
+        var pageCreateTimestamp = (0, _now["default"])();
 
         var pageRes = this._findPage(pageName || '', params);
 
         if (pageRes.pageData) {
-          RenderManager_1["default"].pushPage(pageRes.pageData, pageRes.pageName);
-        }
-      } catch (_e18) {
-        __reportError__(_e18, "", "/thresh-lib/src/core/dynamicFlutter.ts");
-
-        throw _e18;
-      }
-    };
-    /**
-     * 通知 flutter 替换当前显示的DF页面
-     * @param {String} pageName
-     * @param {Object} params 页面参数
-     */
-
-
-    DynamicFlutter.prototype.replacePage = function (pageName, params) {
-      try {
-        if (params === void 0) {
-          params = {};
-        }
-
-        if (!this._alive) return;
-
-        if (!pageName) {
-          UtilManager_1["default"].error(new Error('invoke relpacePage() must have the pageName parameter'));
-        }
-
-        if (AppContainer_1["default"].isEmpty) {
-          this.pushPage(pageName, params);
-          return;
-        }
-
-        var pageRes = this._findPage(pageName, params);
-
-        if (pageRes.pageData) {
-          RenderManager_1["default"].replacePage(pageRes.pageData, pageRes.pageName);
+          RenderManager_1["default"].pushPage(pageRes.pageData, pageRes.pageName, pageCreateTimestamp);
+          Util_1["default"].log('Push page: ' + pageRes.pageName);
         }
       } catch (_e19) {
-        __reportError__(_e19, "", "/thresh-lib/src/core/dynamicFlutter.ts");
+        __reportError__(_e19, "", "/thresh-lib/src/core/ThreshApp.ts");
 
         throw _e19;
       }
@@ -2725,13 +2701,13 @@ function () {
      */
 
 
-    DynamicFlutter.prototype.popPage = function () {
+    ThreshApp.prototype.popPage = function () {
       return __awaiter(this, void 0, void 0, function () {
         return __generator(this, function (_a) {
           try {
             switch (_a.label) {
               case 0:
-                if (!this._alive) return [2
+                if (AppContainer_1["default"].isEmpty) return [2
                 /*return*/
                 ];
                 return [4
@@ -2744,7 +2720,7 @@ function () {
                 , _a.sent()];
             }
           } catch (_e20) {
-            __reportError__(_e20, "", "/thresh-lib/src/core/dynamicFlutter.ts");
+            __reportError__(_e20, "", "/thresh-lib/src/core/ThreshApp.ts");
 
             throw _e20;
           }
@@ -2756,12 +2732,11 @@ function () {
      */
 
 
-    DynamicFlutter.prototype.canPop = function () {
+    ThreshApp.prototype.canPop = function () {
       try {
-        if (!this._alive) return false;
-        return RenderManager_1["default"].canPop();
+        return AppContainer_1["default"].canPop;
       } catch (_e21) {
-        __reportError__(_e21, "", "/thresh-lib/src/core/dynamicFlutter.ts");
+        __reportError__(_e21, "", "/thresh-lib/src/core/ThreshApp.ts");
 
         throw _e21;
       }
@@ -2774,20 +2749,17 @@ function () {
      */
 
 
-    DynamicFlutter.prototype.showModal = function (modal, _a) {
+    ThreshApp.prototype.showModal = function (modal, _a) {
       try {
         var _b = _a === void 0 ? {} : _a,
             title = _b.title,
             popup = _b.popup;
 
-        if (!this._alive) return;
-        title = "" + AppContainer_1.MODAL_TAG + (title || (0, _now["default"])().toString());
-
-        if (!this._modalOnHiding) {
-          RenderManager_1["default"].showModal(modal, title, !!popup);
+        if (!this._modalIsHiding) {
+          RenderManager_1["default"].showModal(modal, AppContainer_1["default"].formatModalName(title), !!popup);
         }
       } catch (_e22) {
-        __reportError__(_e22, "", "/thresh-lib/src/core/dynamicFlutter.ts");
+        __reportError__(_e22, "", "/thresh-lib/src/core/ThreshApp.ts");
 
         throw _e22;
       }
@@ -2797,16 +2769,13 @@ function () {
      */
 
 
-    DynamicFlutter.prototype.hideModal = function () {
+    ThreshApp.prototype.hideModal = function () {
       return __awaiter(this, void 0, void 0, function () {
         return __generator(this, function (_a) {
           try {
             switch (_a.label) {
               case 0:
-                if (!this._alive) return [2
-                /*return*/
-                ];
-                this._modalOnHiding = true;
+                this._modalIsHiding = true;
                 return [4
                 /*yield*/
                 , RenderManager_1["default"].hideModal()];
@@ -2814,13 +2783,13 @@ function () {
               case 1:
                 _a.sent();
 
-                this._modalOnHiding = false;
+                this._modalIsHiding = false;
                 return [2
                 /*return*/
                 ];
             }
           } catch (_e23) {
-            __reportError__(_e23, "", "/thresh-lib/src/core/dynamicFlutter.ts");
+            __reportError__(_e23, "", "/thresh-lib/src/core/ThreshApp.ts");
 
             throw _e23;
           }
@@ -2841,12 +2810,11 @@ function () {
      */
 
 
-    DynamicFlutter.prototype.showToast = function (toast, info) {
+    ThreshApp.prototype.showToast = function (toast, info) {
       try {
-        if (!this._alive) return;
         RenderManager_1["default"].showToast(toast, info);
       } catch (_e24) {
-        __reportError__(_e24, "", "/thresh-lib/src/core/dynamicFlutter.ts");
+        __reportError__(_e24, "", "/thresh-lib/src/core/ThreshApp.ts");
 
         throw _e24;
       }
@@ -2857,12 +2825,11 @@ function () {
      */
 
 
-    DynamicFlutter.prototype.hideToast = function (name) {
+    ThreshApp.prototype.hideToast = function (name) {
       try {
-        if (!this._alive) return;
         RenderManager_1["default"].hideToast(name);
       } catch (_e25) {
-        __reportError__(_e25, "", "/thresh-lib/src/core/dynamicFlutter.ts");
+        __reportError__(_e25, "", "/thresh-lib/src/core/ThreshApp.ts");
 
         throw _e25;
       }
@@ -2871,26 +2838,26 @@ function () {
      * 在关闭容器之前
      * 通过该方法可以停止页面上永久渲染组件的渲染，如 Refresh / gif 等
      * 防止关闭容器后因为持续渲染导致 crash
-     * PS: 如果通过 DF.popPage() 关闭容器则不需要主动调用该方法，popPage 内部会判断调用时机
+     * PS: 如果通过 threshApp.popPage() 关闭容器则不需要主动调用该方法，popPage 内部会判断调用时机
      */
 
 
-    DynamicFlutter.prototype.stopInfinitRender = function () {
+    ThreshApp.prototype.stopInfinitRender = function () {
       try {
         RenderManager_1["default"].stopAlwaysRender();
       } catch (_e26) {
-        __reportError__(_e26, "", "/thresh-lib/src/core/dynamicFlutter.ts");
+        __reportError__(_e26, "", "/thresh-lib/src/core/ThreshApp.ts");
 
         throw _e26;
       }
     };
     /**
-     * 页面已显示并进行上报
+     * 上报当前正在显示页面的数据
      * @param networkTime 接口耗时
      */
 
 
-    DynamicFlutter.prototype.pageDidShow = function (networkTime) {
+    ThreshApp.prototype.pageDidShow = function (networkTime) {
       try {
         if (networkTime === void 0) {
           networkTime = 0;
@@ -2898,9 +2865,23 @@ function () {
 
         MethodChannel_1["default"].pageDidShow(networkTime);
       } catch (_e27) {
-        __reportError__(_e27, "", "/thresh-lib/src/core/dynamicFlutter.ts");
+        __reportError__(_e27, "", "/thresh-lib/src/core/ThreshApp.ts");
 
         throw _e27;
+      }
+    };
+    /**
+     * 加载 providers
+     */
+
+
+    ThreshApp.prototype.useProviders = function (providers) {
+      try {
+        this.providers = providers;
+      } catch (_e28) {
+        __reportError__(_e28, "", "/thresh-lib/src/core/ThreshApp.ts");
+
+        throw _e28;
       }
     };
     /**
@@ -2908,13 +2889,13 @@ function () {
      */
 
 
-    DynamicFlutter.prototype.print = function (args) {
+    ThreshApp.prototype.print = function (args) {
       try {
         MethodChannel_1["default"].print(args);
-      } catch (_e28) {
-        __reportError__(_e28, "", "/thresh-lib/src/core/dynamicFlutter.ts");
+      } catch (_e29) {
+        __reportError__(_e29, "", "/thresh-lib/src/core/ThreshApp.ts");
 
-        throw _e28;
+        throw _e29;
       }
     };
     /**
@@ -2932,7 +2913,7 @@ function () {
      */
 
 
-    DynamicFlutter.prototype._findPage = function (pageName, params) {
+    ThreshApp.prototype._findPage = function (pageName, params) {
       try {
         if (params === void 0) {
           params = {};
@@ -2974,22 +2955,22 @@ function () {
           pageData: pageData,
           pageName: pageName
         };
-      } catch (_e29) {
-        __reportError__(_e29, "", "/thresh-lib/src/core/dynamicFlutter.ts");
+      } catch (_e30) {
+        __reportError__(_e30, "", "/thresh-lib/src/core/ThreshApp.ts");
 
-        throw _e29;
+        throw _e30;
       }
     };
 
-    return DynamicFlutter;
-  } catch (_e30) {
-    __reportError__(_e30, "", "/thresh-lib/src/core/dynamicFlutter.ts");
+    return ThreshApp;
+  } catch (_e31) {
+    __reportError__(_e31, "", "/thresh-lib/src/core/ThreshApp.ts");
 
-    throw _e30;
+    throw _e31;
   }
 }();
 
-exports.DynamicFlutter = DynamicFlutter;
+exports.ThreshApp = ThreshApp;
 /**
 * 第三方注入路由
 * 该方法需要暴露在全局下
@@ -3000,17 +2981,18 @@ exports.DynamicFlutter = DynamicFlutter;
 
 function injectRoute(route) {
   try {
-    DF.injectRouteInfo = route;
-  } catch (_e31) {
-    __reportError__(_e31, "", "/thresh-lib/src/core/dynamicFlutter.ts");
+    if (!route.pageName) return;
+    threshApp.injectRouteInfo = route;
+  } catch (_e32) {
+    __reportError__(_e32, "injectRoute", "/thresh-lib/src/core/ThreshApp.ts");
 
-    throw _e31;
+    throw _e32;
   }
 }
 
 exports.injectRoute = injectRoute;
-var DF = new DynamicFlutter();
-exports["default"] = DF;
+var threshApp = new ThreshApp();
+exports["default"] = threshApp;
 
 /***/ }),
 /* 95 */
@@ -3032,23 +3014,56 @@ module.exports = parent;
 /***/ (function(module, exports, __webpack_require__) {
 
 __webpack_require__(98);
-var path = __webpack_require__(25);
+__webpack_require__(103);
+__webpack_require__(104);
+__webpack_require__(119);
+__webpack_require__(120);
+__webpack_require__(121);
+__webpack_require__(122);
+__webpack_require__(32);
+var path = __webpack_require__(24);
 
-module.exports = path.Date.now;
+module.exports = path.Promise;
 
 
 /***/ }),
 /* 98 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var $ = __webpack_require__(7);
+"use strict";
 
-// `Date.now` method
-// https://tc39.github.io/ecma262/#sec-date.now
-$({ target: 'Date', stat: true }, {
-  now: function now() {
-    return new Date().getTime();
+var $ = __webpack_require__(6);
+var getPrototypeOf = __webpack_require__(49);
+var setPrototypeOf = __webpack_require__(73);
+var create = __webpack_require__(59);
+var createNonEnumerableProperty = __webpack_require__(27);
+var createPropertyDescriptor = __webpack_require__(13);
+var iterate = __webpack_require__(99);
+
+var $AggregateError = function AggregateError(errors, message) {
+  var that = this;
+  if (!(that instanceof $AggregateError)) return new $AggregateError(errors, message);
+  if (setPrototypeOf) {
+    // eslint-disable-next-line unicorn/error-message -- expected
+    that = setPrototypeOf(new Error(undefined), getPrototypeOf(that));
   }
+  if (message !== undefined) createNonEnumerableProperty(that, 'message', String(message));
+  var errorsArray = [];
+  iterate(errors, errorsArray.push, { that: errorsArray });
+  createNonEnumerableProperty(that, 'errors', errorsArray);
+  return that;
+};
+
+$AggregateError.prototype = create(Error.prototype, {
+  constructor: createPropertyDescriptor(5, $AggregateError),
+  message: createPropertyDescriptor(5, ''),
+  name: createPropertyDescriptor(5, 'AggregateError')
+});
+
+// `AggregateError` constructor
+// https://tc39.es/ecma262/#sec-aggregate-error-constructor
+$({ global: true }, {
+  AggregateError: $AggregateError
 });
 
 
@@ -3056,82 +3071,1080 @@ $({ target: 'Date', stat: true }, {
 /* 99 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(100);
+var anObject = __webpack_require__(29);
+var isArrayIteratorMethod = __webpack_require__(100);
+var toLength = __webpack_require__(64);
+var bind = __webpack_require__(25);
+var getIteratorMethod = __webpack_require__(101);
+var iteratorClose = __webpack_require__(102);
+
+var Result = function (stopped, result) {
+  this.stopped = stopped;
+  this.result = result;
+};
+
+module.exports = function (iterable, unboundFunction, options) {
+  var that = options && options.that;
+  var AS_ENTRIES = !!(options && options.AS_ENTRIES);
+  var IS_ITERATOR = !!(options && options.IS_ITERATOR);
+  var INTERRUPTED = !!(options && options.INTERRUPTED);
+  var fn = bind(unboundFunction, that, 1 + AS_ENTRIES + INTERRUPTED);
+  var iterator, iterFn, index, length, result, next, step;
+
+  var stop = function (condition) {
+    if (iterator) iteratorClose(iterator);
+    return new Result(true, condition);
+  };
+
+  var callFn = function (value) {
+    if (AS_ENTRIES) {
+      anObject(value);
+      return INTERRUPTED ? fn(value[0], value[1], stop) : fn(value[0], value[1]);
+    } return INTERRUPTED ? fn(value, stop) : fn(value);
+  };
+
+  if (IS_ITERATOR) {
+    iterator = iterable;
+  } else {
+    iterFn = getIteratorMethod(iterable);
+    if (typeof iterFn != 'function') throw TypeError('Target is not iterable');
+    // optimisation for array iterators
+    if (isArrayIteratorMethod(iterFn)) {
+      for (index = 0, length = toLength(iterable.length); length > index; index++) {
+        result = callFn(iterable[index]);
+        if (result && result instanceof Result) return result;
+      } return new Result(false);
+    }
+    iterator = iterFn.call(iterable);
+  }
+
+  next = iterator.next;
+  while (!(step = next.call(iterator)).done) {
+    try {
+      result = callFn(step.value);
+    } catch (error) {
+      iteratorClose(iterator);
+      throw error;
+    }
+    if (typeof result == 'object' && result && result instanceof Result) return result;
+  } return new Result(false);
+};
+
 
 /***/ }),
 /* 100 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var parent = __webpack_require__(101);
+var wellKnownSymbol = __webpack_require__(52);
+var Iterators = __webpack_require__(35);
 
-module.exports = parent;
+var ITERATOR = wellKnownSymbol('iterator');
+var ArrayPrototype = Array.prototype;
+
+// check on default Array iterator
+module.exports = function (it) {
+  return it !== undefined && (Iterators.Array === it || ArrayPrototype[ITERATOR] === it);
+};
 
 
 /***/ }),
 /* 101 */
 /***/ (function(module, exports, __webpack_require__) {
 
-__webpack_require__(102);
-__webpack_require__(105);
-__webpack_require__(52);
-var WrappedWellKnownSymbolModule = __webpack_require__(104);
+var classof = __webpack_require__(72);
+var Iterators = __webpack_require__(35);
+var wellKnownSymbol = __webpack_require__(52);
 
-module.exports = WrappedWellKnownSymbolModule.f('iterator');
+var ITERATOR = wellKnownSymbol('iterator');
+
+module.exports = function (it) {
+  if (it != undefined) return it[ITERATOR]
+    || it['@@iterator']
+    || Iterators[classof(it)];
+};
 
 
 /***/ }),
 /* 102 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var defineWellKnownSymbol = __webpack_require__(103);
+var anObject = __webpack_require__(29);
 
-// `Symbol.iterator` well-known symbol
-// https://tc39.github.io/ecma262/#sec-symbol.iterator
-defineWellKnownSymbol('iterator');
+module.exports = function (iterator) {
+  var returnMethod = iterator['return'];
+  if (returnMethod !== undefined) {
+    return anObject(returnMethod.call(iterator)).value;
+  }
+};
 
 
 /***/ }),
 /* 103 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ (function(module, exports) {
 
-var path = __webpack_require__(25);
-var has = __webpack_require__(21);
-var wrappedWellKnownSymbolModule = __webpack_require__(104);
-var defineProperty = __webpack_require__(29).f;
-
-module.exports = function (NAME) {
-  var Symbol = path.Symbol || (path.Symbol = {});
-  if (!has(Symbol, NAME)) defineProperty(Symbol, NAME, {
-    value: wrappedWellKnownSymbolModule.f(NAME)
-  });
-};
+// empty
 
 
 /***/ }),
 /* 104 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var wellKnownSymbol = __webpack_require__(37);
+"use strict";
 
-exports.f = wellKnownSymbol;
+var $ = __webpack_require__(6);
+var IS_PURE = __webpack_require__(43);
+var global = __webpack_require__(7);
+var getBuiltIn = __webpack_require__(57);
+var NativePromise = __webpack_require__(105);
+var redefine = __webpack_require__(75);
+var redefineAll = __webpack_require__(106);
+var setToStringTag = __webpack_require__(69);
+var setSpecies = __webpack_require__(107);
+var isObject = __webpack_require__(19);
+var aFunction = __webpack_require__(26);
+var anInstance = __webpack_require__(108);
+var inspectSource = __webpack_require__(38);
+var iterate = __webpack_require__(99);
+var checkCorrectnessOfIteration = __webpack_require__(109);
+var speciesConstructor = __webpack_require__(110);
+var task = __webpack_require__(111).set;
+var microtask = __webpack_require__(113);
+var promiseResolve = __webpack_require__(115);
+var hostReportErrors = __webpack_require__(117);
+var newPromiseCapabilityModule = __webpack_require__(116);
+var perform = __webpack_require__(118);
+var InternalStateModule = __webpack_require__(36);
+var isForced = __webpack_require__(23);
+var wellKnownSymbol = __webpack_require__(52);
+var IS_NODE = __webpack_require__(54);
+var V8_VERSION = __webpack_require__(55);
+
+var SPECIES = wellKnownSymbol('species');
+var PROMISE = 'Promise';
+var getInternalState = InternalStateModule.get;
+var setInternalState = InternalStateModule.set;
+var getInternalPromiseState = InternalStateModule.getterFor(PROMISE);
+var PromiseConstructor = NativePromise;
+var TypeError = global.TypeError;
+var document = global.document;
+var process = global.process;
+var $fetch = getBuiltIn('fetch');
+var newPromiseCapability = newPromiseCapabilityModule.f;
+var newGenericPromiseCapability = newPromiseCapability;
+var DISPATCH_EVENT = !!(document && document.createEvent && global.dispatchEvent);
+var NATIVE_REJECTION_EVENT = typeof PromiseRejectionEvent == 'function';
+var UNHANDLED_REJECTION = 'unhandledrejection';
+var REJECTION_HANDLED = 'rejectionhandled';
+var PENDING = 0;
+var FULFILLED = 1;
+var REJECTED = 2;
+var HANDLED = 1;
+var UNHANDLED = 2;
+var Internal, OwnPromiseCapability, PromiseWrapper, nativeThen;
+
+var FORCED = isForced(PROMISE, function () {
+  var GLOBAL_CORE_JS_PROMISE = inspectSource(PromiseConstructor) !== String(PromiseConstructor);
+  if (!GLOBAL_CORE_JS_PROMISE) {
+    // V8 6.6 (Node 10 and Chrome 66) have a bug with resolving custom thenables
+    // https://bugs.chromium.org/p/chromium/issues/detail?id=830565
+    // We can't detect it synchronously, so just check versions
+    if (V8_VERSION === 66) return true;
+    // Unhandled rejections tracking support, NodeJS Promise without it fails @@species test
+    if (!IS_NODE && !NATIVE_REJECTION_EVENT) return true;
+  }
+  // We need Promise#finally in the pure version for preventing prototype pollution
+  if (IS_PURE && !PromiseConstructor.prototype['finally']) return true;
+  // We can't use @@species feature detection in V8 since it causes
+  // deoptimization and performance degradation
+  // https://github.com/zloirock/core-js/issues/679
+  if (V8_VERSION >= 51 && /native code/.test(PromiseConstructor)) return false;
+  // Detect correctness of subclassing with @@species support
+  var promise = PromiseConstructor.resolve(1);
+  var FakePromise = function (exec) {
+    exec(function () { /* empty */ }, function () { /* empty */ });
+  };
+  var constructor = promise.constructor = {};
+  constructor[SPECIES] = FakePromise;
+  return !(promise.then(function () { /* empty */ }) instanceof FakePromise);
+});
+
+var INCORRECT_ITERATION = FORCED || !checkCorrectnessOfIteration(function (iterable) {
+  PromiseConstructor.all(iterable)['catch'](function () { /* empty */ });
+});
+
+// helpers
+var isThenable = function (it) {
+  var then;
+  return isObject(it) && typeof (then = it.then) == 'function' ? then : false;
+};
+
+var notify = function (state, isReject) {
+  if (state.notified) return;
+  state.notified = true;
+  var chain = state.reactions;
+  microtask(function () {
+    var value = state.value;
+    var ok = state.state == FULFILLED;
+    var index = 0;
+    // variable length - can't use forEach
+    while (chain.length > index) {
+      var reaction = chain[index++];
+      var handler = ok ? reaction.ok : reaction.fail;
+      var resolve = reaction.resolve;
+      var reject = reaction.reject;
+      var domain = reaction.domain;
+      var result, then, exited;
+      try {
+        if (handler) {
+          if (!ok) {
+            if (state.rejection === UNHANDLED) onHandleUnhandled(state);
+            state.rejection = HANDLED;
+          }
+          if (handler === true) result = value;
+          else {
+            if (domain) domain.enter();
+            result = handler(value); // can throw
+            if (domain) {
+              domain.exit();
+              exited = true;
+            }
+          }
+          if (result === reaction.promise) {
+            reject(TypeError('Promise-chain cycle'));
+          } else if (then = isThenable(result)) {
+            then.call(result, resolve, reject);
+          } else resolve(result);
+        } else reject(value);
+      } catch (error) {
+        if (domain && !exited) domain.exit();
+        reject(error);
+      }
+    }
+    state.reactions = [];
+    state.notified = false;
+    if (isReject && !state.rejection) onUnhandled(state);
+  });
+};
+
+var dispatchEvent = function (name, promise, reason) {
+  var event, handler;
+  if (DISPATCH_EVENT) {
+    event = document.createEvent('Event');
+    event.promise = promise;
+    event.reason = reason;
+    event.initEvent(name, false, true);
+    global.dispatchEvent(event);
+  } else event = { promise: promise, reason: reason };
+  if (!NATIVE_REJECTION_EVENT && (handler = global['on' + name])) handler(event);
+  else if (name === UNHANDLED_REJECTION) hostReportErrors('Unhandled promise rejection', reason);
+};
+
+var onUnhandled = function (state) {
+  task.call(global, function () {
+    var promise = state.facade;
+    var value = state.value;
+    var IS_UNHANDLED = isUnhandled(state);
+    var result;
+    if (IS_UNHANDLED) {
+      result = perform(function () {
+        if (IS_NODE) {
+          process.emit('unhandledRejection', value, promise);
+        } else dispatchEvent(UNHANDLED_REJECTION, promise, value);
+      });
+      // Browsers should not trigger `rejectionHandled` event if it was handled here, NodeJS - should
+      state.rejection = IS_NODE || isUnhandled(state) ? UNHANDLED : HANDLED;
+      if (result.error) throw result.value;
+    }
+  });
+};
+
+var isUnhandled = function (state) {
+  return state.rejection !== HANDLED && !state.parent;
+};
+
+var onHandleUnhandled = function (state) {
+  task.call(global, function () {
+    var promise = state.facade;
+    if (IS_NODE) {
+      process.emit('rejectionHandled', promise);
+    } else dispatchEvent(REJECTION_HANDLED, promise, state.value);
+  });
+};
+
+var bind = function (fn, state, unwrap) {
+  return function (value) {
+    fn(state, value, unwrap);
+  };
+};
+
+var internalReject = function (state, value, unwrap) {
+  if (state.done) return;
+  state.done = true;
+  if (unwrap) state = unwrap;
+  state.value = value;
+  state.state = REJECTED;
+  notify(state, true);
+};
+
+var internalResolve = function (state, value, unwrap) {
+  if (state.done) return;
+  state.done = true;
+  if (unwrap) state = unwrap;
+  try {
+    if (state.facade === value) throw TypeError("Promise can't be resolved itself");
+    var then = isThenable(value);
+    if (then) {
+      microtask(function () {
+        var wrapper = { done: false };
+        try {
+          then.call(value,
+            bind(internalResolve, wrapper, state),
+            bind(internalReject, wrapper, state)
+          );
+        } catch (error) {
+          internalReject(wrapper, error, state);
+        }
+      });
+    } else {
+      state.value = value;
+      state.state = FULFILLED;
+      notify(state, false);
+    }
+  } catch (error) {
+    internalReject({ done: false }, error, state);
+  }
+};
+
+// constructor polyfill
+if (FORCED) {
+  // 25.4.3.1 Promise(executor)
+  PromiseConstructor = function Promise(executor) {
+    anInstance(this, PromiseConstructor, PROMISE);
+    aFunction(executor);
+    Internal.call(this);
+    var state = getInternalState(this);
+    try {
+      executor(bind(internalResolve, state), bind(internalReject, state));
+    } catch (error) {
+      internalReject(state, error);
+    }
+  };
+  // eslint-disable-next-line no-unused-vars -- required for `.length`
+  Internal = function Promise(executor) {
+    setInternalState(this, {
+      type: PROMISE,
+      done: false,
+      notified: false,
+      parent: false,
+      reactions: [],
+      rejection: false,
+      state: PENDING,
+      value: undefined
+    });
+  };
+  Internal.prototype = redefineAll(PromiseConstructor.prototype, {
+    // `Promise.prototype.then` method
+    // https://tc39.es/ecma262/#sec-promise.prototype.then
+    then: function then(onFulfilled, onRejected) {
+      var state = getInternalPromiseState(this);
+      var reaction = newPromiseCapability(speciesConstructor(this, PromiseConstructor));
+      reaction.ok = typeof onFulfilled == 'function' ? onFulfilled : true;
+      reaction.fail = typeof onRejected == 'function' && onRejected;
+      reaction.domain = IS_NODE ? process.domain : undefined;
+      state.parent = true;
+      state.reactions.push(reaction);
+      if (state.state != PENDING) notify(state, false);
+      return reaction.promise;
+    },
+    // `Promise.prototype.catch` method
+    // https://tc39.es/ecma262/#sec-promise.prototype.catch
+    'catch': function (onRejected) {
+      return this.then(undefined, onRejected);
+    }
+  });
+  OwnPromiseCapability = function () {
+    var promise = new Internal();
+    var state = getInternalState(promise);
+    this.promise = promise;
+    this.resolve = bind(internalResolve, state);
+    this.reject = bind(internalReject, state);
+  };
+  newPromiseCapabilityModule.f = newPromiseCapability = function (C) {
+    return C === PromiseConstructor || C === PromiseWrapper
+      ? new OwnPromiseCapability(C)
+      : newGenericPromiseCapability(C);
+  };
+
+  if (!IS_PURE && typeof NativePromise == 'function') {
+    nativeThen = NativePromise.prototype.then;
+
+    // wrap native Promise#then for native async functions
+    redefine(NativePromise.prototype, 'then', function then(onFulfilled, onRejected) {
+      var that = this;
+      return new PromiseConstructor(function (resolve, reject) {
+        nativeThen.call(that, resolve, reject);
+      }).then(onFulfilled, onRejected);
+    // https://github.com/zloirock/core-js/issues/640
+    }, { unsafe: true });
+
+    // wrap fetch result
+    if (typeof $fetch == 'function') $({ global: true, enumerable: true, forced: true }, {
+      // eslint-disable-next-line no-unused-vars -- required for `.length`
+      fetch: function fetch(input /* , init */) {
+        return promiseResolve(PromiseConstructor, $fetch.apply(global, arguments));
+      }
+    });
+  }
+}
+
+$({ global: true, wrap: true, forced: FORCED }, {
+  Promise: PromiseConstructor
+});
+
+setToStringTag(PromiseConstructor, PROMISE, false, true);
+setSpecies(PROMISE);
+
+PromiseWrapper = getBuiltIn(PROMISE);
+
+// statics
+$({ target: PROMISE, stat: true, forced: FORCED }, {
+  // `Promise.reject` method
+  // https://tc39.es/ecma262/#sec-promise.reject
+  reject: function reject(r) {
+    var capability = newPromiseCapability(this);
+    capability.reject.call(undefined, r);
+    return capability.promise;
+  }
+});
+
+$({ target: PROMISE, stat: true, forced: IS_PURE || FORCED }, {
+  // `Promise.resolve` method
+  // https://tc39.es/ecma262/#sec-promise.resolve
+  resolve: function resolve(x) {
+    return promiseResolve(IS_PURE && this === PromiseWrapper ? PromiseConstructor : this, x);
+  }
+});
+
+$({ target: PROMISE, stat: true, forced: INCORRECT_ITERATION }, {
+  // `Promise.all` method
+  // https://tc39.es/ecma262/#sec-promise.all
+  all: function all(iterable) {
+    var C = this;
+    var capability = newPromiseCapability(C);
+    var resolve = capability.resolve;
+    var reject = capability.reject;
+    var result = perform(function () {
+      var $promiseResolve = aFunction(C.resolve);
+      var values = [];
+      var counter = 0;
+      var remaining = 1;
+      iterate(iterable, function (promise) {
+        var index = counter++;
+        var alreadyCalled = false;
+        values.push(undefined);
+        remaining++;
+        $promiseResolve.call(C, promise).then(function (value) {
+          if (alreadyCalled) return;
+          alreadyCalled = true;
+          values[index] = value;
+          --remaining || resolve(values);
+        }, reject);
+      });
+      --remaining || resolve(values);
+    });
+    if (result.error) reject(result.value);
+    return capability.promise;
+  },
+  // `Promise.race` method
+  // https://tc39.es/ecma262/#sec-promise.race
+  race: function race(iterable) {
+    var C = this;
+    var capability = newPromiseCapability(C);
+    var reject = capability.reject;
+    var result = perform(function () {
+      var $promiseResolve = aFunction(C.resolve);
+      iterate(iterable, function (promise) {
+        $promiseResolve.call(C, promise).then(capability.resolve, reject);
+      });
+    });
+    if (result.error) reject(result.value);
+    return capability.promise;
+  }
+});
 
 
 /***/ }),
 /* 105 */
 /***/ (function(module, exports, __webpack_require__) {
 
+var global = __webpack_require__(7);
+
+module.exports = global.Promise;
+
+
+/***/ }),
+/* 106 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var redefine = __webpack_require__(75);
+
+module.exports = function (target, src, options) {
+  for (var key in src) {
+    if (options && options.unsafe && target[key]) target[key] = src[key];
+    else redefine(target, key, src[key], options);
+  } return target;
+};
+
+
+/***/ }),
+/* 107 */
+/***/ (function(module, exports, __webpack_require__) {
+
 "use strict";
 
-var charAt = __webpack_require__(106).charAt;
-var InternalStateModule = __webpack_require__(56);
-var defineIterator = __webpack_require__(61);
+var getBuiltIn = __webpack_require__(57);
+var definePropertyModule = __webpack_require__(28);
+var wellKnownSymbol = __webpack_require__(52);
+var DESCRIPTORS = __webpack_require__(10);
+
+var SPECIES = wellKnownSymbol('species');
+
+module.exports = function (CONSTRUCTOR_NAME) {
+  var Constructor = getBuiltIn(CONSTRUCTOR_NAME);
+  var defineProperty = definePropertyModule.f;
+
+  if (DESCRIPTORS && Constructor && !Constructor[SPECIES]) {
+    defineProperty(Constructor, SPECIES, {
+      configurable: true,
+      get: function () { return this; }
+    });
+  }
+};
+
+
+/***/ }),
+/* 108 */
+/***/ (function(module, exports) {
+
+module.exports = function (it, Constructor, name) {
+  if (!(it instanceof Constructor)) {
+    throw TypeError('Incorrect ' + (name ? name + ' ' : '') + 'invocation');
+  } return it;
+};
+
+
+/***/ }),
+/* 109 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var wellKnownSymbol = __webpack_require__(52);
+
+var ITERATOR = wellKnownSymbol('iterator');
+var SAFE_CLOSING = false;
+
+try {
+  var called = 0;
+  var iteratorWithReturn = {
+    next: function () {
+      return { done: !!called++ };
+    },
+    'return': function () {
+      SAFE_CLOSING = true;
+    }
+  };
+  iteratorWithReturn[ITERATOR] = function () {
+    return this;
+  };
+  // eslint-disable-next-line es/no-array-from, no-throw-literal -- required for testing
+  Array.from(iteratorWithReturn, function () { throw 2; });
+} catch (error) { /* empty */ }
+
+module.exports = function (exec, SKIP_CLOSING) {
+  if (!SKIP_CLOSING && !SAFE_CLOSING) return false;
+  var ITERATION_SUPPORT = false;
+  try {
+    var object = {};
+    object[ITERATOR] = function () {
+      return {
+        next: function () {
+          return { done: ITERATION_SUPPORT = true };
+        }
+      };
+    };
+    exec(object);
+  } catch (error) { /* empty */ }
+  return ITERATION_SUPPORT;
+};
+
+
+/***/ }),
+/* 110 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var anObject = __webpack_require__(29);
+var aFunction = __webpack_require__(26);
+var wellKnownSymbol = __webpack_require__(52);
+
+var SPECIES = wellKnownSymbol('species');
+
+// `SpeciesConstructor` abstract operation
+// https://tc39.es/ecma262/#sec-speciesconstructor
+module.exports = function (O, defaultConstructor) {
+  var C = anObject(O).constructor;
+  var S;
+  return C === undefined || (S = anObject(C)[SPECIES]) == undefined ? defaultConstructor : aFunction(S);
+};
+
+
+/***/ }),
+/* 111 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var global = __webpack_require__(7);
+var fails = __webpack_require__(11);
+var bind = __webpack_require__(25);
+var html = __webpack_require__(68);
+var createElement = __webpack_require__(22);
+var IS_IOS = __webpack_require__(112);
+var IS_NODE = __webpack_require__(54);
+
+var location = global.location;
+var set = global.setImmediate;
+var clear = global.clearImmediate;
+var process = global.process;
+var MessageChannel = global.MessageChannel;
+var Dispatch = global.Dispatch;
+var counter = 0;
+var queue = {};
+var ONREADYSTATECHANGE = 'onreadystatechange';
+var defer, channel, port;
+
+var run = function (id) {
+  // eslint-disable-next-line no-prototype-builtins -- safe
+  if (queue.hasOwnProperty(id)) {
+    var fn = queue[id];
+    delete queue[id];
+    fn();
+  }
+};
+
+var runner = function (id) {
+  return function () {
+    run(id);
+  };
+};
+
+var listener = function (event) {
+  run(event.data);
+};
+
+var post = function (id) {
+  // old engines have not location.origin
+  global.postMessage(id + '', location.protocol + '//' + location.host);
+};
+
+// Node.js 0.9+ & IE10+ has setImmediate, otherwise:
+if (!set || !clear) {
+  set = function setImmediate(fn) {
+    var args = [];
+    var i = 1;
+    while (arguments.length > i) args.push(arguments[i++]);
+    queue[++counter] = function () {
+      // eslint-disable-next-line no-new-func -- spec requirement
+      (typeof fn == 'function' ? fn : Function(fn)).apply(undefined, args);
+    };
+    defer(counter);
+    return counter;
+  };
+  clear = function clearImmediate(id) {
+    delete queue[id];
+  };
+  // Node.js 0.8-
+  if (IS_NODE) {
+    defer = function (id) {
+      process.nextTick(runner(id));
+    };
+  // Sphere (JS game engine) Dispatch API
+  } else if (Dispatch && Dispatch.now) {
+    defer = function (id) {
+      Dispatch.now(runner(id));
+    };
+  // Browsers with MessageChannel, includes WebWorkers
+  // except iOS - https://github.com/zloirock/core-js/issues/624
+  } else if (MessageChannel && !IS_IOS) {
+    channel = new MessageChannel();
+    port = channel.port2;
+    channel.port1.onmessage = listener;
+    defer = bind(port.postMessage, port, 1);
+  // Browsers with postMessage, skip WebWorkers
+  // IE8 has postMessage, but it's sync & typeof its postMessage is 'object'
+  } else if (
+    global.addEventListener &&
+    typeof postMessage == 'function' &&
+    !global.importScripts &&
+    location && location.protocol !== 'file:' &&
+    !fails(post)
+  ) {
+    defer = post;
+    global.addEventListener('message', listener, false);
+  // IE8-
+  } else if (ONREADYSTATECHANGE in createElement('script')) {
+    defer = function (id) {
+      html.appendChild(createElement('script'))[ONREADYSTATECHANGE] = function () {
+        html.removeChild(this);
+        run(id);
+      };
+    };
+  // Rest old browsers
+  } else {
+    defer = function (id) {
+      setTimeout(runner(id), 0);
+    };
+  }
+}
+
+module.exports = {
+  set: set,
+  clear: clear
+};
+
+
+/***/ }),
+/* 112 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var userAgent = __webpack_require__(56);
+
+module.exports = /(?:iphone|ipod|ipad).*applewebkit/i.test(userAgent);
+
+
+/***/ }),
+/* 113 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var global = __webpack_require__(7);
+var getOwnPropertyDescriptor = __webpack_require__(9).f;
+var macrotask = __webpack_require__(111).set;
+var IS_IOS = __webpack_require__(112);
+var IS_WEBOS_WEBKIT = __webpack_require__(114);
+var IS_NODE = __webpack_require__(54);
+
+var MutationObserver = global.MutationObserver || global.WebKitMutationObserver;
+var document = global.document;
+var process = global.process;
+var Promise = global.Promise;
+// Node.js 11 shows ExperimentalWarning on getting `queueMicrotask`
+var queueMicrotaskDescriptor = getOwnPropertyDescriptor(global, 'queueMicrotask');
+var queueMicrotask = queueMicrotaskDescriptor && queueMicrotaskDescriptor.value;
+
+var flush, head, last, notify, toggle, node, promise, then;
+
+// modern engines have queueMicrotask method
+if (!queueMicrotask) {
+  flush = function () {
+    var parent, fn;
+    if (IS_NODE && (parent = process.domain)) parent.exit();
+    while (head) {
+      fn = head.fn;
+      head = head.next;
+      try {
+        fn();
+      } catch (error) {
+        if (head) notify();
+        else last = undefined;
+        throw error;
+      }
+    } last = undefined;
+    if (parent) parent.enter();
+  };
+
+  // browsers with MutationObserver, except iOS - https://github.com/zloirock/core-js/issues/339
+  // also except WebOS Webkit https://github.com/zloirock/core-js/issues/898
+  if (!IS_IOS && !IS_NODE && !IS_WEBOS_WEBKIT && MutationObserver && document) {
+    toggle = true;
+    node = document.createTextNode('');
+    new MutationObserver(flush).observe(node, { characterData: true });
+    notify = function () {
+      node.data = toggle = !toggle;
+    };
+  // environments with maybe non-completely correct, but existent Promise
+  } else if (Promise && Promise.resolve) {
+    // Promise.resolve without an argument throws an error in LG WebOS 2
+    promise = Promise.resolve(undefined);
+    then = promise.then;
+    notify = function () {
+      then.call(promise, flush);
+    };
+  // Node.js without promises
+  } else if (IS_NODE) {
+    notify = function () {
+      process.nextTick(flush);
+    };
+  // for other environments - macrotask based on:
+  // - setImmediate
+  // - MessageChannel
+  // - window.postMessag
+  // - onreadystatechange
+  // - setTimeout
+  } else {
+    notify = function () {
+      // strange IE + webpack dev server bug - use .call(global)
+      macrotask.call(global, flush);
+    };
+  }
+}
+
+module.exports = queueMicrotask || function (fn) {
+  var task = { fn: fn, next: undefined };
+  if (last) last.next = task;
+  if (!head) {
+    head = task;
+    notify();
+  } last = task;
+};
+
+
+/***/ }),
+/* 114 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var userAgent = __webpack_require__(56);
+
+module.exports = /web0s(?!.*chrome)/i.test(userAgent);
+
+
+/***/ }),
+/* 115 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var anObject = __webpack_require__(29);
+var isObject = __webpack_require__(19);
+var newPromiseCapability = __webpack_require__(116);
+
+module.exports = function (C, x) {
+  anObject(C);
+  if (isObject(x) && x.constructor === C) return x;
+  var promiseCapability = newPromiseCapability.f(C);
+  var resolve = promiseCapability.resolve;
+  resolve(x);
+  return promiseCapability.promise;
+};
+
+
+/***/ }),
+/* 116 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var aFunction = __webpack_require__(26);
+
+var PromiseCapability = function (C) {
+  var resolve, reject;
+  this.promise = new C(function ($$resolve, $$reject) {
+    if (resolve !== undefined || reject !== undefined) throw TypeError('Bad Promise constructor');
+    resolve = $$resolve;
+    reject = $$reject;
+  });
+  this.resolve = aFunction(resolve);
+  this.reject = aFunction(reject);
+};
+
+// 25.4.1.5 NewPromiseCapability(C)
+module.exports.f = function (C) {
+  return new PromiseCapability(C);
+};
+
+
+/***/ }),
+/* 117 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var global = __webpack_require__(7);
+
+module.exports = function (a, b) {
+  var console = global.console;
+  if (console && console.error) {
+    arguments.length === 1 ? console.error(a) : console.error(a, b);
+  }
+};
+
+
+/***/ }),
+/* 118 */
+/***/ (function(module, exports) {
+
+module.exports = function (exec) {
+  try {
+    return { error: false, value: exec() };
+  } catch (error) {
+    return { error: true, value: error };
+  }
+};
+
+
+/***/ }),
+/* 119 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var $ = __webpack_require__(6);
+var aFunction = __webpack_require__(26);
+var newPromiseCapabilityModule = __webpack_require__(116);
+var perform = __webpack_require__(118);
+var iterate = __webpack_require__(99);
+
+// `Promise.allSettled` method
+// https://tc39.es/ecma262/#sec-promise.allsettled
+$({ target: 'Promise', stat: true }, {
+  allSettled: function allSettled(iterable) {
+    var C = this;
+    var capability = newPromiseCapabilityModule.f(C);
+    var resolve = capability.resolve;
+    var reject = capability.reject;
+    var result = perform(function () {
+      var promiseResolve = aFunction(C.resolve);
+      var values = [];
+      var counter = 0;
+      var remaining = 1;
+      iterate(iterable, function (promise) {
+        var index = counter++;
+        var alreadyCalled = false;
+        values.push(undefined);
+        remaining++;
+        promiseResolve.call(C, promise).then(function (value) {
+          if (alreadyCalled) return;
+          alreadyCalled = true;
+          values[index] = { status: 'fulfilled', value: value };
+          --remaining || resolve(values);
+        }, function (error) {
+          if (alreadyCalled) return;
+          alreadyCalled = true;
+          values[index] = { status: 'rejected', reason: error };
+          --remaining || resolve(values);
+        });
+      });
+      --remaining || resolve(values);
+    });
+    if (result.error) reject(result.value);
+    return capability.promise;
+  }
+});
+
+
+/***/ }),
+/* 120 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var $ = __webpack_require__(6);
+var aFunction = __webpack_require__(26);
+var getBuiltIn = __webpack_require__(57);
+var newPromiseCapabilityModule = __webpack_require__(116);
+var perform = __webpack_require__(118);
+var iterate = __webpack_require__(99);
+
+var PROMISE_ANY_ERROR = 'No one promise resolved';
+
+// `Promise.any` method
+// https://tc39.es/ecma262/#sec-promise.any
+$({ target: 'Promise', stat: true }, {
+  any: function any(iterable) {
+    var C = this;
+    var capability = newPromiseCapabilityModule.f(C);
+    var resolve = capability.resolve;
+    var reject = capability.reject;
+    var result = perform(function () {
+      var promiseResolve = aFunction(C.resolve);
+      var errors = [];
+      var counter = 0;
+      var remaining = 1;
+      var alreadyResolved = false;
+      iterate(iterable, function (promise) {
+        var index = counter++;
+        var alreadyRejected = false;
+        errors.push(undefined);
+        remaining++;
+        promiseResolve.call(C, promise).then(function (value) {
+          if (alreadyRejected || alreadyResolved) return;
+          alreadyResolved = true;
+          resolve(value);
+        }, function (error) {
+          if (alreadyRejected || alreadyResolved) return;
+          alreadyRejected = true;
+          errors[index] = error;
+          --remaining || reject(new (getBuiltIn('AggregateError'))(errors, PROMISE_ANY_ERROR));
+        });
+      });
+      --remaining || reject(new (getBuiltIn('AggregateError'))(errors, PROMISE_ANY_ERROR));
+    });
+    if (result.error) reject(result.value);
+    return capability.promise;
+  }
+});
+
+
+/***/ }),
+/* 121 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var $ = __webpack_require__(6);
+var IS_PURE = __webpack_require__(43);
+var NativePromise = __webpack_require__(105);
+var fails = __webpack_require__(11);
+var getBuiltIn = __webpack_require__(57);
+var speciesConstructor = __webpack_require__(110);
+var promiseResolve = __webpack_require__(115);
+var redefine = __webpack_require__(75);
+
+// Safari bug https://bugs.webkit.org/show_bug.cgi?id=200829
+var NON_GENERIC = !!NativePromise && fails(function () {
+  NativePromise.prototype['finally'].call({ then: function () { /* empty */ } }, function () { /* empty */ });
+});
+
+// `Promise.prototype.finally` method
+// https://tc39.es/ecma262/#sec-promise.prototype.finally
+$({ target: 'Promise', proto: true, real: true, forced: NON_GENERIC }, {
+  'finally': function (onFinally) {
+    var C = speciesConstructor(this, getBuiltIn('Promise'));
+    var isFunction = typeof onFinally == 'function';
+    return this.then(
+      isFunction ? function (x) {
+        return promiseResolve(C, onFinally()).then(function () { return x; });
+      } : onFinally,
+      isFunction ? function (e) {
+        return promiseResolve(C, onFinally()).then(function () { throw e; });
+      } : onFinally
+    );
+  }
+});
+
+// patch native Promise.prototype for native async functions
+if (!IS_PURE && typeof NativePromise == 'function' && !NativePromise.prototype['finally']) {
+  redefine(NativePromise.prototype, 'finally', getBuiltIn('Promise').prototype['finally']);
+}
+
+
+/***/ }),
+/* 122 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var charAt = __webpack_require__(123).charAt;
+var InternalStateModule = __webpack_require__(36);
+var defineIterator = __webpack_require__(46);
 
 var STRING_ITERATOR = 'String Iterator';
 var setInternalState = InternalStateModule.set;
 var getInternalState = InternalStateModule.getterFor(STRING_ITERATOR);
 
 // `String.prototype[@@iterator]` method
-// https://tc39.github.io/ecma262/#sec-string.prototype-@@iterator
+// https://tc39.es/ecma262/#sec-string.prototype-@@iterator
 defineIterator(String, 'String', function (iterated) {
   setInternalState(this, {
     type: STRING_ITERATOR,
@@ -3139,7 +4152,7 @@ defineIterator(String, 'String', function (iterated) {
     index: 0
   });
 // `%StringIteratorPrototype%.next` method
-// https://tc39.github.io/ecma262/#sec-%stringiteratorprototype%.next
+// https://tc39.es/ecma262/#sec-%stringiteratorprototype%.next
 }, function next() {
   var state = getInternalState(this);
   var string = state.string;
@@ -3153,11 +4166,11 @@ defineIterator(String, 'String', function (iterated) {
 
 
 /***/ }),
-/* 106 */
+/* 123 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var toInteger = __webpack_require__(34);
-var requireObjectCoercible = __webpack_require__(18);
+var toInteger = __webpack_require__(65);
+var requireObjectCoercible = __webpack_require__(17);
 
 // `String.prototype.{ codePointAt, at }` methods implementation
 var createMethod = function (CONVERT_TO_STRING) {
@@ -3177,7 +4190,7 @@ var createMethod = function (CONVERT_TO_STRING) {
 
 module.exports = {
   // `String.prototype.codePointAt` method
-  // https://tc39.github.io/ecma262/#sec-string.prototype.codepointat
+  // https://tc39.es/ecma262/#sec-string.prototype.codepointat
   codeAt: createMethod(false),
   // `String.prototype.at` method
   // https://github.com/mathiasbynens/String.prototype.at
@@ -3186,97 +4199,91 @@ module.exports = {
 
 
 /***/ }),
-/* 107 */
+/* 124 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(108);
+module.exports = __webpack_require__(125);
 
 /***/ }),
-/* 108 */
+/* 125 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var parent = __webpack_require__(109);
+var parent = __webpack_require__(126);
 
 module.exports = parent;
 
 
 /***/ }),
-/* 109 */
+/* 126 */
 /***/ (function(module, exports, __webpack_require__) {
 
-__webpack_require__(6);
-__webpack_require__(110);
-__webpack_require__(111);
-__webpack_require__(115);
-__webpack_require__(116);
-__webpack_require__(117);
-__webpack_require__(118);
-__webpack_require__(102);
-__webpack_require__(119);
-__webpack_require__(120);
-__webpack_require__(121);
-__webpack_require__(122);
-__webpack_require__(123);
-__webpack_require__(124);
-__webpack_require__(125);
-__webpack_require__(126);
+__webpack_require__(90);
+__webpack_require__(103);
 __webpack_require__(127);
-__webpack_require__(128);
-__webpack_require__(129);
-var path = __webpack_require__(25);
+__webpack_require__(133);
+__webpack_require__(134);
+__webpack_require__(135);
+__webpack_require__(136);
+__webpack_require__(137);
+__webpack_require__(138);
+__webpack_require__(139);
+__webpack_require__(140);
+__webpack_require__(141);
+__webpack_require__(142);
+__webpack_require__(143);
+__webpack_require__(144);
+__webpack_require__(145);
+__webpack_require__(146);
+__webpack_require__(147);
+__webpack_require__(148);
+__webpack_require__(149);
+var path = __webpack_require__(24);
 
 module.exports = path.Symbol;
 
 
 /***/ }),
-/* 110 */
-/***/ (function(module, exports) {
-
-// empty
-
-
-/***/ }),
-/* 111 */
+/* 127 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
-var $ = __webpack_require__(7);
-var global = __webpack_require__(8);
-var getBuiltIn = __webpack_require__(48);
-var IS_PURE = __webpack_require__(39);
-var DESCRIPTORS = __webpack_require__(11);
-var NATIVE_SYMBOL = __webpack_require__(43);
-var USE_SYMBOL_AS_UID = __webpack_require__(44);
-var fails = __webpack_require__(12);
-var has = __webpack_require__(21);
-var isArray = __webpack_require__(31);
-var isObject = __webpack_require__(20);
-var anObject = __webpack_require__(30);
-var toObject = __webpack_require__(32);
-var toIndexedObject = __webpack_require__(15);
-var toPrimitive = __webpack_require__(19);
-var createPropertyDescriptor = __webpack_require__(14);
-var nativeObjectCreate = __webpack_require__(66);
-var objectKeys = __webpack_require__(68);
-var getOwnPropertyNamesModule = __webpack_require__(112);
-var getOwnPropertyNamesExternal = __webpack_require__(113);
-var getOwnPropertySymbolsModule = __webpack_require__(114);
-var getOwnPropertyDescriptorModule = __webpack_require__(10);
-var definePropertyModule = __webpack_require__(29);
-var propertyIsEnumerableModule = __webpack_require__(13);
-var createNonEnumerableProperty = __webpack_require__(28);
-var redefine = __webpack_require__(80);
-var shared = __webpack_require__(38);
-var sharedKey = __webpack_require__(59);
-var hiddenKeys = __webpack_require__(60);
-var uid = __webpack_require__(42);
-var wellKnownSymbol = __webpack_require__(37);
-var wrappedWellKnownSymbolModule = __webpack_require__(104);
-var defineWellKnownSymbol = __webpack_require__(103);
-var setToStringTag = __webpack_require__(74);
-var InternalStateModule = __webpack_require__(56);
-var $forEach = __webpack_require__(86).forEach;
+var $ = __webpack_require__(6);
+var global = __webpack_require__(7);
+var getBuiltIn = __webpack_require__(57);
+var IS_PURE = __webpack_require__(43);
+var DESCRIPTORS = __webpack_require__(10);
+var NATIVE_SYMBOL = __webpack_require__(53);
+var USE_SYMBOL_AS_UID = __webpack_require__(58);
+var fails = __webpack_require__(11);
+var has = __webpack_require__(20);
+var isArray = __webpack_require__(83);
+var isObject = __webpack_require__(19);
+var anObject = __webpack_require__(29);
+var toObject = __webpack_require__(50);
+var toIndexedObject = __webpack_require__(14);
+var toPrimitive = __webpack_require__(18);
+var createPropertyDescriptor = __webpack_require__(13);
+var nativeObjectCreate = __webpack_require__(59);
+var objectKeys = __webpack_require__(61);
+var getOwnPropertyNamesModule = __webpack_require__(128);
+var getOwnPropertyNamesExternal = __webpack_require__(129);
+var getOwnPropertySymbolsModule = __webpack_require__(130);
+var getOwnPropertyDescriptorModule = __webpack_require__(9);
+var definePropertyModule = __webpack_require__(28);
+var propertyIsEnumerableModule = __webpack_require__(12);
+var createNonEnumerableProperty = __webpack_require__(27);
+var redefine = __webpack_require__(75);
+var shared = __webpack_require__(42);
+var sharedKey = __webpack_require__(41);
+var hiddenKeys = __webpack_require__(45);
+var uid = __webpack_require__(44);
+var wellKnownSymbol = __webpack_require__(52);
+var wrappedWellKnownSymbolModule = __webpack_require__(131);
+var defineWellKnownSymbol = __webpack_require__(132);
+var setToStringTag = __webpack_require__(69);
+var InternalStateModule = __webpack_require__(36);
+var $forEach = __webpack_require__(81).forEach;
 
 var HIDDEN = sharedKey('hidden');
 var SYMBOL = 'Symbol';
@@ -3401,7 +4408,7 @@ var $getOwnPropertySymbols = function getOwnPropertySymbols(O) {
 };
 
 // `Symbol` constructor
-// https://tc39.github.io/ecma262/#sec-symbol-constructor
+// https://tc39.es/ecma262/#sec-symbol-constructor
 if (!NATIVE_SYMBOL) {
   $Symbol = function Symbol() {
     if (this instanceof $Symbol) throw TypeError('Symbol is not a constructor');
@@ -3458,7 +4465,7 @@ $forEach(objectKeys(WellKnownSymbolsStore), function (name) {
 
 $({ target: SYMBOL, stat: true, forced: !NATIVE_SYMBOL }, {
   // `Symbol.for` method
-  // https://tc39.github.io/ecma262/#sec-symbol.for
+  // https://tc39.es/ecma262/#sec-symbol.for
   'for': function (key) {
     var string = String(key);
     if (has(StringToSymbolRegistry, string)) return StringToSymbolRegistry[string];
@@ -3468,7 +4475,7 @@ $({ target: SYMBOL, stat: true, forced: !NATIVE_SYMBOL }, {
     return symbol;
   },
   // `Symbol.keyFor` method
-  // https://tc39.github.io/ecma262/#sec-symbol.keyfor
+  // https://tc39.es/ecma262/#sec-symbol.keyfor
   keyFor: function keyFor(sym) {
     if (!isSymbol(sym)) throw TypeError(sym + ' is not a symbol');
     if (has(SymbolToStringRegistry, sym)) return SymbolToStringRegistry[sym];
@@ -3479,25 +4486,25 @@ $({ target: SYMBOL, stat: true, forced: !NATIVE_SYMBOL }, {
 
 $({ target: 'Object', stat: true, forced: !NATIVE_SYMBOL, sham: !DESCRIPTORS }, {
   // `Object.create` method
-  // https://tc39.github.io/ecma262/#sec-object.create
+  // https://tc39.es/ecma262/#sec-object.create
   create: $create,
   // `Object.defineProperty` method
-  // https://tc39.github.io/ecma262/#sec-object.defineproperty
+  // https://tc39.es/ecma262/#sec-object.defineproperty
   defineProperty: $defineProperty,
   // `Object.defineProperties` method
-  // https://tc39.github.io/ecma262/#sec-object.defineproperties
+  // https://tc39.es/ecma262/#sec-object.defineproperties
   defineProperties: $defineProperties,
   // `Object.getOwnPropertyDescriptor` method
-  // https://tc39.github.io/ecma262/#sec-object.getownpropertydescriptors
+  // https://tc39.es/ecma262/#sec-object.getownpropertydescriptors
   getOwnPropertyDescriptor: $getOwnPropertyDescriptor
 });
 
 $({ target: 'Object', stat: true, forced: !NATIVE_SYMBOL }, {
   // `Object.getOwnPropertyNames` method
-  // https://tc39.github.io/ecma262/#sec-object.getownpropertynames
+  // https://tc39.es/ecma262/#sec-object.getownpropertynames
   getOwnPropertyNames: $getOwnPropertyNames,
   // `Object.getOwnPropertySymbols` method
-  // https://tc39.github.io/ecma262/#sec-object.getownpropertysymbols
+  // https://tc39.es/ecma262/#sec-object.getownpropertysymbols
   getOwnPropertySymbols: $getOwnPropertySymbols
 });
 
@@ -3510,7 +4517,7 @@ $({ target: 'Object', stat: true, forced: fails(function () { getOwnPropertySymb
 });
 
 // `JSON.stringify` method behavior with symbols
-// https://tc39.github.io/ecma262/#sec-json.stringify
+// https://tc39.es/ecma262/#sec-json.stringify
 if ($stringify) {
   var FORCED_JSON_STRINGIFY = !NATIVE_SYMBOL || fails(function () {
     var symbol = $Symbol();
@@ -3523,7 +4530,7 @@ if ($stringify) {
   });
 
   $({ target: 'JSON', stat: true, forced: FORCED_JSON_STRINGIFY }, {
-    // eslint-disable-next-line no-unused-vars
+    // eslint-disable-next-line no-unused-vars -- required for `.length`
     stringify: function stringify(it, replacer, space) {
       var args = [it];
       var index = 1;
@@ -3542,39 +4549,41 @@ if ($stringify) {
 }
 
 // `Symbol.prototype[@@toPrimitive]` method
-// https://tc39.github.io/ecma262/#sec-symbol.prototype-@@toprimitive
+// https://tc39.es/ecma262/#sec-symbol.prototype-@@toprimitive
 if (!$Symbol[PROTOTYPE][TO_PRIMITIVE]) {
   createNonEnumerableProperty($Symbol[PROTOTYPE], TO_PRIMITIVE, $Symbol[PROTOTYPE].valueOf);
 }
 // `Symbol.prototype[@@toStringTag]` property
-// https://tc39.github.io/ecma262/#sec-symbol.prototype-@@tostringtag
+// https://tc39.es/ecma262/#sec-symbol.prototype-@@tostringtag
 setToStringTag($Symbol, SYMBOL);
 
 hiddenKeys[HIDDEN] = true;
 
 
 /***/ }),
-/* 112 */
+/* 128 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var internalObjectKeys = __webpack_require__(69);
-var enumBugKeys = __webpack_require__(72);
+var internalObjectKeys = __webpack_require__(62);
+var enumBugKeys = __webpack_require__(67);
 
 var hiddenKeys = enumBugKeys.concat('length', 'prototype');
 
 // `Object.getOwnPropertyNames` method
-// https://tc39.github.io/ecma262/#sec-object.getownpropertynames
+// https://tc39.es/ecma262/#sec-object.getownpropertynames
+// eslint-disable-next-line es/no-object-getownpropertynames -- safe
 exports.f = Object.getOwnPropertyNames || function getOwnPropertyNames(O) {
   return internalObjectKeys(O, hiddenKeys);
 };
 
 
 /***/ }),
-/* 113 */
+/* 129 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var toIndexedObject = __webpack_require__(15);
-var nativeGetOwnPropertyNames = __webpack_require__(112).f;
+/* eslint-disable es/no-object-getownpropertynames -- safe */
+var toIndexedObject = __webpack_require__(14);
+var $getOwnPropertyNames = __webpack_require__(128).f;
 
 var toString = {}.toString;
 
@@ -3583,7 +4592,7 @@ var windowNames = typeof window == 'object' && window && Object.getOwnPropertyNa
 
 var getWindowNames = function (it) {
   try {
-    return nativeGetOwnPropertyNames(it);
+    return $getOwnPropertyNames(it);
   } catch (error) {
     return windowNames.slice();
   }
@@ -3593,1189 +4602,289 @@ var getWindowNames = function (it) {
 module.exports.f = function getOwnPropertyNames(it) {
   return windowNames && toString.call(it) == '[object Window]'
     ? getWindowNames(it)
-    : nativeGetOwnPropertyNames(toIndexedObject(it));
+    : $getOwnPropertyNames(toIndexedObject(it));
 };
 
 
 /***/ }),
-/* 114 */
+/* 130 */
 /***/ (function(module, exports) {
 
+// eslint-disable-next-line es/no-object-getownpropertysymbols -- safe
 exports.f = Object.getOwnPropertySymbols;
 
-
-/***/ }),
-/* 115 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var defineWellKnownSymbol = __webpack_require__(103);
-
-// `Symbol.asyncIterator` well-known symbol
-// https://tc39.github.io/ecma262/#sec-symbol.asynciterator
-defineWellKnownSymbol('asyncIterator');
-
-
-/***/ }),
-/* 116 */
-/***/ (function(module, exports) {
-
-// empty
-
-
-/***/ }),
-/* 117 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var defineWellKnownSymbol = __webpack_require__(103);
-
-// `Symbol.hasInstance` well-known symbol
-// https://tc39.github.io/ecma262/#sec-symbol.hasinstance
-defineWellKnownSymbol('hasInstance');
-
-
-/***/ }),
-/* 118 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var defineWellKnownSymbol = __webpack_require__(103);
-
-// `Symbol.isConcatSpreadable` well-known symbol
-// https://tc39.github.io/ecma262/#sec-symbol.isconcatspreadable
-defineWellKnownSymbol('isConcatSpreadable');
-
-
-/***/ }),
-/* 119 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var defineWellKnownSymbol = __webpack_require__(103);
-
-// `Symbol.match` well-known symbol
-// https://tc39.github.io/ecma262/#sec-symbol.match
-defineWellKnownSymbol('match');
-
-
-/***/ }),
-/* 120 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var defineWellKnownSymbol = __webpack_require__(103);
-
-// `Symbol.matchAll` well-known symbol
-defineWellKnownSymbol('matchAll');
-
-
-/***/ }),
-/* 121 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var defineWellKnownSymbol = __webpack_require__(103);
-
-// `Symbol.replace` well-known symbol
-// https://tc39.github.io/ecma262/#sec-symbol.replace
-defineWellKnownSymbol('replace');
-
-
-/***/ }),
-/* 122 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var defineWellKnownSymbol = __webpack_require__(103);
-
-// `Symbol.search` well-known symbol
-// https://tc39.github.io/ecma262/#sec-symbol.search
-defineWellKnownSymbol('search');
-
-
-/***/ }),
-/* 123 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var defineWellKnownSymbol = __webpack_require__(103);
-
-// `Symbol.species` well-known symbol
-// https://tc39.github.io/ecma262/#sec-symbol.species
-defineWellKnownSymbol('species');
-
-
-/***/ }),
-/* 124 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var defineWellKnownSymbol = __webpack_require__(103);
-
-// `Symbol.split` well-known symbol
-// https://tc39.github.io/ecma262/#sec-symbol.split
-defineWellKnownSymbol('split');
-
-
-/***/ }),
-/* 125 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var defineWellKnownSymbol = __webpack_require__(103);
-
-// `Symbol.toPrimitive` well-known symbol
-// https://tc39.github.io/ecma262/#sec-symbol.toprimitive
-defineWellKnownSymbol('toPrimitive');
-
-
-/***/ }),
-/* 126 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var defineWellKnownSymbol = __webpack_require__(103);
-
-// `Symbol.toStringTag` well-known symbol
-// https://tc39.github.io/ecma262/#sec-symbol.tostringtag
-defineWellKnownSymbol('toStringTag');
-
-
-/***/ }),
-/* 127 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var defineWellKnownSymbol = __webpack_require__(103);
-
-// `Symbol.unscopables` well-known symbol
-// https://tc39.github.io/ecma262/#sec-symbol.unscopables
-defineWellKnownSymbol('unscopables');
-
-
-/***/ }),
-/* 128 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var setToStringTag = __webpack_require__(74);
-
-// Math[@@toStringTag] property
-// https://tc39.github.io/ecma262/#sec-math-@@tostringtag
-setToStringTag(Math, 'Math', true);
-
-
-/***/ }),
-/* 129 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var global = __webpack_require__(8);
-var setToStringTag = __webpack_require__(74);
-
-// JSON[@@toStringTag] property
-// https://tc39.github.io/ecma262/#sec-json-@@tostringtag
-setToStringTag(global.JSON, 'JSON', true);
-
-
-/***/ }),
-/* 130 */
-/***/ (function(module, exports, __webpack_require__) {
-
-module.exports = __webpack_require__(131);
 
 /***/ }),
 /* 131 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var parent = __webpack_require__(132);
+var wellKnownSymbol = __webpack_require__(52);
 
-module.exports = parent;
+exports.f = wellKnownSymbol;
 
 
 /***/ }),
 /* 132 */
 /***/ (function(module, exports, __webpack_require__) {
 
-__webpack_require__(110);
-__webpack_require__(105);
-__webpack_require__(52);
-__webpack_require__(133);
-__webpack_require__(151);
-__webpack_require__(152);
-var path = __webpack_require__(25);
+var path = __webpack_require__(24);
+var has = __webpack_require__(20);
+var wrappedWellKnownSymbolModule = __webpack_require__(131);
+var defineProperty = __webpack_require__(28).f;
 
-module.exports = path.Promise;
+module.exports = function (NAME) {
+  var Symbol = path.Symbol || (path.Symbol = {});
+  if (!has(Symbol, NAME)) defineProperty(Symbol, NAME, {
+    value: wrappedWellKnownSymbolModule.f(NAME)
+  });
+};
 
 
 /***/ }),
 /* 133 */
 /***/ (function(module, exports, __webpack_require__) {
 
-"use strict";
+var defineWellKnownSymbol = __webpack_require__(132);
 
-var $ = __webpack_require__(7);
-var IS_PURE = __webpack_require__(39);
-var global = __webpack_require__(8);
-var getBuiltIn = __webpack_require__(48);
-var NativePromise = __webpack_require__(134);
-var redefine = __webpack_require__(80);
-var redefineAll = __webpack_require__(135);
-var setToStringTag = __webpack_require__(74);
-var setSpecies = __webpack_require__(136);
-var isObject = __webpack_require__(20);
-var aFunction = __webpack_require__(27);
-var anInstance = __webpack_require__(137);
-var classof = __webpack_require__(17);
-var inspectSource = __webpack_require__(58);
-var iterate = __webpack_require__(138);
-var checkCorrectnessOfIteration = __webpack_require__(142);
-var speciesConstructor = __webpack_require__(143);
-var task = __webpack_require__(144).set;
-var microtask = __webpack_require__(146);
-var promiseResolve = __webpack_require__(147);
-var hostReportErrors = __webpack_require__(149);
-var newPromiseCapabilityModule = __webpack_require__(148);
-var perform = __webpack_require__(150);
-var InternalStateModule = __webpack_require__(56);
-var isForced = __webpack_require__(24);
-var wellKnownSymbol = __webpack_require__(37);
-var V8_VERSION = __webpack_require__(46);
-
-var SPECIES = wellKnownSymbol('species');
-var PROMISE = 'Promise';
-var getInternalState = InternalStateModule.get;
-var setInternalState = InternalStateModule.set;
-var getInternalPromiseState = InternalStateModule.getterFor(PROMISE);
-var PromiseConstructor = NativePromise;
-var TypeError = global.TypeError;
-var document = global.document;
-var process = global.process;
-var $fetch = getBuiltIn('fetch');
-var newPromiseCapability = newPromiseCapabilityModule.f;
-var newGenericPromiseCapability = newPromiseCapability;
-var IS_NODE = classof(process) == 'process';
-var DISPATCH_EVENT = !!(document && document.createEvent && global.dispatchEvent);
-var UNHANDLED_REJECTION = 'unhandledrejection';
-var REJECTION_HANDLED = 'rejectionhandled';
-var PENDING = 0;
-var FULFILLED = 1;
-var REJECTED = 2;
-var HANDLED = 1;
-var UNHANDLED = 2;
-var Internal, OwnPromiseCapability, PromiseWrapper, nativeThen;
-
-var FORCED = isForced(PROMISE, function () {
-  var GLOBAL_CORE_JS_PROMISE = inspectSource(PromiseConstructor) !== String(PromiseConstructor);
-  if (!GLOBAL_CORE_JS_PROMISE) {
-    // V8 6.6 (Node 10 and Chrome 66) have a bug with resolving custom thenables
-    // https://bugs.chromium.org/p/chromium/issues/detail?id=830565
-    // We can't detect it synchronously, so just check versions
-    if (V8_VERSION === 66) return true;
-    // Unhandled rejections tracking support, NodeJS Promise without it fails @@species test
-    if (!IS_NODE && typeof PromiseRejectionEvent != 'function') return true;
-  }
-  // We need Promise#finally in the pure version for preventing prototype pollution
-  if (IS_PURE && !PromiseConstructor.prototype['finally']) return true;
-  // We can't use @@species feature detection in V8 since it causes
-  // deoptimization and performance degradation
-  // https://github.com/zloirock/core-js/issues/679
-  if (V8_VERSION >= 51 && /native code/.test(PromiseConstructor)) return false;
-  // Detect correctness of subclassing with @@species support
-  var promise = PromiseConstructor.resolve(1);
-  var FakePromise = function (exec) {
-    exec(function () { /* empty */ }, function () { /* empty */ });
-  };
-  var constructor = promise.constructor = {};
-  constructor[SPECIES] = FakePromise;
-  return !(promise.then(function () { /* empty */ }) instanceof FakePromise);
-});
-
-var INCORRECT_ITERATION = FORCED || !checkCorrectnessOfIteration(function (iterable) {
-  PromiseConstructor.all(iterable)['catch'](function () { /* empty */ });
-});
-
-// helpers
-var isThenable = function (it) {
-  var then;
-  return isObject(it) && typeof (then = it.then) == 'function' ? then : false;
-};
-
-var notify = function (promise, state, isReject) {
-  if (state.notified) return;
-  state.notified = true;
-  var chain = state.reactions;
-  microtask(function () {
-    var value = state.value;
-    var ok = state.state == FULFILLED;
-    var index = 0;
-    // variable length - can't use forEach
-    while (chain.length > index) {
-      var reaction = chain[index++];
-      var handler = ok ? reaction.ok : reaction.fail;
-      var resolve = reaction.resolve;
-      var reject = reaction.reject;
-      var domain = reaction.domain;
-      var result, then, exited;
-      try {
-        if (handler) {
-          if (!ok) {
-            if (state.rejection === UNHANDLED) onHandleUnhandled(promise, state);
-            state.rejection = HANDLED;
-          }
-          if (handler === true) result = value;
-          else {
-            if (domain) domain.enter();
-            result = handler(value); // can throw
-            if (domain) {
-              domain.exit();
-              exited = true;
-            }
-          }
-          if (result === reaction.promise) {
-            reject(TypeError('Promise-chain cycle'));
-          } else if (then = isThenable(result)) {
-            then.call(result, resolve, reject);
-          } else resolve(result);
-        } else reject(value);
-      } catch (error) {
-        if (domain && !exited) domain.exit();
-        reject(error);
-      }
-    }
-    state.reactions = [];
-    state.notified = false;
-    if (isReject && !state.rejection) onUnhandled(promise, state);
-  });
-};
-
-var dispatchEvent = function (name, promise, reason) {
-  var event, handler;
-  if (DISPATCH_EVENT) {
-    event = document.createEvent('Event');
-    event.promise = promise;
-    event.reason = reason;
-    event.initEvent(name, false, true);
-    global.dispatchEvent(event);
-  } else event = { promise: promise, reason: reason };
-  if (handler = global['on' + name]) handler(event);
-  else if (name === UNHANDLED_REJECTION) hostReportErrors('Unhandled promise rejection', reason);
-};
-
-var onUnhandled = function (promise, state) {
-  task.call(global, function () {
-    var value = state.value;
-    var IS_UNHANDLED = isUnhandled(state);
-    var result;
-    if (IS_UNHANDLED) {
-      result = perform(function () {
-        if (IS_NODE) {
-          process.emit('unhandledRejection', value, promise);
-        } else dispatchEvent(UNHANDLED_REJECTION, promise, value);
-      });
-      // Browsers should not trigger `rejectionHandled` event if it was handled here, NodeJS - should
-      state.rejection = IS_NODE || isUnhandled(state) ? UNHANDLED : HANDLED;
-      if (result.error) throw result.value;
-    }
-  });
-};
-
-var isUnhandled = function (state) {
-  return state.rejection !== HANDLED && !state.parent;
-};
-
-var onHandleUnhandled = function (promise, state) {
-  task.call(global, function () {
-    if (IS_NODE) {
-      process.emit('rejectionHandled', promise);
-    } else dispatchEvent(REJECTION_HANDLED, promise, state.value);
-  });
-};
-
-var bind = function (fn, promise, state, unwrap) {
-  return function (value) {
-    fn(promise, state, value, unwrap);
-  };
-};
-
-var internalReject = function (promise, state, value, unwrap) {
-  if (state.done) return;
-  state.done = true;
-  if (unwrap) state = unwrap;
-  state.value = value;
-  state.state = REJECTED;
-  notify(promise, state, true);
-};
-
-var internalResolve = function (promise, state, value, unwrap) {
-  if (state.done) return;
-  state.done = true;
-  if (unwrap) state = unwrap;
-  try {
-    if (promise === value) throw TypeError("Promise can't be resolved itself");
-    var then = isThenable(value);
-    if (then) {
-      microtask(function () {
-        var wrapper = { done: false };
-        try {
-          then.call(value,
-            bind(internalResolve, promise, wrapper, state),
-            bind(internalReject, promise, wrapper, state)
-          );
-        } catch (error) {
-          internalReject(promise, wrapper, error, state);
-        }
-      });
-    } else {
-      state.value = value;
-      state.state = FULFILLED;
-      notify(promise, state, false);
-    }
-  } catch (error) {
-    internalReject(promise, { done: false }, error, state);
-  }
-};
-
-// constructor polyfill
-if (FORCED) {
-  // 25.4.3.1 Promise(executor)
-  PromiseConstructor = function Promise(executor) {
-    anInstance(this, PromiseConstructor, PROMISE);
-    aFunction(executor);
-    Internal.call(this);
-    var state = getInternalState(this);
-    try {
-      executor(bind(internalResolve, this, state), bind(internalReject, this, state));
-    } catch (error) {
-      internalReject(this, state, error);
-    }
-  };
-  // eslint-disable-next-line no-unused-vars
-  Internal = function Promise(executor) {
-    setInternalState(this, {
-      type: PROMISE,
-      done: false,
-      notified: false,
-      parent: false,
-      reactions: [],
-      rejection: false,
-      state: PENDING,
-      value: undefined
-    });
-  };
-  Internal.prototype = redefineAll(PromiseConstructor.prototype, {
-    // `Promise.prototype.then` method
-    // https://tc39.github.io/ecma262/#sec-promise.prototype.then
-    then: function then(onFulfilled, onRejected) {
-      var state = getInternalPromiseState(this);
-      var reaction = newPromiseCapability(speciesConstructor(this, PromiseConstructor));
-      reaction.ok = typeof onFulfilled == 'function' ? onFulfilled : true;
-      reaction.fail = typeof onRejected == 'function' && onRejected;
-      reaction.domain = IS_NODE ? process.domain : undefined;
-      state.parent = true;
-      state.reactions.push(reaction);
-      if (state.state != PENDING) notify(this, state, false);
-      return reaction.promise;
-    },
-    // `Promise.prototype.catch` method
-    // https://tc39.github.io/ecma262/#sec-promise.prototype.catch
-    'catch': function (onRejected) {
-      return this.then(undefined, onRejected);
-    }
-  });
-  OwnPromiseCapability = function () {
-    var promise = new Internal();
-    var state = getInternalState(promise);
-    this.promise = promise;
-    this.resolve = bind(internalResolve, promise, state);
-    this.reject = bind(internalReject, promise, state);
-  };
-  newPromiseCapabilityModule.f = newPromiseCapability = function (C) {
-    return C === PromiseConstructor || C === PromiseWrapper
-      ? new OwnPromiseCapability(C)
-      : newGenericPromiseCapability(C);
-  };
-
-  if (!IS_PURE && typeof NativePromise == 'function') {
-    nativeThen = NativePromise.prototype.then;
-
-    // wrap native Promise#then for native async functions
-    redefine(NativePromise.prototype, 'then', function then(onFulfilled, onRejected) {
-      var that = this;
-      return new PromiseConstructor(function (resolve, reject) {
-        nativeThen.call(that, resolve, reject);
-      }).then(onFulfilled, onRejected);
-    // https://github.com/zloirock/core-js/issues/640
-    }, { unsafe: true });
-
-    // wrap fetch result
-    if (typeof $fetch == 'function') $({ global: true, enumerable: true, forced: true }, {
-      // eslint-disable-next-line no-unused-vars
-      fetch: function fetch(input /* , init */) {
-        return promiseResolve(PromiseConstructor, $fetch.apply(global, arguments));
-      }
-    });
-  }
-}
-
-$({ global: true, wrap: true, forced: FORCED }, {
-  Promise: PromiseConstructor
-});
-
-setToStringTag(PromiseConstructor, PROMISE, false, true);
-setSpecies(PROMISE);
-
-PromiseWrapper = getBuiltIn(PROMISE);
-
-// statics
-$({ target: PROMISE, stat: true, forced: FORCED }, {
-  // `Promise.reject` method
-  // https://tc39.github.io/ecma262/#sec-promise.reject
-  reject: function reject(r) {
-    var capability = newPromiseCapability(this);
-    capability.reject.call(undefined, r);
-    return capability.promise;
-  }
-});
-
-$({ target: PROMISE, stat: true, forced: IS_PURE || FORCED }, {
-  // `Promise.resolve` method
-  // https://tc39.github.io/ecma262/#sec-promise.resolve
-  resolve: function resolve(x) {
-    return promiseResolve(IS_PURE && this === PromiseWrapper ? PromiseConstructor : this, x);
-  }
-});
-
-$({ target: PROMISE, stat: true, forced: INCORRECT_ITERATION }, {
-  // `Promise.all` method
-  // https://tc39.github.io/ecma262/#sec-promise.all
-  all: function all(iterable) {
-    var C = this;
-    var capability = newPromiseCapability(C);
-    var resolve = capability.resolve;
-    var reject = capability.reject;
-    var result = perform(function () {
-      var $promiseResolve = aFunction(C.resolve);
-      var values = [];
-      var counter = 0;
-      var remaining = 1;
-      iterate(iterable, function (promise) {
-        var index = counter++;
-        var alreadyCalled = false;
-        values.push(undefined);
-        remaining++;
-        $promiseResolve.call(C, promise).then(function (value) {
-          if (alreadyCalled) return;
-          alreadyCalled = true;
-          values[index] = value;
-          --remaining || resolve(values);
-        }, reject);
-      });
-      --remaining || resolve(values);
-    });
-    if (result.error) reject(result.value);
-    return capability.promise;
-  },
-  // `Promise.race` method
-  // https://tc39.github.io/ecma262/#sec-promise.race
-  race: function race(iterable) {
-    var C = this;
-    var capability = newPromiseCapability(C);
-    var reject = capability.reject;
-    var result = perform(function () {
-      var $promiseResolve = aFunction(C.resolve);
-      iterate(iterable, function (promise) {
-        $promiseResolve.call(C, promise).then(capability.resolve, reject);
-      });
-    });
-    if (result.error) reject(result.value);
-    return capability.promise;
-  }
-});
+// `Symbol.asyncIterator` well-known symbol
+// https://tc39.es/ecma262/#sec-symbol.asynciterator
+defineWellKnownSymbol('asyncIterator');
 
 
 /***/ }),
 /* 134 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ (function(module, exports) {
 
-var global = __webpack_require__(8);
-
-module.exports = global.Promise;
+// empty
 
 
 /***/ }),
 /* 135 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var redefine = __webpack_require__(80);
+var defineWellKnownSymbol = __webpack_require__(132);
 
-module.exports = function (target, src, options) {
-  for (var key in src) {
-    if (options && options.unsafe && target[key]) target[key] = src[key];
-    else redefine(target, key, src[key], options);
-  } return target;
-};
+// `Symbol.hasInstance` well-known symbol
+// https://tc39.es/ecma262/#sec-symbol.hasinstance
+defineWellKnownSymbol('hasInstance');
 
 
 /***/ }),
 /* 136 */
 /***/ (function(module, exports, __webpack_require__) {
 
-"use strict";
+var defineWellKnownSymbol = __webpack_require__(132);
 
-var getBuiltIn = __webpack_require__(48);
-var definePropertyModule = __webpack_require__(29);
-var wellKnownSymbol = __webpack_require__(37);
-var DESCRIPTORS = __webpack_require__(11);
-
-var SPECIES = wellKnownSymbol('species');
-
-module.exports = function (CONSTRUCTOR_NAME) {
-  var Constructor = getBuiltIn(CONSTRUCTOR_NAME);
-  var defineProperty = definePropertyModule.f;
-
-  if (DESCRIPTORS && Constructor && !Constructor[SPECIES]) {
-    defineProperty(Constructor, SPECIES, {
-      configurable: true,
-      get: function () { return this; }
-    });
-  }
-};
+// `Symbol.isConcatSpreadable` well-known symbol
+// https://tc39.es/ecma262/#sec-symbol.isconcatspreadable
+defineWellKnownSymbol('isConcatSpreadable');
 
 
 /***/ }),
 /* 137 */
-/***/ (function(module, exports) {
+/***/ (function(module, exports, __webpack_require__) {
 
-module.exports = function (it, Constructor, name) {
-  if (!(it instanceof Constructor)) {
-    throw TypeError('Incorrect ' + (name ? name + ' ' : '') + 'invocation');
-  } return it;
-};
+var defineWellKnownSymbol = __webpack_require__(132);
+
+// `Symbol.iterator` well-known symbol
+// https://tc39.es/ecma262/#sec-symbol.iterator
+defineWellKnownSymbol('iterator');
 
 
 /***/ }),
 /* 138 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var anObject = __webpack_require__(30);
-var isArrayIteratorMethod = __webpack_require__(139);
-var toLength = __webpack_require__(33);
-var bind = __webpack_require__(26);
-var getIteratorMethod = __webpack_require__(140);
-var callWithSafeIterationClosing = __webpack_require__(141);
+var defineWellKnownSymbol = __webpack_require__(132);
 
-var Result = function (stopped, result) {
-  this.stopped = stopped;
-  this.result = result;
-};
-
-var iterate = module.exports = function (iterable, fn, that, AS_ENTRIES, IS_ITERATOR) {
-  var boundFunction = bind(fn, that, AS_ENTRIES ? 2 : 1);
-  var iterator, iterFn, index, length, result, next, step;
-
-  if (IS_ITERATOR) {
-    iterator = iterable;
-  } else {
-    iterFn = getIteratorMethod(iterable);
-    if (typeof iterFn != 'function') throw TypeError('Target is not iterable');
-    // optimisation for array iterators
-    if (isArrayIteratorMethod(iterFn)) {
-      for (index = 0, length = toLength(iterable.length); length > index; index++) {
-        result = AS_ENTRIES
-          ? boundFunction(anObject(step = iterable[index])[0], step[1])
-          : boundFunction(iterable[index]);
-        if (result && result instanceof Result) return result;
-      } return new Result(false);
-    }
-    iterator = iterFn.call(iterable);
-  }
-
-  next = iterator.next;
-  while (!(step = next.call(iterator)).done) {
-    result = callWithSafeIterationClosing(iterator, boundFunction, step.value, AS_ENTRIES);
-    if (typeof result == 'object' && result && result instanceof Result) return result;
-  } return new Result(false);
-};
-
-iterate.stop = function (result) {
-  return new Result(true, result);
-};
+// `Symbol.match` well-known symbol
+// https://tc39.es/ecma262/#sec-symbol.match
+defineWellKnownSymbol('match');
 
 
 /***/ }),
 /* 139 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var wellKnownSymbol = __webpack_require__(37);
-var Iterators = __webpack_require__(55);
+var defineWellKnownSymbol = __webpack_require__(132);
 
-var ITERATOR = wellKnownSymbol('iterator');
-var ArrayPrototype = Array.prototype;
-
-// check on default Array iterator
-module.exports = function (it) {
-  return it !== undefined && (Iterators.Array === it || ArrayPrototype[ITERATOR] === it);
-};
+// `Symbol.matchAll` well-known symbol
+// https://tc39.es/ecma262/#sec-symbol.matchall
+defineWellKnownSymbol('matchAll');
 
 
 /***/ }),
 /* 140 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var classof = __webpack_require__(77);
-var Iterators = __webpack_require__(55);
-var wellKnownSymbol = __webpack_require__(37);
+var defineWellKnownSymbol = __webpack_require__(132);
 
-var ITERATOR = wellKnownSymbol('iterator');
-
-module.exports = function (it) {
-  if (it != undefined) return it[ITERATOR]
-    || it['@@iterator']
-    || Iterators[classof(it)];
-};
+// `Symbol.replace` well-known symbol
+// https://tc39.es/ecma262/#sec-symbol.replace
+defineWellKnownSymbol('replace');
 
 
 /***/ }),
 /* 141 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var anObject = __webpack_require__(30);
+var defineWellKnownSymbol = __webpack_require__(132);
 
-// call something on iterator step with safe closing on error
-module.exports = function (iterator, fn, value, ENTRIES) {
-  try {
-    return ENTRIES ? fn(anObject(value)[0], value[1]) : fn(value);
-  // 7.4.6 IteratorClose(iterator, completion)
-  } catch (error) {
-    var returnMethod = iterator['return'];
-    if (returnMethod !== undefined) anObject(returnMethod.call(iterator));
-    throw error;
-  }
-};
+// `Symbol.search` well-known symbol
+// https://tc39.es/ecma262/#sec-symbol.search
+defineWellKnownSymbol('search');
 
 
 /***/ }),
 /* 142 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var wellKnownSymbol = __webpack_require__(37);
+var defineWellKnownSymbol = __webpack_require__(132);
 
-var ITERATOR = wellKnownSymbol('iterator');
-var SAFE_CLOSING = false;
-
-try {
-  var called = 0;
-  var iteratorWithReturn = {
-    next: function () {
-      return { done: !!called++ };
-    },
-    'return': function () {
-      SAFE_CLOSING = true;
-    }
-  };
-  iteratorWithReturn[ITERATOR] = function () {
-    return this;
-  };
-  // eslint-disable-next-line no-throw-literal
-  Array.from(iteratorWithReturn, function () { throw 2; });
-} catch (error) { /* empty */ }
-
-module.exports = function (exec, SKIP_CLOSING) {
-  if (!SKIP_CLOSING && !SAFE_CLOSING) return false;
-  var ITERATION_SUPPORT = false;
-  try {
-    var object = {};
-    object[ITERATOR] = function () {
-      return {
-        next: function () {
-          return { done: ITERATION_SUPPORT = true };
-        }
-      };
-    };
-    exec(object);
-  } catch (error) { /* empty */ }
-  return ITERATION_SUPPORT;
-};
+// `Symbol.species` well-known symbol
+// https://tc39.es/ecma262/#sec-symbol.species
+defineWellKnownSymbol('species');
 
 
 /***/ }),
 /* 143 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var anObject = __webpack_require__(30);
-var aFunction = __webpack_require__(27);
-var wellKnownSymbol = __webpack_require__(37);
+var defineWellKnownSymbol = __webpack_require__(132);
 
-var SPECIES = wellKnownSymbol('species');
-
-// `SpeciesConstructor` abstract operation
-// https://tc39.github.io/ecma262/#sec-speciesconstructor
-module.exports = function (O, defaultConstructor) {
-  var C = anObject(O).constructor;
-  var S;
-  return C === undefined || (S = anObject(C)[SPECIES]) == undefined ? defaultConstructor : aFunction(S);
-};
+// `Symbol.split` well-known symbol
+// https://tc39.es/ecma262/#sec-symbol.split
+defineWellKnownSymbol('split');
 
 
 /***/ }),
 /* 144 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var global = __webpack_require__(8);
-var fails = __webpack_require__(12);
-var classof = __webpack_require__(17);
-var bind = __webpack_require__(26);
-var html = __webpack_require__(73);
-var createElement = __webpack_require__(23);
-var IS_IOS = __webpack_require__(145);
+var defineWellKnownSymbol = __webpack_require__(132);
 
-var location = global.location;
-var set = global.setImmediate;
-var clear = global.clearImmediate;
-var process = global.process;
-var MessageChannel = global.MessageChannel;
-var Dispatch = global.Dispatch;
-var counter = 0;
-var queue = {};
-var ONREADYSTATECHANGE = 'onreadystatechange';
-var defer, channel, port;
-
-var run = function (id) {
-  // eslint-disable-next-line no-prototype-builtins
-  if (queue.hasOwnProperty(id)) {
-    var fn = queue[id];
-    delete queue[id];
-    fn();
-  }
-};
-
-var runner = function (id) {
-  return function () {
-    run(id);
-  };
-};
-
-var listener = function (event) {
-  run(event.data);
-};
-
-var post = function (id) {
-  // old engines have not location.origin
-  global.postMessage(id + '', location.protocol + '//' + location.host);
-};
-
-// Node.js 0.9+ & IE10+ has setImmediate, otherwise:
-if (!set || !clear) {
-  set = function setImmediate(fn) {
-    var args = [];
-    var i = 1;
-    while (arguments.length > i) args.push(arguments[i++]);
-    queue[++counter] = function () {
-      // eslint-disable-next-line no-new-func
-      (typeof fn == 'function' ? fn : Function(fn)).apply(undefined, args);
-    };
-    defer(counter);
-    return counter;
-  };
-  clear = function clearImmediate(id) {
-    delete queue[id];
-  };
-  // Node.js 0.8-
-  if (classof(process) == 'process') {
-    defer = function (id) {
-      process.nextTick(runner(id));
-    };
-  // Sphere (JS game engine) Dispatch API
-  } else if (Dispatch && Dispatch.now) {
-    defer = function (id) {
-      Dispatch.now(runner(id));
-    };
-  // Browsers with MessageChannel, includes WebWorkers
-  // except iOS - https://github.com/zloirock/core-js/issues/624
-  } else if (MessageChannel && !IS_IOS) {
-    channel = new MessageChannel();
-    port = channel.port2;
-    channel.port1.onmessage = listener;
-    defer = bind(port.postMessage, port, 1);
-  // Browsers with postMessage, skip WebWorkers
-  // IE8 has postMessage, but it's sync & typeof its postMessage is 'object'
-  } else if (
-    global.addEventListener &&
-    typeof postMessage == 'function' &&
-    !global.importScripts &&
-    !fails(post) &&
-    location.protocol !== 'file:'
-  ) {
-    defer = post;
-    global.addEventListener('message', listener, false);
-  // IE8-
-  } else if (ONREADYSTATECHANGE in createElement('script')) {
-    defer = function (id) {
-      html.appendChild(createElement('script'))[ONREADYSTATECHANGE] = function () {
-        html.removeChild(this);
-        run(id);
-      };
-    };
-  // Rest old browsers
-  } else {
-    defer = function (id) {
-      setTimeout(runner(id), 0);
-    };
-  }
-}
-
-module.exports = {
-  set: set,
-  clear: clear
-};
+// `Symbol.toPrimitive` well-known symbol
+// https://tc39.es/ecma262/#sec-symbol.toprimitive
+defineWellKnownSymbol('toPrimitive');
 
 
 /***/ }),
 /* 145 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var userAgent = __webpack_require__(47);
+var defineWellKnownSymbol = __webpack_require__(132);
 
-module.exports = /(iphone|ipod|ipad).*applewebkit/i.test(userAgent);
+// `Symbol.toStringTag` well-known symbol
+// https://tc39.es/ecma262/#sec-symbol.tostringtag
+defineWellKnownSymbol('toStringTag');
 
 
 /***/ }),
 /* 146 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var global = __webpack_require__(8);
-var getOwnPropertyDescriptor = __webpack_require__(10).f;
-var classof = __webpack_require__(17);
-var macrotask = __webpack_require__(144).set;
-var IS_IOS = __webpack_require__(145);
+var defineWellKnownSymbol = __webpack_require__(132);
 
-var MutationObserver = global.MutationObserver || global.WebKitMutationObserver;
-var process = global.process;
-var Promise = global.Promise;
-var IS_NODE = classof(process) == 'process';
-// Node.js 11 shows ExperimentalWarning on getting `queueMicrotask`
-var queueMicrotaskDescriptor = getOwnPropertyDescriptor(global, 'queueMicrotask');
-var queueMicrotask = queueMicrotaskDescriptor && queueMicrotaskDescriptor.value;
-
-var flush, head, last, notify, toggle, node, promise, then;
-
-// modern engines have queueMicrotask method
-if (!queueMicrotask) {
-  flush = function () {
-    var parent, fn;
-    if (IS_NODE && (parent = process.domain)) parent.exit();
-    while (head) {
-      fn = head.fn;
-      head = head.next;
-      try {
-        fn();
-      } catch (error) {
-        if (head) notify();
-        else last = undefined;
-        throw error;
-      }
-    } last = undefined;
-    if (parent) parent.enter();
-  };
-
-  // Node.js
-  if (IS_NODE) {
-    notify = function () {
-      process.nextTick(flush);
-    };
-  // browsers with MutationObserver, except iOS - https://github.com/zloirock/core-js/issues/339
-  } else if (MutationObserver && !IS_IOS) {
-    toggle = true;
-    node = document.createTextNode('');
-    new MutationObserver(flush).observe(node, { characterData: true });
-    notify = function () {
-      node.data = toggle = !toggle;
-    };
-  // environments with maybe non-completely correct, but existent Promise
-  } else if (Promise && Promise.resolve) {
-    // Promise.resolve without an argument throws an error in LG WebOS 2
-    promise = Promise.resolve(undefined);
-    then = promise.then;
-    notify = function () {
-      then.call(promise, flush);
-    };
-  // for other environments - macrotask based on:
-  // - setImmediate
-  // - MessageChannel
-  // - window.postMessag
-  // - onreadystatechange
-  // - setTimeout
-  } else {
-    notify = function () {
-      // strange IE + webpack dev server bug - use .call(global)
-      macrotask.call(global, flush);
-    };
-  }
-}
-
-module.exports = queueMicrotask || function (fn) {
-  var task = { fn: fn, next: undefined };
-  if (last) last.next = task;
-  if (!head) {
-    head = task;
-    notify();
-  } last = task;
-};
+// `Symbol.unscopables` well-known symbol
+// https://tc39.es/ecma262/#sec-symbol.unscopables
+defineWellKnownSymbol('unscopables');
 
 
 /***/ }),
 /* 147 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var anObject = __webpack_require__(30);
-var isObject = __webpack_require__(20);
-var newPromiseCapability = __webpack_require__(148);
+var global = __webpack_require__(7);
+var setToStringTag = __webpack_require__(69);
 
-module.exports = function (C, x) {
-  anObject(C);
-  if (isObject(x) && x.constructor === C) return x;
-  var promiseCapability = newPromiseCapability.f(C);
-  var resolve = promiseCapability.resolve;
-  resolve(x);
-  return promiseCapability.promise;
-};
+// JSON[@@toStringTag] property
+// https://tc39.es/ecma262/#sec-json-@@tostringtag
+setToStringTag(global.JSON, 'JSON', true);
 
 
 /***/ }),
 /* 148 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ (function(module, exports) {
 
-"use strict";
-
-var aFunction = __webpack_require__(27);
-
-var PromiseCapability = function (C) {
-  var resolve, reject;
-  this.promise = new C(function ($$resolve, $$reject) {
-    if (resolve !== undefined || reject !== undefined) throw TypeError('Bad Promise constructor');
-    resolve = $$resolve;
-    reject = $$reject;
-  });
-  this.resolve = aFunction(resolve);
-  this.reject = aFunction(reject);
-};
-
-// 25.4.1.5 NewPromiseCapability(C)
-module.exports.f = function (C) {
-  return new PromiseCapability(C);
-};
+// empty
 
 
 /***/ }),
 /* 149 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ (function(module, exports) {
 
-var global = __webpack_require__(8);
-
-module.exports = function (a, b) {
-  var console = global.console;
-  if (console && console.error) {
-    arguments.length === 1 ? console.error(a) : console.error(a, b);
-  }
-};
+// empty
 
 
 /***/ }),
 /* 150 */
-/***/ (function(module, exports) {
+/***/ (function(module, exports, __webpack_require__) {
 
-module.exports = function (exec) {
-  try {
-    return { error: false, value: exec() };
-  } catch (error) {
-    return { error: true, value: error };
-  }
-};
-
+module.exports = __webpack_require__(151);
 
 /***/ }),
 /* 151 */
 /***/ (function(module, exports, __webpack_require__) {
 
-"use strict";
+var parent = __webpack_require__(152);
 
-var $ = __webpack_require__(7);
-var aFunction = __webpack_require__(27);
-var newPromiseCapabilityModule = __webpack_require__(148);
-var perform = __webpack_require__(150);
-var iterate = __webpack_require__(138);
-
-// `Promise.allSettled` method
-// https://github.com/tc39/proposal-promise-allSettled
-$({ target: 'Promise', stat: true }, {
-  allSettled: function allSettled(iterable) {
-    var C = this;
-    var capability = newPromiseCapabilityModule.f(C);
-    var resolve = capability.resolve;
-    var reject = capability.reject;
-    var result = perform(function () {
-      var promiseResolve = aFunction(C.resolve);
-      var values = [];
-      var counter = 0;
-      var remaining = 1;
-      iterate(iterable, function (promise) {
-        var index = counter++;
-        var alreadyCalled = false;
-        values.push(undefined);
-        remaining++;
-        promiseResolve.call(C, promise).then(function (value) {
-          if (alreadyCalled) return;
-          alreadyCalled = true;
-          values[index] = { status: 'fulfilled', value: value };
-          --remaining || resolve(values);
-        }, function (e) {
-          if (alreadyCalled) return;
-          alreadyCalled = true;
-          values[index] = { status: 'rejected', reason: e };
-          --remaining || resolve(values);
-        });
-      });
-      --remaining || resolve(values);
-    });
-    if (result.error) reject(result.value);
-    return capability.promise;
-  }
-});
+module.exports = parent;
 
 
 /***/ }),
 /* 152 */
 /***/ (function(module, exports, __webpack_require__) {
 
-"use strict";
+__webpack_require__(137);
+__webpack_require__(122);
+__webpack_require__(32);
+var WrappedWellKnownSymbolModule = __webpack_require__(131);
 
-var $ = __webpack_require__(7);
-var IS_PURE = __webpack_require__(39);
-var NativePromise = __webpack_require__(134);
-var fails = __webpack_require__(12);
-var getBuiltIn = __webpack_require__(48);
-var speciesConstructor = __webpack_require__(143);
-var promiseResolve = __webpack_require__(147);
-var redefine = __webpack_require__(80);
-
-// Safari bug https://bugs.webkit.org/show_bug.cgi?id=200829
-var NON_GENERIC = !!NativePromise && fails(function () {
-  NativePromise.prototype['finally'].call({ then: function () { /* empty */ } }, function () { /* empty */ });
-});
-
-// `Promise.prototype.finally` method
-// https://tc39.github.io/ecma262/#sec-promise.prototype.finally
-$({ target: 'Promise', proto: true, real: true, forced: NON_GENERIC }, {
-  'finally': function (onFinally) {
-    var C = speciesConstructor(this, getBuiltIn('Promise'));
-    var isFunction = typeof onFinally == 'function';
-    return this.then(
-      isFunction ? function (x) {
-        return promiseResolve(C, onFinally()).then(function () { return x; });
-      } : onFinally,
-      isFunction ? function (e) {
-        return promiseResolve(C, onFinally()).then(function () { throw e; });
-      } : onFinally
-    );
-  }
-});
-
-// patch native Promise.prototype for native async functions
-if (!IS_PURE && typeof NativePromise == 'function' && !NativePromise.prototype['finally']) {
-  redefine(NativePromise.prototype, 'finally', getBuiltIn('Promise').prototype['finally']);
-}
+module.exports = WrappedWellKnownSymbolModule.f('iterator');
 
 
 /***/ }),
 /* 153 */
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports = __webpack_require__(154);
+
+/***/ }),
+/* 154 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var parent = __webpack_require__(155);
+
+module.exports = parent;
+
+
+/***/ }),
+/* 155 */
+/***/ (function(module, exports, __webpack_require__) {
+
+__webpack_require__(156);
+var path = __webpack_require__(24);
+
+module.exports = path.Date.now;
+
+
+/***/ }),
+/* 156 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var $ = __webpack_require__(6);
+
+// `Date.now` method
+// https://tc39.es/ecma262/#sec-date.now
+$({ target: 'Date', stat: true }, {
+  now: function now() {
+    return new Date().getTime();
+  }
+});
+
+
+/***/ }),
+/* 157 */
 /***/ (function(module, exports, __webpack_require__) {
 
 
@@ -4805,23 +4914,119 @@ if (!IS_PURE && typeof NativePromise == 'function' && !NativePromise.prototype['
 
 var _interopRequireDefault = __webpack_require__(1);
 
-var _includes = _interopRequireDefault(__webpack_require__(154));
+var _defineProperty = _interopRequireDefault(__webpack_require__(2));
 
-var _now = _interopRequireDefault(__webpack_require__(95));
+var _stringify = _interopRequireDefault(__webpack_require__(158));
 
-var _defineProperty = _interopRequireDefault(__webpack_require__(89));
+var _now = _interopRequireDefault(__webpack_require__(153));
 
 (0, _defineProperty["default"])(exports, "__esModule", {
   value: true
 });
+exports.MethodChannelReceiveType = exports.NativeMethodChannelType = exports.FlutterMethodChannelType = void 0;
 
-var __1 = __webpack_require__(93);
+var BridgeManager_1 = __webpack_require__(162);
 
-var BridgeManager_1 = __webpack_require__(164);
+var UtilManager_1 = __webpack_require__(233);
 
-var UtilManager_1 = __webpack_require__(202);
+var Util_1 = __webpack_require__(173);
 
-var Util_1 = __webpack_require__(165);
+var ThreshApp_1 = __webpack_require__(94);
+
+var AppContainer_1 = __webpack_require__(210);
+/**
+ * JS 向 Flutter 发出消息的类型枚举
+ */
+
+
+var FlutterMethodChannelType;
+
+(function (FlutterMethodChannelType) {
+  try {
+    FlutterMethodChannelType["none"] = "";
+    FlutterMethodChannelType["setBundleDir"] = "setBundleDir";
+    FlutterMethodChannelType["devtools"] = "devtools";
+    FlutterMethodChannelType["bridgeRequest"] = "bridgeRequest";
+    FlutterMethodChannelType["onError"] = "onError"; // UI
+
+    FlutterMethodChannelType["mediaQuery"] = "mediaQuery";
+    FlutterMethodChannelType["setAppBarHeight"] = "setAppBarHeight";
+    FlutterMethodChannelType["pushPage"] = "pushPage";
+    FlutterMethodChannelType["popPage"] = "popPage";
+    FlutterMethodChannelType["showModal"] = "showModal";
+    FlutterMethodChannelType["showToast"] = "showToast";
+    FlutterMethodChannelType["hideToast"] = "hideToast";
+    FlutterMethodChannelType["updateWidget"] = "updateWidget";
+    FlutterMethodChannelType["pageNotFound"] = "pageNotFound";
+    FlutterMethodChannelType["stopAlwaysRender"] = "stopAlwaysRender";
+    FlutterMethodChannelType["onDestroyed"] = "onDestroyed"; // Utils  
+
+    FlutterMethodChannelType["copy"] = "copy";
+    FlutterMethodChannelType["blur"] = "blur"; // Widget Methods
+
+    FlutterMethodChannelType["updateTitle"] = "updateTitle";
+    FlutterMethodChannelType["scrollTo"] = "scrollTo";
+    FlutterMethodChannelType["stopAsyncOperate"] = "stopAsyncOperate";
+    FlutterMethodChannelType["openActions"] = "openActions";
+    FlutterMethodChannelType["closeActions"] = "closeActions";
+    FlutterMethodChannelType["swipeTo"] = "swipeTo";
+    FlutterMethodChannelType["setValue"] = "setValue";
+    FlutterMethodChannelType["jumpTo"] = "jumpTo";
+    FlutterMethodChannelType["animateTo"] = "animateTo";
+    FlutterMethodChannelType["setNestScrollViewStatus"] = "setNestScrollViewStatus";
+    FlutterMethodChannelType["dragPositionAnimateTo"] = "dragPositionAnimateTo";
+  } catch (_e) {
+    __reportError__(_e, "", "/thresh-lib/src/channel/MethodChannel.ts");
+
+    throw _e;
+  }
+})(FlutterMethodChannelType = exports.FlutterMethodChannelType || (exports.FlutterMethodChannelType = {}));
+/**
+ * JS 向  Native 发出消息的类型枚举
+ */
+
+
+var NativeMethodChannelType;
+
+(function (NativeMethodChannelType) {
+  try {
+    NativeMethodChannelType["print"] = "print";
+    NativeMethodChannelType["reload"] = "reload";
+    NativeMethodChannelType["pageDidShow"] = "pageDidShow";
+    NativeMethodChannelType["invokeNativeViewMethod"] = "invokeNativeViewMethod";
+    NativeMethodChannelType["bridgeRequest"] = "bridgeRequest";
+  } catch (_e2) {
+    __reportError__(_e2, "", "/thresh-lib/src/channel/MethodChannel.ts");
+
+    throw _e2;
+  }
+})(NativeMethodChannelType = exports.NativeMethodChannelType || (exports.NativeMethodChannelType = {}));
+/**
+ * JS 接收到的消息类型枚举
+ */
+
+
+var MethodChannelReceiveType;
+
+(function (MethodChannelReceiveType) {
+  try {
+    MethodChannelReceiveType["mediaQuery"] = "mediaQuery";
+    MethodChannelReceiveType["ready"] = "ready";
+    MethodChannelReceiveType["setupPage"] = "setupPage";
+    MethodChannelReceiveType["needPopPage"] = "needPopPage";
+    MethodChannelReceiveType["hasPopPage"] = "hasPopPage";
+    MethodChannelReceiveType["triggerEvent"] = "triggerEvent";
+    MethodChannelReceiveType["lifeCycle"] = "lifeCycle";
+    MethodChannelReceiveType["bridgeResponse"] = "bridgeResponse";
+    MethodChannelReceiveType["closeWindow"] = "closeWindow";
+    MethodChannelReceiveType["pageDidLoad"] = "pageDidLoad";
+    MethodChannelReceiveType["onDestroyed"] = "onDestroyed";
+  } catch (_e3) {
+    __reportError__(_e3, "", "/thresh-lib/src/channel/MethodChannel.ts");
+
+    throw _e3;
+  }
+})(MethodChannelReceiveType = exports.MethodChannelReceiveType || (exports.MethodChannelReceiveType = {}));
 /**
  * 打印method channel方法参数
  */
@@ -4830,7 +5035,8 @@ var Util_1 = __webpack_require__(165);
 var methodChannelConsole = function methodChannelConsole(channelParams) {
   try {
     var method = channelParams.method,
-        params = channelParams.params;
+        params = channelParams.params,
+        contextId = channelParams.contextId;
     console.group('[CHANNEL PRINT] method: ' + method);
 
     if (params) {
@@ -4843,12 +5049,13 @@ var methodChannelConsole = function methodChannelConsole(channelParams) {
       }
     }
 
-    console.log('[CHANNEL PRINT] params: ', params);
+    console.log('contextId: ', contextId);
+    console.log('params: ', params);
     console.groupEnd();
-  } catch (_e) {
-    __reportError__(_e, "methodChannelConsole", "/thresh-lib/src/channel/MethodChannel.ts");
+  } catch (_e4) {
+    __reportError__(_e4, "methodChannelConsole", "/thresh-lib/src/channel/MethodChannel.ts");
 
-    throw _e;
+    throw _e4;
   }
 };
 /**
@@ -4861,120 +5068,64 @@ function jsCallNative(channelParams) {
   try {
     try {
       channelParams = formatChannelParams(channelParams);
-      if (!channelParams.method) return; // reportChannelLog(channelParams, 'Native')
-
+      if (channelParams.method === FlutterMethodChannelType.none) return;
       methodChannel_js_call_native(channelParams);
-    } catch (e) {} finally {// if (DF.debugMode && 'production' === 'development') {
+    } catch (e) {} finally {// if (threshApp.debugMode && 'production' === 'development') {
       //   methodChannelConsole(channelParams)
       // }
     }
-  } catch (_e2) {
-    __reportError__(_e2, "", "/thresh-lib/src/channel/MethodChannel.ts");
+  } catch (_e5) {
+    __reportError__(_e5, "", "/thresh-lib/src/channel/MethodChannel.ts");
 
-    throw _e2;
+    throw _e5;
   }
 }
 
 function jsCallFlutter(channelParams) {
   try {
-    if (__1["default"] && !__1["default"]._alive) return;
-
     try {
       channelParams = formatChannelParams(channelParams);
-      if (!channelParams.method) return; // reportChannelLog(channelParams, 'Flutter')
-
+      if (channelParams.method === FlutterMethodChannelType.none) return;
       methodChannel_js_call_flutter(channelParams);
-    } catch (e) {} finally {// if (DF.debugMode && process.env.NODE_ENV === 'development') {
+    } catch (e) {} finally {// if (threshApp.debugMode && process.env.NODE_ENV === 'development') {
       //   methodChannelConsole(channelParams)
       // }
     }
-  } catch (_e3) {
-    __reportError__(_e3, "jsCallFlutter", "/thresh-lib/src/channel/MethodChannel.ts");
+  } catch (_e6) {
+    __reportError__(_e6, "", "/thresh-lib/src/channel/MethodChannel.ts");
 
-    throw _e3;
+    throw _e6;
   }
 }
 
-function formatChannelParams(channelParams) {
+function formatChannelParams(channelParams, stringifyParams) {
   try {
+    if (stringifyParams === void 0) {
+      stringifyParams = false;
+    }
+
     var params = channelParams.params;
     if (Util_1["default"].isNil(params)) params = {};
 
     if (!Util_1["default"].isObject(params)) {
       UtilManager_1["default"].error('Channel params must pass in an object!');
       return {
-        method: ''
+        method: FlutterMethodChannelType.none
       };
-    }
+    } // if (!Util.isNil(params.__channelStartTime__)) {
+    //   UtilManager.error('Channel params cannot use "__channelStartTime__" as a key!')
+    //   return { method: FlutterMethodChannelType.none }
+    // }
+    // params.__channelStartTime__ = Date.now()
 
-    if (!Util_1["default"].isNil(params.__channelStartTime__)) {
-      UtilManager_1["default"].error('Channel params cannot use "__channelStartTime__" as a key!');
-      return {
-        method: ''
-      };
-    }
 
-    params.__channelStartTime__ = (0, _now["default"])();
-    channelParams.params = params;
+    if (!channelParams.contextId) channelParams.contextId = AppContainer_1["default"].contextId;
+    channelParams.params = stringifyParams ? (0, _stringify["default"])(params) : params;
     return channelParams;
-  } catch (_e4) {
-    __reportError__(_e4, "formatChannelParams", "/thresh-lib/src/channel/MethodChannel.ts");
+  } catch (_e7) {
+    __reportError__(_e7, "formatChannelParams", "/thresh-lib/src/channel/MethodChannel.ts");
 
-    throw _e4;
-  }
-}
-
-var noLogMethods = ['devtools', 'clearTimer', 'setInterval', 'setTimeout', 'print', 'reload', 'bridgeRequest'];
-
-function reportChannelLog(channelParams, callType) {
-  try {
-    var method = channelParams.method,
-        params = channelParams.params;
-
-    if (method && !(0, _includes["default"])(noLogMethods).call(noLogMethods, method)) {
-      var content = {
-        method: method
-      };
-
-      if (method === 'pushPage') {
-        content.params = {
-          pageName: params.pageName,
-          isModal: params.isModal,
-          popup: params.popup,
-          hasRenderData: !!params.widgetRenderData
-        };
-      } else if (method === 'replacePage') {
-        content.params = {
-          pageName: params.pageName,
-          hasRenderData: !!params.widgetRenderData
-        };
-      } else if (method === 'updateWidget') {
-        content.params = {
-          pageName: params.pageName,
-          hasRenderData: !!params.widgetUpdateData,
-          needUpdateWidgetId: params.needUpdateWidgetId,
-          invokeDidUpdateWidgetId: params.invokeDidUpdateWidgetId
-        };
-      } else if (method === 'showToast') {
-        content.params = {
-          hasRenderData: !!params.toastRenderData,
-          toastInfo: params.toastInfo
-        };
-      } else content.params = params; // BridgeManager.invoke({
-      //   module: 'base',
-      //   method: 'log',
-      //   params: {
-      //     level: 0,
-      //     tag: callType === 'Flutter' ? 'DF_jsCallFlutter' : 'DF_jsCallNative',
-      //     content: JSON.stringify(content)
-      //   }
-      // })
-
-    }
-  } catch (_e5) {
-    __reportError__(_e5, "reportChannelLog", "/thresh-lib/src/channel/MethodChannel.ts");
-
-    throw _e5;
+    throw _e7;
   }
 }
 /**
@@ -4990,21 +5141,21 @@ function () {
     function MethodChannel() {} // 调用注入方法
 
 
-    MethodChannel.call = function (method, params) {
+    MethodChannel.call = function (_a) {
       try {
-        if (params === void 0) {
-          params = {};
-        }
-
-        if (!MethodChannel.jsStartTime) MethodChannel.jsStartTime = (0, _now["default"])();
+        var method = _a.method,
+            _b = _a.params,
+            params = _b === void 0 ? {} : _b,
+            contextId = _a.contextId;
         jsCallFlutter({
+          contextId: contextId,
           method: method,
           params: params
         });
-      } catch (_e6) {
-        __reportError__(_e6, "", "/thresh-lib/src/channel/MethodChannel.ts");
+      } catch (_e8) {
+        __reportError__(_e8, "", "/thresh-lib/src/channel/MethodChannel.ts");
 
-        throw _e6;
+        throw _e8;
       }
     }; // 页面初次渲染完成时通知 native
 
@@ -5015,36 +5166,37 @@ function () {
           networkTime = 0;
         }
 
-        if (MethodChannel.hasCallPageDidShow) return;
-        MethodChannel.hasCallPageDidShow = true;
-        var pageDidLoadTime = MethodChannel.pageDidLoadTime,
-            jsStartTime = MethodChannel.jsStartTime,
-            channelFirstSpendTime = MethodChannel.channelFirstSpendTime,
-            jsRunAppTime = MethodChannel.jsRunAppTime;
+        var performanceInfo = AppContainer_1["default"].getPagePerformanceInfo();
+        if (!performanceInfo || performanceInfo.hasReported) return;
+        performanceInfo.hasReported = true;
+        var pageShowTimestamp = (0, _now["default"])();
+        var pageName = ThreshApp_1["default"].pageName || 'unknown';
         jsCallNative({
-          method: 'pageDidShow',
+          method: NativeMethodChannelType.pageDidShow,
           params: {
-            flutterVersion: __1["default"].flutterVersion,
-            jsVersion: __1["default"].jsVersion,
-            pageName: __1["default"].pageName || 'unknown',
+            flutterVersion: ThreshApp_1["default"].flutterVersion,
+            jsVersion: ThreshApp_1["default"].jsVersion,
+            pageName: pageName,
+            // 网络通信耗时
             networkTime: networkTime,
-            pageDidLoad: pageDidLoadTime || (0, _now["default"])() - networkTime,
-            jsStartTime: jsStartTime,
-            jsRunAppTime: jsRunAppTime,
-            channelFirstSpendTime: channelFirstSpendTime,
-            pageDidShowTime: (0, _now["default"])()
+            // 页面创建时的时间戳
+            pageCreateTimestamp: performanceInfo.createTimestamp,
+            // 页面首帧加载完成的时间戳
+            pageLoadTimestamp: performanceInfo.loadTimestamp,
+            // 页面显示时的时间戳（包含网络通信耗时）
+            pageShowTimestamp: pageShowTimestamp
           }
         });
         UtilManager_1["default"].log({
+          pageName: pageName,
           networkTime: networkTime,
-          jsRenderTime: (0, _now["default"])() - MethodChannel.jsRunAppTime - networkTime,
-          jsTotalTime: (0, _now["default"])() - MethodChannel.jsStartTime,
-          channelFirstSpendTime: channelFirstSpendTime
+          pageLoadTime: performanceInfo.loadTimestamp - performanceInfo.createTimestamp,
+          pageShowTime: pageShowTimestamp - performanceInfo.createTimestamp
         });
-      } catch (_e7) {
-        __reportError__(_e7, "", "/thresh-lib/src/channel/MethodChannel.ts");
+      } catch (_e9) {
+        __reportError__(_e9, "", "/thresh-lib/src/channel/MethodChannel.ts");
 
-        throw _e7;
+        throw _e9;
       }
     }; // 输出到native
 
@@ -5056,13 +5208,13 @@ function () {
         }
 
         jsCallNative({
-          method: 'print',
+          method: NativeMethodChannelType.print,
           params: params
         });
-      } catch (_e8) {
-        __reportError__(_e8, "", "/thresh-lib/src/channel/MethodChannel.ts");
+      } catch (_e10) {
+        __reportError__(_e10, "", "/thresh-lib/src/channel/MethodChannel.ts");
 
-        throw _e8;
+        throw _e10;
       }
     }; // 重载bundle.js
 
@@ -5070,13 +5222,13 @@ function () {
     MethodChannel.reload = function () {
       try {
         jsCallNative({
-          method: 'reload',
+          method: NativeMethodChannelType.reload,
           params: {}
         });
-      } catch (_e9) {
-        __reportError__(_e9, "", "/thresh-lib/src/channel/MethodChannel.ts");
+      } catch (_e11) {
+        __reportError__(_e11, "", "/thresh-lib/src/channel/MethodChannel.ts");
 
-        throw _e9;
+        throw _e11;
       }
     }; // 触发 NativeView 方法
 
@@ -5090,7 +5242,7 @@ function () {
             _c = _a.viewParams,
             viewParams = _c === void 0 ? {} : _c;
         jsCallNative({
-          method: 'invokeNativeViewMethod',
+          method: NativeMethodChannelType.invokeNativeViewMethod,
           params: {
             methodName: methodName,
             methodParams: methodParams,
@@ -5098,21 +5250,19 @@ function () {
             viewParams: viewParams
           }
         });
-      } catch (_e10) {
-        __reportError__(_e10, "", "/thresh-lib/src/channel/MethodChannel.ts");
+      } catch (_e12) {
+        __reportError__(_e12, "", "/thresh-lib/src/channel/MethodChannel.ts");
 
-        throw _e10;
+        throw _e12;
       }
     }; // bridge方法
 
 
     MethodChannel.bridge = function (methodId, params) {
       try {
-        var channelMethodName = 'bridgeRequest';
-
         if (!Util_1["default"].isProd && BridgeManager_1["default"].isNetworkRequest(params)) {
           jsCallFlutter({
-            method: channelMethodName,
+            method: FlutterMethodChannelType.bridgeRequest,
             params: {
               methodId: methodId,
               request: Util_1["default"].toString(params)
@@ -5122,191 +5272,103 @@ function () {
         }
 
         jsCallNative({
-          method: channelMethodName,
+          method: NativeMethodChannelType.bridgeRequest,
           params: {
             methodId: methodId,
             request: params
           }
         });
-      } catch (_e11) {
-        __reportError__(_e11, "", "/thresh-lib/src/channel/MethodChannel.ts");
+      } catch (_e13) {
+        __reportError__(_e13, "", "/thresh-lib/src/channel/MethodChannel.ts");
 
-        throw _e11;
+        throw _e13;
       }
-    }; // 是否已调用 pageDidShow
+    };
 
-
-    MethodChannel.hasCallPageDidShow = false; // js 与 flutter 首次通信时的时间戳
-
-    MethodChannel.jsStartTime = 0; // js -> flutter 首次通信的耗时
-
-    MethodChannel.channelFirstSpendTime = 0; // js runApp 时的时间戳
-
-    MethodChannel.jsRunAppTime = 0;
+    MethodChannel.MAX_CHUNK_SIZE = 1024 * 10;
     return MethodChannel;
-  } catch (_e12) {
-    __reportError__(_e12, "", "/thresh-lib/src/channel/MethodChannel.ts");
+  } catch (_e14) {
+    __reportError__(_e14, "", "/thresh-lib/src/channel/MethodChannel.ts");
 
-    throw _e12;
+    throw _e14;
   }
 }();
 
 exports["default"] = MethodChannel;
 
 /***/ }),
-/* 154 */
-/***/ (function(module, exports, __webpack_require__) {
-
-module.exports = __webpack_require__(155);
-
-/***/ }),
-/* 155 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var parent = __webpack_require__(156);
-
-module.exports = parent;
-
-
-/***/ }),
-/* 156 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var arrayIncludes = __webpack_require__(157);
-var stringIncludes = __webpack_require__(159);
-
-var ArrayPrototype = Array.prototype;
-var StringPrototype = String.prototype;
-
-module.exports = function (it) {
-  var own = it.includes;
-  if (it === ArrayPrototype || (it instanceof Array && own === ArrayPrototype.includes)) return arrayIncludes;
-  if (typeof it === 'string' || it === StringPrototype || (it instanceof String && own === StringPrototype.includes)) {
-    return stringIncludes;
-  } return own;
-};
-
-
-/***/ }),
-/* 157 */
-/***/ (function(module, exports, __webpack_require__) {
-
-__webpack_require__(158);
-var entryVirtual = __webpack_require__(49);
-
-module.exports = entryVirtual('Array').includes;
-
-
-/***/ }),
 /* 158 */
 /***/ (function(module, exports, __webpack_require__) {
 
-"use strict";
-
-var $ = __webpack_require__(7);
-var $includes = __webpack_require__(70).includes;
-var addToUnscopables = __webpack_require__(54);
-var arrayMethodUsesToLength = __webpack_require__(88);
-
-var USES_TO_LENGTH = arrayMethodUsesToLength('indexOf', { ACCESSORS: true, 1: 0 });
-
-// `Array.prototype.includes` method
-// https://tc39.github.io/ecma262/#sec-array.prototype.includes
-$({ target: 'Array', proto: true, forced: !USES_TO_LENGTH }, {
-  includes: function includes(el /* , fromIndex = 0 */) {
-    return $includes(this, el, arguments.length > 1 ? arguments[1] : undefined);
-  }
-});
-
-// https://tc39.github.io/ecma262/#sec-array.prototype-@@unscopables
-addToUnscopables('includes');
-
+module.exports = __webpack_require__(159);
 
 /***/ }),
 /* 159 */
 /***/ (function(module, exports, __webpack_require__) {
 
-__webpack_require__(160);
-var entryVirtual = __webpack_require__(49);
+var parent = __webpack_require__(160);
 
-module.exports = entryVirtual('String').includes;
+module.exports = parent;
 
 
 /***/ }),
 /* 160 */
 /***/ (function(module, exports, __webpack_require__) {
 
-"use strict";
+__webpack_require__(161);
+var core = __webpack_require__(24);
 
-var $ = __webpack_require__(7);
-var notARegExp = __webpack_require__(161);
-var requireObjectCoercible = __webpack_require__(18);
-var correctIsRegExpLogic = __webpack_require__(163);
+// eslint-disable-next-line es/no-json -- safe
+if (!core.JSON) core.JSON = { stringify: JSON.stringify };
 
-// `String.prototype.includes` method
-// https://tc39.github.io/ecma262/#sec-string.prototype.includes
-$({ target: 'String', proto: true, forced: !correctIsRegExpLogic('includes') }, {
-  includes: function includes(searchString /* , position = 0 */) {
-    return !!~String(requireObjectCoercible(this))
-      .indexOf(notARegExp(searchString), arguments.length > 1 ? arguments[1] : undefined);
-  }
-});
+// eslint-disable-next-line no-unused-vars -- required for `.length`
+module.exports = function stringify(it, replacer, space) {
+  return core.JSON.stringify.apply(null, arguments);
+};
 
 
 /***/ }),
 /* 161 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var isRegExp = __webpack_require__(162);
+var $ = __webpack_require__(6);
+var getBuiltIn = __webpack_require__(57);
+var fails = __webpack_require__(11);
 
-module.exports = function (it) {
-  if (isRegExp(it)) {
-    throw TypeError("The method doesn't accept regular expressions");
-  } return it;
+var $stringify = getBuiltIn('JSON', 'stringify');
+var re = /[\uD800-\uDFFF]/g;
+var low = /^[\uD800-\uDBFF]$/;
+var hi = /^[\uDC00-\uDFFF]$/;
+
+var fix = function (match, offset, string) {
+  var prev = string.charAt(offset - 1);
+  var next = string.charAt(offset + 1);
+  if ((low.test(match) && !hi.test(next)) || (hi.test(match) && !low.test(prev))) {
+    return '\\u' + match.charCodeAt(0).toString(16);
+  } return match;
 };
+
+var FORCED = fails(function () {
+  return $stringify('\uDF06\uD834') !== '"\\udf06\\ud834"'
+    || $stringify('\uDEAD') !== '"\\udead"';
+});
+
+if ($stringify) {
+  // `JSON.stringify` method
+  // https://tc39.es/ecma262/#sec-json.stringify
+  // https://github.com/tc39/proposal-well-formed-stringify
+  $({ target: 'JSON', stat: true, forced: FORCED }, {
+    // eslint-disable-next-line no-unused-vars -- required for `.length`
+    stringify: function stringify(it, replacer, space) {
+      var result = $stringify.apply(null, arguments);
+      return typeof result == 'string' ? result.replace(re, fix) : result;
+    }
+  });
+}
 
 
 /***/ }),
 /* 162 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var isObject = __webpack_require__(20);
-var classof = __webpack_require__(17);
-var wellKnownSymbol = __webpack_require__(37);
-
-var MATCH = wellKnownSymbol('match');
-
-// `IsRegExp` abstract operation
-// https://tc39.github.io/ecma262/#sec-isregexp
-module.exports = function (it) {
-  var isRegExp;
-  return isObject(it) && ((isRegExp = it[MATCH]) !== undefined ? !!isRegExp : classof(it) == 'RegExp');
-};
-
-
-/***/ }),
-/* 163 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var wellKnownSymbol = __webpack_require__(37);
-
-var MATCH = wellKnownSymbol('match');
-
-module.exports = function (METHOD_NAME) {
-  var regexp = /./;
-  try {
-    '/./'[METHOD_NAME](regexp);
-  } catch (e) {
-    try {
-      regexp[MATCH] = false;
-      return '/./'[METHOD_NAME](regexp);
-    } catch (f) { /* empty */ }
-  } return false;
-};
-
-
-/***/ }),
-/* 164 */
 /***/ (function(module, exports, __webpack_require__) {
 
 
@@ -5336,13 +5398,15 @@ module.exports = function (METHOD_NAME) {
 
 var _interopRequireDefault = __webpack_require__(1);
 
-var _defineProperty = _interopRequireDefault(__webpack_require__(89));
+var _promise = _interopRequireDefault(__webpack_require__(95));
 
-var _iterator = _interopRequireDefault(__webpack_require__(99));
+var _symbol = _interopRequireDefault(__webpack_require__(124));
 
-var _symbol = _interopRequireDefault(__webpack_require__(107));
+var _iterator = _interopRequireDefault(__webpack_require__(150));
 
-var _promise = _interopRequireDefault(__webpack_require__(130));
+var _defineProperty = _interopRequireDefault(__webpack_require__(2));
+
+var _includes = _interopRequireDefault(__webpack_require__(163));
 
 var __awaiter = void 0 && (void 0).__awaiter || function (thisArg, _arguments, P, generator) {
   try {
@@ -5557,15 +5621,15 @@ var __generator = void 0 && (void 0).__generator || function (thisArg, body) {
   value: true
 });
 
-var MethodChannel_1 = __webpack_require__(153);
+var MethodChannel_1 = __webpack_require__(157);
 
-var Util_1 = __webpack_require__(165);
+var Util_1 = __webpack_require__(173);
 
-var bus_1 = __webpack_require__(200);
+var bus_1 = __webpack_require__(226);
 
-var DevtoolsManager_1 = __webpack_require__(201);
+var DevtoolsManager_1 = __webpack_require__(225);
 
-var UtilManager_1 = __webpack_require__(202);
+var TimerManager_1 = __webpack_require__(232);
 /**
  * Bridge管理器
  */
@@ -5619,11 +5683,11 @@ function () {
 
         if (!Util_1["default"].isObject(params.params)) params.params = {};else params = Util_1["default"].filterAllNilProps(params);
         MethodChannel_1["default"].bridge(methodId, params);
-        DevtoolsManager_1["default"].bridge(methodId, params, true);
+        if (!BridgeManager.isLogRequest(params)) DevtoolsManager_1["default"].bridge(methodId, params, true);
 
         if (!Util_1["default"].isProd && !BridgeManager.isNetworkRequest(params)) {
-          // 开发模式下，如果长时间未响应某个bridge，则主动mock响应，防止阻塞进程
-          UtilManager_1["default"].setTimeout(function () {
+          // 开发模式下，如果宿主包中长时间未响应某个bridge，则主动mock响应，防止阻塞进程
+          TimerManager_1["default"].setTimeout(function () {
             try {
               BridgeManager.response(methodId, {
                 code: 0,
@@ -5659,7 +5723,9 @@ function () {
 
     BridgeManager.isNetworkRequest = function (params) {
       try {
-        return params.module === BridgeManager.DF_BUILT_IN_BRIDGE && params.method === BridgeManager.BRIDGE_METHOD_NET_REQUEST;
+        var _context, _context2;
+
+        return (0, _includes["default"])(_context = BridgeManager.networkModuleNames).call(_context, params.module) && (0, _includes["default"])(_context2 = BridgeManager.networkModuleNames).call(_context2, params.method);
       } catch (_e18) {
         __reportError__(_e18, "", "/thresh-lib/src/manager/BridgeManager.ts");
 
@@ -5667,20 +5733,178 @@ function () {
       }
     };
 
-    BridgeManager.DF_BUILT_IN_BRIDGE = 'DF_BUILT_IN_BRIDGE';
-    BridgeManager.BRIDGE_METHOD_NET_REQUEST = 'BRIDGE_METHOD_NET_REQUEST';
-    return BridgeManager;
-  } catch (_e19) {
-    __reportError__(_e19, "", "/thresh-lib/src/manager/BridgeManager.ts");
+    BridgeManager.isLogRequest = function (params) {
+      try {
+        return params.module === 'base' && params.method === 'log';
+      } catch (_e19) {
+        __reportError__(_e19, "", "/thresh-lib/src/manager/BridgeManager.ts");
 
-    throw _e19;
+        throw _e19;
+      }
+    };
+
+    BridgeManager.networkModuleNames = ['base', 'network', 'netbase', 'request'];
+    return BridgeManager;
+  } catch (_e20) {
+    __reportError__(_e20, "", "/thresh-lib/src/manager/BridgeManager.ts");
+
+    throw _e20;
   }
 }();
 
 exports["default"] = BridgeManager;
 
 /***/ }),
+/* 163 */
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports = __webpack_require__(164);
+
+/***/ }),
+/* 164 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var parent = __webpack_require__(165);
+
+module.exports = parent;
+
+
+/***/ }),
 /* 165 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var arrayIncludes = __webpack_require__(166);
+var stringIncludes = __webpack_require__(168);
+
+var ArrayPrototype = Array.prototype;
+var StringPrototype = String.prototype;
+
+module.exports = function (it) {
+  var own = it.includes;
+  if (it === ArrayPrototype || (it instanceof Array && own === ArrayPrototype.includes)) return arrayIncludes;
+  if (typeof it === 'string' || it === StringPrototype || (it instanceof String && own === StringPrototype.includes)) {
+    return stringIncludes;
+  } return own;
+};
+
+
+/***/ }),
+/* 166 */
+/***/ (function(module, exports, __webpack_require__) {
+
+__webpack_require__(167);
+var entryVirtual = __webpack_require__(85);
+
+module.exports = entryVirtual('Array').includes;
+
+
+/***/ }),
+/* 167 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var $ = __webpack_require__(6);
+var $includes = __webpack_require__(63).includes;
+var addToUnscopables = __webpack_require__(34);
+
+// `Array.prototype.includes` method
+// https://tc39.es/ecma262/#sec-array.prototype.includes
+$({ target: 'Array', proto: true }, {
+  includes: function includes(el /* , fromIndex = 0 */) {
+    return $includes(this, el, arguments.length > 1 ? arguments[1] : undefined);
+  }
+});
+
+// https://tc39.es/ecma262/#sec-array.prototype-@@unscopables
+addToUnscopables('includes');
+
+
+/***/ }),
+/* 168 */
+/***/ (function(module, exports, __webpack_require__) {
+
+__webpack_require__(169);
+var entryVirtual = __webpack_require__(85);
+
+module.exports = entryVirtual('String').includes;
+
+
+/***/ }),
+/* 169 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var $ = __webpack_require__(6);
+var notARegExp = __webpack_require__(170);
+var requireObjectCoercible = __webpack_require__(17);
+var correctIsRegExpLogic = __webpack_require__(172);
+
+// `String.prototype.includes` method
+// https://tc39.es/ecma262/#sec-string.prototype.includes
+$({ target: 'String', proto: true, forced: !correctIsRegExpLogic('includes') }, {
+  includes: function includes(searchString /* , position = 0 */) {
+    return !!~String(requireObjectCoercible(this))
+      .indexOf(notARegExp(searchString), arguments.length > 1 ? arguments[1] : undefined);
+  }
+});
+
+
+/***/ }),
+/* 170 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var isRegExp = __webpack_require__(171);
+
+module.exports = function (it) {
+  if (isRegExp(it)) {
+    throw TypeError("The method doesn't accept regular expressions");
+  } return it;
+};
+
+
+/***/ }),
+/* 171 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var isObject = __webpack_require__(19);
+var classof = __webpack_require__(16);
+var wellKnownSymbol = __webpack_require__(52);
+
+var MATCH = wellKnownSymbol('match');
+
+// `IsRegExp` abstract operation
+// https://tc39.es/ecma262/#sec-isregexp
+module.exports = function (it) {
+  var isRegExp;
+  return isObject(it) && ((isRegExp = it[MATCH]) !== undefined ? !!isRegExp : classof(it) == 'RegExp');
+};
+
+
+/***/ }),
+/* 172 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var wellKnownSymbol = __webpack_require__(52);
+
+var MATCH = wellKnownSymbol('match');
+
+module.exports = function (METHOD_NAME) {
+  var regexp = /./;
+  try {
+    '/./'[METHOD_NAME](regexp);
+  } catch (error1) {
+    try {
+      regexp[MATCH] = false;
+      return '/./'[METHOD_NAME](regexp);
+    } catch (error2) { /* empty */ }
+  } return false;
+};
+
+
+/***/ }),
+/* 173 */
 /***/ (function(module, exports, __webpack_require__) {
 
 
@@ -5710,35 +5934,43 @@ exports["default"] = BridgeManager;
 
 var _interopRequireDefault = __webpack_require__(1);
 
-var _now = _interopRequireDefault(__webpack_require__(95));
+var _typeof2 = _interopRequireDefault(__webpack_require__(174));
 
-var _stringify = _interopRequireDefault(__webpack_require__(166));
+var _defineProperty = _interopRequireDefault(__webpack_require__(2));
 
-var _assign = _interopRequireDefault(__webpack_require__(170));
+var _splice = _interopRequireDefault(__webpack_require__(184));
 
-var _reduce = _interopRequireDefault(__webpack_require__(175));
+var _includes = _interopRequireDefault(__webpack_require__(163));
 
-var _concat = _interopRequireDefault(__webpack_require__(2));
+var _isArray = _interopRequireDefault(__webpack_require__(189));
 
-var _forEach = _interopRequireDefault(__webpack_require__(50));
+var _forEach = _interopRequireDefault(__webpack_require__(30));
 
-var _isArray = _interopRequireDefault(__webpack_require__(181));
+var _concat = _interopRequireDefault(__webpack_require__(86));
 
-var _typeof2 = _interopRequireDefault(__webpack_require__(185));
+var _reduce = _interopRequireDefault(__webpack_require__(193));
 
-var _includes = _interopRequireDefault(__webpack_require__(154));
+var _assign = _interopRequireDefault(__webpack_require__(199));
 
-var _splice = _interopRequireDefault(__webpack_require__(195));
+var _stringify = _interopRequireDefault(__webpack_require__(158));
 
-var _defineProperty = _interopRequireDefault(__webpack_require__(89));
+var _now = _interopRequireDefault(__webpack_require__(153));
+
+var _promise = _interopRequireDefault(__webpack_require__(95));
 
 (0, _defineProperty["default"])(exports, "__esModule", {
   value: true
 });
 
 var __1 = __webpack_require__(93);
+
+var VNode_1 = __webpack_require__(204);
+
+var BridgeManager_1 = __webpack_require__(162);
+
+var DevtoolsManager_1 = __webpack_require__(225);
 /**
- * DF内部工具类
+ * threshApp内部工具类
  */
 
 
@@ -5779,7 +6011,7 @@ function () {
 
     Util.randomId = function () {
       try {
-        return Math.random().toString(16);
+        return Math.random().toString(16).replace('0.', '');
       } catch (_e3) {
         __reportError__(_e3, "", "/thresh-lib/src/shared/Util.ts");
 
@@ -5916,6 +6148,8 @@ function () {
 
     Util.toString = function (value, showUndefined) {
       try {
+        var _a;
+
         if (showUndefined === void 0) {
           showUndefined = false;
         }
@@ -5923,12 +6157,15 @@ function () {
         if (Util.isNil(value)) return !showUndefined ? '' : 'undefined';
         var res;
         if (Util.isString(value)) return value;
+        if (value instanceof VNode_1["default"]) return "Widget " + value.type;
+        if (value instanceof __1.Widget) return "Widget " + (((_a = value.__vNode__) === null || _a === void 0 ? void 0 : _a.type) || '[unknown]');
 
         try {
           res = (0, _stringify["default"])(value);
         } catch (e) {
-          console.error(e);
           res = value.toString();
+        } finally {
+          if (Util.isNil(res)) res = Util.type(value);
         }
 
         return res;
@@ -5959,7 +6196,7 @@ function () {
 
               for (var key in item) {
                 var value = item[key];
-                if (key !== '__showDivider__') tempArr.push("[" + key + "] - " + Util.toString(value, true));else tempArr.push("-----" + (Util.isString(value) ? value : '') + "-----");
+                if (key !== DevtoolsManager_1.SHOW_DIVIDER_KEY) tempArr.push("[" + key + "] - " + Util.toString(value, true));else tempArr.push("-----" + (Util.isString(value) ? value : '') + "-----");
                 temp = tempArr.join('\n');
               }
             } else {
@@ -6116,182 +6353,82 @@ function () {
         throw _e23;
       }
     };
+    /**
+     * Native 日志
+     */
+
+
+    Util.log = function (content) {
+      try {
+        var t = (0, _now["default"])();
+        BridgeManager_1["default"].invoke({
+          module: 'base',
+          method: 'log',
+          params: {
+            level: 2,
+            tag: '[[Dynamic Flutter JS Log]]',
+            content: "[" + t + "] - " + content
+          }
+        });
+      } catch (_e24) {
+        __reportError__(_e24, "", "/thresh-lib/src/shared/Util.ts");
+
+        throw _e24;
+      }
+    }; // ios 10.0.x 版本上 Promise 回调中的 resolve 存在异常
+    // 必须先通过 Promise.resolve() 进行一遍类似初始化的操作
+
+
+    Util.promiseResolveHackForIos_10_0_x = function () {
+      try {
+        return _promise["default"].resolve();
+      } catch (_e25) {
+        __reportError__(_e25, "", "/thresh-lib/src/shared/Util.ts");
+
+        throw _e25;
+      }
+    };
 
     return Util;
-  } catch (_e24) {
-    __reportError__(_e24, "", "/thresh-lib/src/shared/Util.ts");
+  } catch (_e26) {
+    __reportError__(_e26, "", "/thresh-lib/src/shared/Util.ts");
 
-    throw _e24;
+    throw _e26;
   }
 }();
 
 exports["default"] = Util;
 
 /***/ }),
-/* 166 */
-/***/ (function(module, exports, __webpack_require__) {
-
-module.exports = __webpack_require__(167);
-
-/***/ }),
-/* 167 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var parent = __webpack_require__(168);
-
-module.exports = parent;
-
-
-/***/ }),
-/* 168 */
-/***/ (function(module, exports, __webpack_require__) {
-
-__webpack_require__(169);
-var core = __webpack_require__(25);
-
-if (!core.JSON) core.JSON = { stringify: JSON.stringify };
-
-// eslint-disable-next-line no-unused-vars
-module.exports = function stringify(it, replacer, space) {
-  return core.JSON.stringify.apply(null, arguments);
-};
-
-
-/***/ }),
-/* 169 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var $ = __webpack_require__(7);
-var getBuiltIn = __webpack_require__(48);
-var fails = __webpack_require__(12);
-
-var $stringify = getBuiltIn('JSON', 'stringify');
-var re = /[\uD800-\uDFFF]/g;
-var low = /^[\uD800-\uDBFF]$/;
-var hi = /^[\uDC00-\uDFFF]$/;
-
-var fix = function (match, offset, string) {
-  var prev = string.charAt(offset - 1);
-  var next = string.charAt(offset + 1);
-  if ((low.test(match) && !hi.test(next)) || (hi.test(match) && !low.test(prev))) {
-    return '\\u' + match.charCodeAt(0).toString(16);
-  } return match;
-};
-
-var FORCED = fails(function () {
-  return $stringify('\uDF06\uD834') !== '"\\udf06\\ud834"'
-    || $stringify('\uDEAD') !== '"\\udead"';
-});
-
-if ($stringify) {
-  // https://github.com/tc39/proposal-well-formed-stringify
-  $({ target: 'JSON', stat: true, forced: FORCED }, {
-    // eslint-disable-next-line no-unused-vars
-    stringify: function stringify(it, replacer, space) {
-      var result = $stringify.apply(null, arguments);
-      return typeof result == 'string' ? result.replace(re, fix) : result;
-    }
-  });
-}
-
-
-/***/ }),
-/* 170 */
-/***/ (function(module, exports, __webpack_require__) {
-
-module.exports = __webpack_require__(171);
-
-/***/ }),
-/* 171 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var parent = __webpack_require__(172);
-
-module.exports = parent;
-
-
-/***/ }),
-/* 172 */
-/***/ (function(module, exports, __webpack_require__) {
-
-__webpack_require__(173);
-var path = __webpack_require__(25);
-
-module.exports = path.Object.assign;
-
-
-/***/ }),
-/* 173 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var $ = __webpack_require__(7);
-var assign = __webpack_require__(174);
-
-// `Object.assign` method
-// https://tc39.github.io/ecma262/#sec-object.assign
-$({ target: 'Object', stat: true, forced: Object.assign !== assign }, {
-  assign: assign
-});
-
-
-/***/ }),
 /* 174 */
 /***/ (function(module, exports, __webpack_require__) {
 
-"use strict";
+var _Symbol = __webpack_require__(175);
 
-var DESCRIPTORS = __webpack_require__(11);
-var fails = __webpack_require__(12);
-var objectKeys = __webpack_require__(68);
-var getOwnPropertySymbolsModule = __webpack_require__(114);
-var propertyIsEnumerableModule = __webpack_require__(13);
-var toObject = __webpack_require__(32);
-var IndexedObject = __webpack_require__(16);
+var _Symbol$iterator = __webpack_require__(182);
 
-var nativeAssign = Object.assign;
-var defineProperty = Object.defineProperty;
+function _typeof(obj) {
+  "@babel/helpers - typeof";
 
-// `Object.assign` method
-// https://tc39.github.io/ecma262/#sec-object.assign
-module.exports = !nativeAssign || fails(function () {
-  // should have correct order of operations (Edge bug)
-  if (DESCRIPTORS && nativeAssign({ b: 1 }, nativeAssign(defineProperty({}, 'a', {
-    enumerable: true,
-    get: function () {
-      defineProperty(this, 'b', {
-        value: 3,
-        enumerable: false
-      });
-    }
-  }), { b: 2 })).b !== 1) return true;
-  // should work with symbols and should have deterministic property order (V8 bug)
-  var A = {};
-  var B = {};
-  // eslint-disable-next-line no-undef
-  var symbol = Symbol();
-  var alphabet = 'abcdefghijklmnopqrst';
-  A[symbol] = 7;
-  alphabet.split('').forEach(function (chr) { B[chr] = chr; });
-  return nativeAssign({}, A)[symbol] != 7 || objectKeys(nativeAssign({}, B)).join('') != alphabet;
-}) ? function assign(target, source) { // eslint-disable-line no-unused-vars
-  var T = toObject(target);
-  var argumentsLength = arguments.length;
-  var index = 1;
-  var getOwnPropertySymbols = getOwnPropertySymbolsModule.f;
-  var propertyIsEnumerable = propertyIsEnumerableModule.f;
-  while (argumentsLength > index) {
-    var S = IndexedObject(arguments[index++]);
-    var keys = getOwnPropertySymbols ? objectKeys(S).concat(getOwnPropertySymbols(S)) : objectKeys(S);
-    var length = keys.length;
-    var j = 0;
-    var key;
-    while (length > j) {
-      key = keys[j++];
-      if (!DESCRIPTORS || propertyIsEnumerable.call(S, key)) T[key] = S[key];
-    }
-  } return T;
-} : nativeAssign;
+  if (typeof _Symbol === "function" && typeof _Symbol$iterator === "symbol") {
+    module.exports = _typeof = function _typeof(obj) {
+      return typeof obj;
+    };
 
+    module.exports["default"] = module.exports, module.exports.__esModule = true;
+  } else {
+    module.exports = _typeof = function _typeof(obj) {
+      return obj && typeof _Symbol === "function" && obj.constructor === _Symbol && obj !== _Symbol.prototype ? "symbol" : typeof obj;
+    };
+
+    module.exports["default"] = module.exports, module.exports.__esModule = true;
+  }
+
+  return _typeof(obj);
+}
+
+module.exports = _typeof;
+module.exports["default"] = module.exports, module.exports.__esModule = true;
 
 /***/ }),
 /* 175 */
@@ -6303,7 +6440,13 @@ module.exports = __webpack_require__(176);
 /* 176 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var parent = __webpack_require__(177);
+var parent = __webpack_require__(126);
+__webpack_require__(177);
+__webpack_require__(178);
+__webpack_require__(179);
+__webpack_require__(180);
+// TODO: Remove from `core-js@4`
+__webpack_require__(181);
 
 module.exports = parent;
 
@@ -6312,201 +6455,7 @@ module.exports = parent;
 /* 177 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var reduce = __webpack_require__(178);
-
-var ArrayPrototype = Array.prototype;
-
-module.exports = function (it) {
-  var own = it.reduce;
-  return it === ArrayPrototype || (it instanceof Array && own === ArrayPrototype.reduce) ? reduce : own;
-};
-
-
-/***/ }),
-/* 178 */
-/***/ (function(module, exports, __webpack_require__) {
-
-__webpack_require__(179);
-var entryVirtual = __webpack_require__(49);
-
-module.exports = entryVirtual('Array').reduce;
-
-
-/***/ }),
-/* 179 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-var $ = __webpack_require__(7);
-var $reduce = __webpack_require__(180).left;
-var arrayMethodIsStrict = __webpack_require__(87);
-var arrayMethodUsesToLength = __webpack_require__(88);
-
-var STRICT_METHOD = arrayMethodIsStrict('reduce');
-var USES_TO_LENGTH = arrayMethodUsesToLength('reduce', { 1: 0 });
-
-// `Array.prototype.reduce` method
-// https://tc39.github.io/ecma262/#sec-array.prototype.reduce
-$({ target: 'Array', proto: true, forced: !STRICT_METHOD || !USES_TO_LENGTH }, {
-  reduce: function reduce(callbackfn /* , initialValue */) {
-    return $reduce(this, callbackfn, arguments.length, arguments.length > 1 ? arguments[1] : undefined);
-  }
-});
-
-
-/***/ }),
-/* 180 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var aFunction = __webpack_require__(27);
-var toObject = __webpack_require__(32);
-var IndexedObject = __webpack_require__(16);
-var toLength = __webpack_require__(33);
-
-// `Array.prototype.{ reduce, reduceRight }` methods implementation
-var createMethod = function (IS_RIGHT) {
-  return function (that, callbackfn, argumentsLength, memo) {
-    aFunction(callbackfn);
-    var O = toObject(that);
-    var self = IndexedObject(O);
-    var length = toLength(O.length);
-    var index = IS_RIGHT ? length - 1 : 0;
-    var i = IS_RIGHT ? -1 : 1;
-    if (argumentsLength < 2) while (true) {
-      if (index in self) {
-        memo = self[index];
-        index += i;
-        break;
-      }
-      index += i;
-      if (IS_RIGHT ? index < 0 : length <= index) {
-        throw TypeError('Reduce of empty array with no initial value');
-      }
-    }
-    for (;IS_RIGHT ? index >= 0 : length > index; index += i) if (index in self) {
-      memo = callbackfn(memo, self[index], index, O);
-    }
-    return memo;
-  };
-};
-
-module.exports = {
-  // `Array.prototype.reduce` method
-  // https://tc39.github.io/ecma262/#sec-array.prototype.reduce
-  left: createMethod(false),
-  // `Array.prototype.reduceRight` method
-  // https://tc39.github.io/ecma262/#sec-array.prototype.reduceright
-  right: createMethod(true)
-};
-
-
-/***/ }),
-/* 181 */
-/***/ (function(module, exports, __webpack_require__) {
-
-module.exports = __webpack_require__(182);
-
-/***/ }),
-/* 182 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var parent = __webpack_require__(183);
-
-module.exports = parent;
-
-
-/***/ }),
-/* 183 */
-/***/ (function(module, exports, __webpack_require__) {
-
-__webpack_require__(184);
-var path = __webpack_require__(25);
-
-module.exports = path.Array.isArray;
-
-
-/***/ }),
-/* 184 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var $ = __webpack_require__(7);
-var isArray = __webpack_require__(31);
-
-// `Array.isArray` method
-// https://tc39.github.io/ecma262/#sec-array.isarray
-$({ target: 'Array', stat: true }, {
-  isArray: isArray
-});
-
-
-/***/ }),
-/* 185 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var _Symbol$iterator = __webpack_require__(186);
-
-var _Symbol = __webpack_require__(188);
-
-function _typeof(obj) {
-  "@babel/helpers - typeof";
-
-  if (typeof _Symbol === "function" && typeof _Symbol$iterator === "symbol") {
-    module.exports = _typeof = function _typeof(obj) {
-      return typeof obj;
-    };
-  } else {
-    module.exports = _typeof = function _typeof(obj) {
-      return obj && typeof _Symbol === "function" && obj.constructor === _Symbol && obj !== _Symbol.prototype ? "symbol" : typeof obj;
-    };
-  }
-
-  return _typeof(obj);
-}
-
-module.exports = _typeof;
-
-/***/ }),
-/* 186 */
-/***/ (function(module, exports, __webpack_require__) {
-
-module.exports = __webpack_require__(187);
-
-/***/ }),
-/* 187 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var parent = __webpack_require__(101);
-
-module.exports = parent;
-
-
-/***/ }),
-/* 188 */
-/***/ (function(module, exports, __webpack_require__) {
-
-module.exports = __webpack_require__(189);
-
-/***/ }),
-/* 189 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var parent = __webpack_require__(109);
-__webpack_require__(190);
-__webpack_require__(191);
-__webpack_require__(192);
-__webpack_require__(193);
-// TODO: Remove from `core-js@4`
-__webpack_require__(194);
-
-module.exports = parent;
-
-
-/***/ }),
-/* 190 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var defineWellKnownSymbol = __webpack_require__(103);
+var defineWellKnownSymbol = __webpack_require__(132);
 
 // `Symbol.asyncDispose` well-known symbol
 // https://github.com/tc39/proposal-using-statement
@@ -6514,10 +6463,10 @@ defineWellKnownSymbol('asyncDispose');
 
 
 /***/ }),
-/* 191 */
+/* 178 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var defineWellKnownSymbol = __webpack_require__(103);
+var defineWellKnownSymbol = __webpack_require__(132);
 
 // `Symbol.dispose` well-known symbol
 // https://github.com/tc39/proposal-using-statement
@@ -6525,10 +6474,10 @@ defineWellKnownSymbol('dispose');
 
 
 /***/ }),
-/* 192 */
+/* 179 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var defineWellKnownSymbol = __webpack_require__(103);
+var defineWellKnownSymbol = __webpack_require__(132);
 
 // `Symbol.observable` well-known symbol
 // https://github.com/tc39/proposal-observable
@@ -6536,10 +6485,10 @@ defineWellKnownSymbol('observable');
 
 
 /***/ }),
-/* 193 */
+/* 180 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var defineWellKnownSymbol = __webpack_require__(103);
+var defineWellKnownSymbol = __webpack_require__(132);
 
 // `Symbol.patternMatch` well-known symbol
 // https://github.com/tc39/proposal-pattern-matching
@@ -6547,35 +6496,50 @@ defineWellKnownSymbol('patternMatch');
 
 
 /***/ }),
-/* 194 */
+/* 181 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // TODO: remove from `core-js@4`
-var defineWellKnownSymbol = __webpack_require__(103);
+var defineWellKnownSymbol = __webpack_require__(132);
 
 defineWellKnownSymbol('replaceAll');
 
 
 /***/ }),
-/* 195 */
+/* 182 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(196);
+module.exports = __webpack_require__(183);
 
 /***/ }),
-/* 196 */
+/* 183 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var parent = __webpack_require__(197);
+var parent = __webpack_require__(152);
 
 module.exports = parent;
 
 
 /***/ }),
-/* 197 */
+/* 184 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var splice = __webpack_require__(198);
+module.exports = __webpack_require__(185);
+
+/***/ }),
+/* 185 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var parent = __webpack_require__(186);
+
+module.exports = parent;
+
+
+/***/ }),
+/* 186 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var splice = __webpack_require__(187);
 
 var ArrayPrototype = Array.prototype;
 
@@ -6586,33 +6550,31 @@ module.exports = function (it) {
 
 
 /***/ }),
-/* 198 */
+/* 187 */
 /***/ (function(module, exports, __webpack_require__) {
 
-__webpack_require__(199);
-var entryVirtual = __webpack_require__(49);
+__webpack_require__(188);
+var entryVirtual = __webpack_require__(85);
 
 module.exports = entryVirtual('Array').splice;
 
 
 /***/ }),
-/* 199 */
+/* 188 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
-var $ = __webpack_require__(7);
-var toAbsoluteIndex = __webpack_require__(71);
-var toInteger = __webpack_require__(34);
-var toLength = __webpack_require__(33);
-var toObject = __webpack_require__(32);
-var arraySpeciesCreate = __webpack_require__(36);
-var createProperty = __webpack_require__(35);
-var arrayMethodHasSpeciesSupport = __webpack_require__(45);
-var arrayMethodUsesToLength = __webpack_require__(88);
+var $ = __webpack_require__(6);
+var toAbsoluteIndex = __webpack_require__(66);
+var toInteger = __webpack_require__(65);
+var toLength = __webpack_require__(64);
+var toObject = __webpack_require__(50);
+var arraySpeciesCreate = __webpack_require__(82);
+var createProperty = __webpack_require__(91);
+var arrayMethodHasSpeciesSupport = __webpack_require__(92);
 
 var HAS_SPECIES_SUPPORT = arrayMethodHasSpeciesSupport('splice');
-var USES_TO_LENGTH = arrayMethodUsesToLength('splice', { ACCESSORS: true, 0: 0, 1: 2 });
 
 var max = Math.max;
 var min = Math.min;
@@ -6620,9 +6582,9 @@ var MAX_SAFE_INTEGER = 0x1FFFFFFFFFFFFF;
 var MAXIMUM_ALLOWED_LENGTH_EXCEEDED = 'Maximum allowed length exceeded';
 
 // `Array.prototype.splice` method
-// https://tc39.github.io/ecma262/#sec-array.prototype.splice
+// https://tc39.es/ecma262/#sec-array.prototype.splice
 // with adding support of @@species
-$({ target: 'Array', proto: true, forced: !HAS_SPECIES_SUPPORT || !USES_TO_LENGTH }, {
+$({ target: 'Array', proto: true, forced: !HAS_SPECIES_SUPPORT }, {
   splice: function splice(start, deleteCount /* , ...items */) {
     var O = toObject(this);
     var len = toLength(O.length);
@@ -6673,1755 +6635,260 @@ $({ target: 'Array', proto: true, forced: !HAS_SPECIES_SUPPORT || !USES_TO_LENGT
 
 
 /***/ }),
+/* 189 */
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports = __webpack_require__(190);
+
+/***/ }),
+/* 190 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var parent = __webpack_require__(191);
+
+module.exports = parent;
+
+
+/***/ }),
+/* 191 */
+/***/ (function(module, exports, __webpack_require__) {
+
+__webpack_require__(192);
+var path = __webpack_require__(24);
+
+module.exports = path.Array.isArray;
+
+
+/***/ }),
+/* 192 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var $ = __webpack_require__(6);
+var isArray = __webpack_require__(83);
+
+// `Array.isArray` method
+// https://tc39.es/ecma262/#sec-array.isarray
+$({ target: 'Array', stat: true }, {
+  isArray: isArray
+});
+
+
+/***/ }),
+/* 193 */
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports = __webpack_require__(194);
+
+/***/ }),
+/* 194 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var parent = __webpack_require__(195);
+
+module.exports = parent;
+
+
+/***/ }),
+/* 195 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var reduce = __webpack_require__(196);
+
+var ArrayPrototype = Array.prototype;
+
+module.exports = function (it) {
+  var own = it.reduce;
+  return it === ArrayPrototype || (it instanceof Array && own === ArrayPrototype.reduce) ? reduce : own;
+};
+
+
+/***/ }),
+/* 196 */
+/***/ (function(module, exports, __webpack_require__) {
+
+__webpack_require__(197);
+var entryVirtual = __webpack_require__(85);
+
+module.exports = entryVirtual('Array').reduce;
+
+
+/***/ }),
+/* 197 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var $ = __webpack_require__(6);
+var $reduce = __webpack_require__(198).left;
+var arrayMethodIsStrict = __webpack_require__(84);
+var CHROME_VERSION = __webpack_require__(55);
+var IS_NODE = __webpack_require__(54);
+
+var STRICT_METHOD = arrayMethodIsStrict('reduce');
+// Chrome 80-82 has a critical bug
+// https://bugs.chromium.org/p/chromium/issues/detail?id=1049982
+var CHROME_BUG = !IS_NODE && CHROME_VERSION > 79 && CHROME_VERSION < 83;
+
+// `Array.prototype.reduce` method
+// https://tc39.es/ecma262/#sec-array.prototype.reduce
+$({ target: 'Array', proto: true, forced: !STRICT_METHOD || CHROME_BUG }, {
+  reduce: function reduce(callbackfn /* , initialValue */) {
+    return $reduce(this, callbackfn, arguments.length, arguments.length > 1 ? arguments[1] : undefined);
+  }
+});
+
+
+/***/ }),
+/* 198 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var aFunction = __webpack_require__(26);
+var toObject = __webpack_require__(50);
+var IndexedObject = __webpack_require__(15);
+var toLength = __webpack_require__(64);
+
+// `Array.prototype.{ reduce, reduceRight }` methods implementation
+var createMethod = function (IS_RIGHT) {
+  return function (that, callbackfn, argumentsLength, memo) {
+    aFunction(callbackfn);
+    var O = toObject(that);
+    var self = IndexedObject(O);
+    var length = toLength(O.length);
+    var index = IS_RIGHT ? length - 1 : 0;
+    var i = IS_RIGHT ? -1 : 1;
+    if (argumentsLength < 2) while (true) {
+      if (index in self) {
+        memo = self[index];
+        index += i;
+        break;
+      }
+      index += i;
+      if (IS_RIGHT ? index < 0 : length <= index) {
+        throw TypeError('Reduce of empty array with no initial value');
+      }
+    }
+    for (;IS_RIGHT ? index >= 0 : length > index; index += i) if (index in self) {
+      memo = callbackfn(memo, self[index], index, O);
+    }
+    return memo;
+  };
+};
+
+module.exports = {
+  // `Array.prototype.reduce` method
+  // https://tc39.es/ecma262/#sec-array.prototype.reduce
+  left: createMethod(false),
+  // `Array.prototype.reduceRight` method
+  // https://tc39.es/ecma262/#sec-array.prototype.reduceright
+  right: createMethod(true)
+};
+
+
+/***/ }),
+/* 199 */
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports = __webpack_require__(200);
+
+/***/ }),
 /* 200 */
 /***/ (function(module, exports, __webpack_require__) {
 
+var parent = __webpack_require__(201);
 
-/**
- * MIT License
- *
- * Copyright (c) 2020 ManBang Group
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- *
- */
+module.exports = parent;
 
-var _interopRequireDefault = __webpack_require__(1);
-
-var _defineProperty = _interopRequireDefault(__webpack_require__(89));
-
-(0, _defineProperty["default"])(exports, "__esModule", {
-  value: true
-});
-
-var Util_1 = __webpack_require__(165);
-/**
- * 简易实现的事件触发器
- * 仅框架内部使用
- * 一个name仅对应一个回调事件
- * 未传入name时默认会有自增id作为name
- * 主要为 定时器 bridge 等服务
- */
-
-
-var Bus =
-/** @class */
-function () {
-  try {
-    function Bus() {
-      try {
-        this._busId = 0;
-        this._pool = {};
-      } catch (_e) {
-        __reportError__(_e, "Bus", "/thresh-lib/src/shared/bus.ts");
-
-        throw _e;
-      }
-    }
-
-    Bus.prototype.register = function (callback, name) {
-      try {
-        if (!Util_1["default"].isFunc(callback)) return;
-        var busName = name ? String(name).toString() : (++this._busId).toString();
-        this._pool[busName] = callback;
-        return busName;
-      } catch (_e2) {
-        __reportError__(_e2, "", "/thresh-lib/src/shared/bus.ts");
-
-        throw _e2;
-      }
-    };
-
-    Bus.prototype.fire = function (name) {
-      try {
-        var args = [];
-
-        for (var _i = 1; _i < arguments.length; _i++) {
-          args[_i - 1] = arguments[_i];
-        }
-
-        if (!name) return;
-        var cb = this._pool[name];
-        cb && cb.apply(void 0, args);
-      } catch (_e3) {
-        __reportError__(_e3, "", "/thresh-lib/src/shared/bus.ts");
-
-        throw _e3;
-      }
-    };
-
-    Bus.prototype.has = function (name) {
-      try {
-        return !!(name && this._pool[name]);
-      } catch (_e4) {
-        __reportError__(_e4, "", "/thresh-lib/src/shared/bus.ts");
-
-        throw _e4;
-      }
-    };
-
-    Bus.prototype.remove = function (name) {
-      try {
-        if (!name) return;
-        if (this._pool[name]) delete this._pool[name];
-      } catch (_e5) {
-        __reportError__(_e5, "", "/thresh-lib/src/shared/bus.ts");
-
-        throw _e5;
-      }
-    };
-
-    return Bus;
-  } catch (_e6) {
-    __reportError__(_e6, "", "/thresh-lib/src/shared/bus.ts");
-
-    throw _e6;
-  }
-}();
-
-exports["default"] = new Bus();
 
 /***/ }),
 /* 201 */
 /***/ (function(module, exports, __webpack_require__) {
 
+__webpack_require__(202);
+var path = __webpack_require__(24);
 
-/**
- * MIT License
- *
- * Copyright (c) 2020 ManBang Group
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- *
- */
+module.exports = path.Object.assign;
 
-var _interopRequireDefault = __webpack_require__(1);
-
-var _defineProperty = _interopRequireDefault(__webpack_require__(89));
-
-var _assign = _interopRequireDefault(__webpack_require__(170));
-
-var __assign = void 0 && (void 0).__assign || function () {
-  try {
-    __assign = _assign["default"] || function (t) {
-      try {
-        for (var s, i = 1, n = arguments.length; i < n; i++) {
-          s = arguments[i];
-
-          for (var p in s) {
-            if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
-          }
-        }
-
-        return t;
-      } catch (_e) {
-        __reportError__(_e, "", "/thresh-lib/src/manager/DevtoolsManager.ts");
-
-        throw _e;
-      }
-    };
-
-    return __assign.apply(this, arguments);
-  } catch (_e2) {
-    __reportError__(_e2, "", "/thresh-lib/src/manager/DevtoolsManager.ts");
-
-    throw _e2;
-  }
-};
-
-(0, _defineProperty["default"])(exports, "__esModule", {
-  value: true
-});
-exports.InfoType = void 0;
-
-var __1 = __webpack_require__(93);
-
-var MethodChannel_1 = __webpack_require__(153);
-
-var BridgeManager_1 = __webpack_require__(164);
-
-var Util_1 = __webpack_require__(165);
-
-var InfoType;
-
-(function (InfoType) {
-  try {
-    InfoType["log"] = "log";
-    InfoType["warn"] = "warn";
-    InfoType["error"] = "error";
-    InfoType["network"] = "network";
-    InfoType["bridge"] = "bridge";
-    InfoType["event"] = "event";
-  } catch (_e3) {
-    __reportError__(_e3, "", "/thresh-lib/src/manager/DevtoolsManager.ts");
-
-    throw _e3;
-  }
-})(InfoType = exports.InfoType || (exports.InfoType = {}));
-
-var DevtoolsManager =
-/** @class */
-function () {
-  try {
-    function DevtoolsManager() {}
-
-    DevtoolsManager.show = function (type, content, title) {
-      try {
-        if (!__1["default"] || !__1["default"].debugMode) return;
-        MethodChannel_1["default"].call('devtools', {
-          type: type,
-          title: title,
-          content: content
-        });
-      } catch (_e4) {
-        __reportError__(_e4, "", "/thresh-lib/src/manager/DevtoolsManager.ts");
-
-        throw _e4;
-      }
-    };
-
-    DevtoolsManager.log = function () {
-      try {
-        var args = [];
-
-        for (var _i = 0; _i < arguments.length; _i++) {
-          args[_i] = arguments[_i];
-        }
-
-        DevtoolsManager.show(InfoType.log, Util_1["default"].anyToRawString.apply(Util_1["default"], args));
-      } catch (_e5) {
-        __reportError__(_e5, "", "/thresh-lib/src/manager/DevtoolsManager.ts");
-
-        throw _e5;
-      }
-    };
-
-    DevtoolsManager.warn = function () {
-      try {
-        var args = [];
-
-        for (var _i = 0; _i < arguments.length; _i++) {
-          args[_i] = arguments[_i];
-        }
-
-        DevtoolsManager.show(InfoType.warn, Util_1["default"].anyToRawString.apply(Util_1["default"], args));
-      } catch (_e6) {
-        __reportError__(_e6, "", "/thresh-lib/src/manager/DevtoolsManager.ts");
-
-        throw _e6;
-      }
-    };
-
-    DevtoolsManager.error = function () {
-      try {
-        var args = [];
-
-        for (var _i = 0; _i < arguments.length; _i++) {
-          args[_i] = arguments[_i];
-        }
-
-        DevtoolsManager.show(InfoType.error, Util_1["default"].anyToRawString.apply(Util_1["default"], args));
-      } catch (_e7) {
-        __reportError__(_e7, "", "/thresh-lib/src/manager/DevtoolsManager.ts");
-
-        throw _e7;
-      }
-    };
-
-    DevtoolsManager.bridge = function (methodId, data, isRequest) {
-      try {
-        if (isRequest === void 0) {
-          isRequest = false;
-        }
-
-        if (!__1["default"] || !__1["default"].debugMode) return;
-        var bridgeParams;
-
-        if (isRequest) {
-          DevtoolsManager.pool[methodId] = data;
-          bridgeParams = data;
-        } else {
-          bridgeParams = DevtoolsManager.pool[methodId];
-          delete DevtoolsManager.pool[methodId];
-        }
-
-        if (!bridgeParams) return;
-        var module = bridgeParams.module,
-            business = bridgeParams.business,
-            method = bridgeParams.method,
-            params = bridgeParams.params;
-
-        if (BridgeManager_1["default"].isNetworkRequest(bridgeParams)) {
-          var showInfo = void 0;
-
-          if (isRequest) {
-            showInfo = __assign({
-              method: params.method,
-              __showDivider__: 'params'
-            }, params.data || params.query || {});
-          } else {
-            showInfo = __assign({
-              code: data.code,
-              reason: data.reason,
-              __showDivider__: 'data'
-            }, Util_1["default"].isString(data.data) || Util_1["default"].isNil(data.data) || !Util_1["default"].isObject(data.data) ? {
-              data: data.data
-            } : data.data);
-          }
-
-          DevtoolsManager.network(params.url, showInfo, isRequest);
-          return;
-        }
-
-        var logInfos = [isRequest ? 'Request' : 'Response', "Module: " + module];
-        if (business) logInfos.push("Business: " + business);
-        logInfos.push("Method: " + method);
-        logInfos.push("MethodId: " + methodId);
-        DevtoolsManager.show(InfoType.bridge, Util_1["default"].anyToRawString(data), logInfos.join('\n'));
-      } catch (_e8) {
-        __reportError__(_e8, "", "/thresh-lib/src/manager/DevtoolsManager.ts");
-
-        throw _e8;
-      }
-    };
-
-    DevtoolsManager.network = function (url, params, isRequest) {
-      try {
-        if (isRequest === void 0) {
-          isRequest = false;
-        }
-
-        DevtoolsManager.show(InfoType.network, Util_1["default"].anyToRawString(params), (isRequest ? 'Request' : 'Response') + "\n" + url);
-      } catch (_e9) {
-        __reportError__(_e9, "", "/thresh-lib/src/manager/DevtoolsManager.ts");
-
-        throw _e9;
-      }
-    };
-
-    DevtoolsManager.pool = {};
-    return DevtoolsManager;
-  } catch (_e10) {
-    __reportError__(_e10, "", "/thresh-lib/src/manager/DevtoolsManager.ts");
-
-    throw _e10;
-  }
-}();
-
-exports["default"] = DevtoolsManager;
 
 /***/ }),
 /* 202 */
 /***/ (function(module, exports, __webpack_require__) {
 
+var $ = __webpack_require__(6);
+var assign = __webpack_require__(203);
 
-/**
- * MIT License
- *
- * Copyright (c) 2020 ManBang Group
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- *
- */
-
-var _interopRequireDefault = __webpack_require__(1);
-
-var _defineProperty = _interopRequireDefault(__webpack_require__(89));
-
-var _iterator = _interopRequireDefault(__webpack_require__(99));
-
-var _symbol = _interopRequireDefault(__webpack_require__(107));
-
-var _promise = _interopRequireDefault(__webpack_require__(130));
-
-var __awaiter = void 0 && (void 0).__awaiter || function (thisArg, _arguments, P, generator) {
-  try {
-    function adopt(value) {
-      try {
-        return value instanceof P ? value : new P(function (resolve) {
-          try {
-            resolve(value);
-          } catch (_e) {
-            __reportError__(_e, "", "/thresh-lib/src/manager/UtilManager.ts");
-
-            throw _e;
-          }
-        });
-      } catch (_e2) {
-        __reportError__(_e2, "", "/thresh-lib/src/manager/UtilManager.ts");
-
-        throw _e2;
-      }
-    }
-
-    return new (P || (P = _promise["default"]))(function (resolve, reject) {
-      try {
-        function fulfilled(value) {
-          try {
-            try {
-              step(generator.next(value));
-            } catch (e) {
-              reject(e);
-            }
-          } catch (_e3) {
-            __reportError__(_e3, "", "/thresh-lib/src/manager/UtilManager.ts");
-
-            throw _e3;
-          }
-        }
-
-        function rejected(value) {
-          try {
-            try {
-              step(generator["throw"](value));
-            } catch (e) {
-              reject(e);
-            }
-          } catch (_e4) {
-            __reportError__(_e4, "", "/thresh-lib/src/manager/UtilManager.ts");
-
-            throw _e4;
-          }
-        }
-
-        function step(result) {
-          try {
-            result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected);
-          } catch (_e5) {
-            __reportError__(_e5, "", "/thresh-lib/src/manager/UtilManager.ts");
-
-            throw _e5;
-          }
-        }
-
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-      } catch (_e6) {
-        __reportError__(_e6, "", "/thresh-lib/src/manager/UtilManager.ts");
-
-        throw _e6;
-      }
-    });
-  } catch (_e7) {
-    __reportError__(_e7, "", "/thresh-lib/src/manager/UtilManager.ts");
-
-    throw _e7;
-  }
-};
-
-var __generator = void 0 && (void 0).__generator || function (thisArg, body) {
-  try {
-    var _ = {
-      label: 0,
-      sent: function sent() {
-        try {
-          if (t[0] & 1) throw t[1];
-          return t[1];
-        } catch (_e8) {
-          __reportError__(_e8, "sent", "/thresh-lib/src/manager/UtilManager.ts");
-
-          throw _e8;
-        }
-      },
-      trys: [],
-      ops: []
-    },
-        f,
-        y,
-        t,
-        g;
-    return g = {
-      next: verb(0),
-      "throw": verb(1),
-      "return": verb(2)
-    }, typeof _symbol["default"] === "function" && (g[_iterator["default"]] = function () {
-      try {
-        return this;
-      } catch (_e9) {
-        __reportError__(_e9, "", "/thresh-lib/src/manager/UtilManager.ts");
-
-        throw _e9;
-      }
-    }), g;
-
-    function verb(n) {
-      try {
-        return function (v) {
-          return step([n, v]);
-        };
-      } catch (_e10) {
-        __reportError__(_e10, "", "/thresh-lib/src/manager/UtilManager.ts");
-
-        throw _e10;
-      }
-    }
-
-    function step(op) {
-      if (f) throw new TypeError("Generator is already executing.");
-
-      while (_) {
-        try {
-          if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
-          if (y = 0, t) op = [op[0] & 2, t.value];
-
-          switch (op[0]) {
-            case 0:
-            case 1:
-              t = op;
-              break;
-
-            case 4:
-              _.label++;
-              return {
-                value: op[1],
-                done: false
-              };
-
-            case 5:
-              _.label++;
-              y = op[1];
-              op = [0];
-              continue;
-
-            case 7:
-              op = _.ops.pop();
-
-              _.trys.pop();
-
-              continue;
-
-            default:
-              if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) {
-                _ = 0;
-                continue;
-              }
-
-              if (op[0] === 3 && (!t || op[1] > t[0] && op[1] < t[3])) {
-                _.label = op[1];
-                break;
-              }
-
-              if (op[0] === 6 && _.label < t[1]) {
-                _.label = t[1];
-                t = op;
-                break;
-              }
-
-              if (t && _.label < t[2]) {
-                _.label = t[2];
-
-                _.ops.push(op);
-
-                break;
-              }
-
-              if (t[2]) _.ops.pop();
-
-              _.trys.pop();
-
-              continue;
-          }
-
-          op = body.call(thisArg, _);
-        } catch (e) {
-          op = [6, e];
-          y = 0;
-        } finally {
-          f = t = 0;
-        }
-      }
-
-      if (op[0] & 5) throw op[1];
-      return {
-        value: op[0] ? op[1] : void 0,
-        done: true
-      };
-    }
-  } catch (_e11) {
-    __reportError__(_e11, "", "/thresh-lib/src/manager/UtilManager.ts");
-
-    throw _e11;
-  }
-};
-
-(0, _defineProperty["default"])(exports, "__esModule", {
-  value: true
+// `Object.assign` method
+// https://tc39.es/ecma262/#sec-object.assign
+// eslint-disable-next-line es/no-object-assign -- required for testing
+$({ target: 'Object', stat: true, forced: Object.assign !== assign }, {
+  assign: assign
 });
 
-var MethodChannel_1 = __webpack_require__(153);
-
-var BridgeManager_1 = __webpack_require__(164);
-
-var bus_1 = __webpack_require__(200);
-
-var Util_1 = __webpack_require__(165);
-
-var DevtoolsManager_1 = __webpack_require__(201);
-/**
- * 工具方法管理器
- */
-
-
-var UtilManager =
-/** @class */
-function () {
-  try {
-    function UtilManager() {}
-    /**
-     * 定时执行器
-     */
-
-
-    UtilManager.setTimeout = function (callback, duration) {
-      try {
-        if (duration === void 0) {
-          duration = 16;
-        }
-
-        return UtilManager.registerTimer('setTimeout', callback, duration);
-      } catch (_e12) {
-        __reportError__(_e12, "", "/thresh-lib/src/manager/UtilManager.ts");
-
-        throw _e12;
-      }
-    };
-    /**
-     * 循环定时执行器
-     */
-
-
-    UtilManager.setInterval = function (callback, duration) {
-      try {
-        if (duration === void 0) {
-          duration = 16;
-        }
-
-        return UtilManager.registerTimer('setInterval', callback, duration);
-      } catch (_e13) {
-        __reportError__(_e13, "", "/thresh-lib/src/manager/UtilManager.ts");
-
-        throw _e13;
-      }
-    };
-    /**
-     * 清除定时器
-     */
-
-
-    UtilManager.clearTimer = function (timerId) {
-      try {
-        if (!timerId) return;
-        if (!bus_1["default"].has(timerId)) return;
-        bus_1["default"].remove(timerId);
-        MethodChannel_1["default"].call('clearTimer', {
-          timerId: timerId
-        });
-      } catch (_e14) {
-        __reportError__(_e14, "", "/thresh-lib/src/manager/UtilManager.ts");
-
-        throw _e14;
-      }
-    };
-    /**
-     * 注册定时器
-     */
-
-
-    UtilManager.registerTimer = function (type, callback, duration) {
-      try {
-        if (!Util_1["default"].isFunc(callback)) return;
-        var timerId = bus_1["default"].register(callback);
-        MethodChannel_1["default"].call(type, {
-          timerId: timerId,
-          duration: duration
-        });
-        return timerId;
-      } catch (_e15) {
-        __reportError__(_e15, "", "/thresh-lib/src/manager/UtilManager.ts");
-
-        throw _e15;
-      }
-    };
-    /**
-     * 发起网络请求
-     */
-
-
-    UtilManager.request = function (params) {
-      return __awaiter(this, void 0, void 0, function () {
-        return __generator(this, function (_a) {
-          try {
-            return [2
-            /*return*/
-            , BridgeManager_1["default"].invoke({
-              module: BridgeManager_1["default"].DF_BUILT_IN_BRIDGE,
-              method: BridgeManager_1["default"].BRIDGE_METHOD_NET_REQUEST,
-              params: params
-            })];
-          } catch (_e16) {
-            __reportError__(_e16, "", "/thresh-lib/src/manager/UtilManager.ts");
-
-            throw _e16;
-          }
-        });
-      });
-    };
-    /**
-     * 复制到剪贴板
-     * @param {any} data
-     */
-
-
-    UtilManager.copy = function (data, showSuccess) {
-      try {
-        if (showSuccess === void 0) {
-          showSuccess = true;
-        }
-
-        MethodChannel_1["default"].call('copy', {
-          data: Util_1["default"].toString(data),
-          showSuccess: showSuccess
-        });
-      } catch (_e17) {
-        __reportError__(_e17, "", "/thresh-lib/src/manager/UtilManager.ts");
-
-        throw _e17;
-      }
-    };
-
-    UtilManager.log = function () {
-      try {
-        var args = [];
-
-        for (var _i = 0; _i < arguments.length; _i++) {
-          args[_i] = arguments[_i];
-        }
-
-        if (console && console.log) {
-          console.log.apply(console, args);
-        }
-
-        DevtoolsManager_1["default"].log.apply(DevtoolsManager_1["default"], args);
-      } catch (_e18) {
-        __reportError__(_e18, "", "/thresh-lib/src/manager/UtilManager.ts");
-
-        throw _e18;
-      }
-    };
-
-    UtilManager.warn = function () {
-      try {
-        var args = [];
-
-        for (var _i = 0; _i < arguments.length; _i++) {
-          args[_i] = arguments[_i];
-        }
-
-        if (console && console.warn) {
-          console.warn.apply(console, args);
-        }
-
-        DevtoolsManager_1["default"].warn.apply(DevtoolsManager_1["default"], args);
-      } catch (_e19) {
-        __reportError__(_e19, "", "/thresh-lib/src/manager/UtilManager.ts");
-
-        throw _e19;
-      }
-    };
-
-    UtilManager.error = function () {
-      try {
-        var args = [];
-
-        for (var _i = 0; _i < arguments.length; _i++) {
-          args[_i] = arguments[_i];
-        }
-
-        if (console && console.error) {
-          console.error.apply(console, args);
-        }
-
-        DevtoolsManager_1["default"].error.apply(DevtoolsManager_1["default"], args);
-      } catch (_e20) {
-        __reportError__(_e20, "", "/thresh-lib/src/manager/UtilManager.ts");
-
-        throw _e20;
-      }
-    };
-
-    return UtilManager;
-  } catch (_e21) {
-    __reportError__(_e21, "", "/thresh-lib/src/manager/UtilManager.ts");
-
-    throw _e21;
-  }
-}();
-
-exports["default"] = UtilManager;
 
 /***/ }),
 /* 203 */
 /***/ (function(module, exports, __webpack_require__) {
 
-
-/**
- * MIT License
- *
- * Copyright (c) 2020 ManBang Group
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- *
- */
-
-var _interopRequireDefault = __webpack_require__(1);
-
-var _startsWith = _interopRequireDefault(__webpack_require__(204));
-
-var _now = _interopRequireDefault(__webpack_require__(95));
-
-var _keys = _interopRequireDefault(__webpack_require__(209));
-
-var _from = _interopRequireDefault(__webpack_require__(213));
-
-var _defineProperty = _interopRequireDefault(__webpack_require__(89));
-
-var _iterator = _interopRequireDefault(__webpack_require__(99));
-
-var _symbol = _interopRequireDefault(__webpack_require__(107));
-
-var _promise = _interopRequireDefault(__webpack_require__(130));
-
-var __awaiter = void 0 && (void 0).__awaiter || function (thisArg, _arguments, P, generator) {
-  try {
-    function adopt(value) {
-      try {
-        return value instanceof P ? value : new P(function (resolve) {
-          try {
-            resolve(value);
-          } catch (_e) {
-            __reportError__(_e, "", "/thresh-lib/src/manager/RenderManager.ts");
-
-            throw _e;
-          }
-        });
-      } catch (_e2) {
-        __reportError__(_e2, "", "/thresh-lib/src/manager/RenderManager.ts");
-
-        throw _e2;
-      }
-    }
-
-    return new (P || (P = _promise["default"]))(function (resolve, reject) {
-      try {
-        function fulfilled(value) {
-          try {
-            try {
-              step(generator.next(value));
-            } catch (e) {
-              reject(e);
-            }
-          } catch (_e3) {
-            __reportError__(_e3, "", "/thresh-lib/src/manager/RenderManager.ts");
-
-            throw _e3;
-          }
-        }
-
-        function rejected(value) {
-          try {
-            try {
-              step(generator["throw"](value));
-            } catch (e) {
-              reject(e);
-            }
-          } catch (_e4) {
-            __reportError__(_e4, "", "/thresh-lib/src/manager/RenderManager.ts");
-
-            throw _e4;
-          }
-        }
-
-        function step(result) {
-          try {
-            result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected);
-          } catch (_e5) {
-            __reportError__(_e5, "", "/thresh-lib/src/manager/RenderManager.ts");
-
-            throw _e5;
-          }
-        }
-
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-      } catch (_e6) {
-        __reportError__(_e6, "", "/thresh-lib/src/manager/RenderManager.ts");
-
-        throw _e6;
-      }
-    });
-  } catch (_e7) {
-    __reportError__(_e7, "", "/thresh-lib/src/manager/RenderManager.ts");
-
-    throw _e7;
-  }
-};
-
-var __generator = void 0 && (void 0).__generator || function (thisArg, body) {
-  try {
-    var _ = {
-      label: 0,
-      sent: function sent() {
-        try {
-          if (t[0] & 1) throw t[1];
-          return t[1];
-        } catch (_e8) {
-          __reportError__(_e8, "sent", "/thresh-lib/src/manager/RenderManager.ts");
-
-          throw _e8;
-        }
-      },
-      trys: [],
-      ops: []
-    },
-        f,
-        y,
-        t,
-        g;
-    return g = {
-      next: verb(0),
-      "throw": verb(1),
-      "return": verb(2)
-    }, typeof _symbol["default"] === "function" && (g[_iterator["default"]] = function () {
-      try {
-        return this;
-      } catch (_e9) {
-        __reportError__(_e9, "", "/thresh-lib/src/manager/RenderManager.ts");
-
-        throw _e9;
-      }
-    }), g;
-
-    function verb(n) {
-      try {
-        return function (v) {
-          return step([n, v]);
-        };
-      } catch (_e10) {
-        __reportError__(_e10, "", "/thresh-lib/src/manager/RenderManager.ts");
-
-        throw _e10;
-      }
-    }
-
-    function step(op) {
-      if (f) throw new TypeError("Generator is already executing.");
-
-      while (_) {
-        try {
-          if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
-          if (y = 0, t) op = [op[0] & 2, t.value];
-
-          switch (op[0]) {
-            case 0:
-            case 1:
-              t = op;
-              break;
-
-            case 4:
-              _.label++;
-              return {
-                value: op[1],
-                done: false
-              };
-
-            case 5:
-              _.label++;
-              y = op[1];
-              op = [0];
-              continue;
-
-            case 7:
-              op = _.ops.pop();
-
-              _.trys.pop();
-
-              continue;
-
-            default:
-              if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) {
-                _ = 0;
-                continue;
-              }
-
-              if (op[0] === 3 && (!t || op[1] > t[0] && op[1] < t[3])) {
-                _.label = op[1];
-                break;
-              }
-
-              if (op[0] === 6 && _.label < t[1]) {
-                _.label = t[1];
-                t = op;
-                break;
-              }
-
-              if (t && _.label < t[2]) {
-                _.label = t[2];
-
-                _.ops.push(op);
-
-                break;
-              }
-
-              if (t[2]) _.ops.pop();
-
-              _.trys.pop();
-
-              continue;
-          }
-
-          op = body.call(thisArg, _);
-        } catch (e) {
-          op = [6, e];
-          y = 0;
-        } finally {
-          f = t = 0;
-        }
-      }
-
-      if (op[0] & 5) throw op[1];
-      return {
-        value: op[0] ? op[1] : void 0,
-        done: true
-      };
-    }
-  } catch (_e11) {
-    __reportError__(_e11, "", "/thresh-lib/src/manager/RenderManager.ts");
-
-    throw _e11;
-  }
-};
-
-(0, _defineProperty["default"])(exports, "__esModule", {
-  value: true
-});
-
-var __1 = __webpack_require__(93);
-
-var MethodChannel_1 = __webpack_require__(153);
-
-var dispatchMethod_1 = __webpack_require__(218);
-
-var AppContainer_1 = __webpack_require__(225);
-
-var Util_1 = __webpack_require__(165);
-
-var bus_1 = __webpack_require__(200);
-
-var EventManager_1 = __webpack_require__(236);
-
-var UIManager_1 = __webpack_require__(234);
-
-var basicWidget_1 = __webpack_require__(237);
-/**
- * 页面渲染管理器
- */
-
-
-var RenderManager =
-/** @class */
-function () {
-  try {
-    function RenderManager() {}
-
-    (0, _defineProperty["default"])(RenderManager, "currentPage", {
-      /**
-       * 获取当前页面信息
-       */
-      get: function get() {
-        try {
-          if (AppContainer_1["default"].isEmpty) return;
-          var pageName = AppContainer_1["default"].currentPageName;
-          if (!pageName) return;
-          var pageData = AppContainer_1["default"].currentPageData;
-          if (!pageData) return;
-          var temp = pageName.split('#');
-          temp.pop();
-          pageName = temp.join('#');
-          return {
-            pageName: pageName,
-            pageData: pageData
-          };
-        } catch (_e12) {
-          __reportError__(_e12, "get", "/thresh-lib/src/manager/RenderManager.ts");
-
-          throw _e12;
-        }
-      },
-      enumerable: false,
-      configurable: true
-    });
-    /**
-     * 页面不存在
-     */
-
-    RenderManager.pageNotFound = function (nextPath) {
-      try {
-        var _context;
-
-        var allPaths = (0, _from["default"])((0, _keys["default"])(_context = AppContainer_1["default"].routes).call(_context));
-        MethodChannel_1["default"].call('pageNotFound', {
-          allPath: allPaths.join('\n'),
-          nextPath: nextPath,
-          prevPath: AppContainer_1["default"].referPageName || ''
-        });
-      } catch (_e13) {
-        __reportError__(_e13, "", "/thresh-lib/src/manager/RenderManager.ts");
-
-        throw _e13;
-      }
-    };
-    /**
-     * 建立页面/模态框
-     * @param {VNode} renderTree
-     * @param {String} pageName
-     * @param {Boolean} isModal 是否作为模态框显示
-     * @param {Boolean} popup 作为模态框显示时是否从底部弹出
-     */
-
-
-    RenderManager.pushPage = function (renderTree, pageName, isModal, popup) {
-      try {
-        if (isModal === void 0) {
-          isModal = false;
-        }
-
-        if (popup === void 0) {
-          popup = false;
-        }
-
-        if (AppContainer_1["default"].isEmpty && (UIManager_1["default"].screenWidth === 0 || UIManager_1["default"].screenHeight === 0)) {
-          throw new Error("[UI ERROR] screenWidth: " + UIManager_1["default"].screenWidth + ", screenHeight: " + UIManager_1["default"].screenHeight);
-        }
-
-        if (!AppContainer_1["default"].isEmpty && !isModal) EventManager_1["default"].fire('pageOnHide');
-
-        var page = RenderManager._buildPage(renderTree, pageName);
-
-        AppContainer_1["default"].pushPage(page.pageName, renderTree, isModal);
-        if (!isModal) EventManager_1["default"].fire('pageOnShow');
-        MethodChannel_1["default"].call('pushPage', {
-          widgetRenderData: page.pageData,
-          pageName: page.pageName,
-          isModal: isModal,
-          popup: popup
-        });
-      } catch (_e14) {
-        __reportError__(_e14, "", "/thresh-lib/src/manager/RenderManager.ts");
-
-        throw _e14;
-      }
-    };
-    /**
-     * 用一个新的页面替换当前显示的页面
-     * @param {VNode} newRenderTree
-     * @param {String} newPageName
-     */
-
-
-    RenderManager.replacePage = function (newRenderTree, newPageName) {
-      try {
-        EventManager_1["default"].fire('pageOnHide');
-
-        var page = RenderManager._buildPage(newRenderTree, newPageName);
-
-        AppContainer_1["default"].replacePage(page.pageName, newRenderTree);
-        EventManager_1["default"].fire('pageOnShow');
-        MethodChannel_1["default"].call('replacePage', {
-          widgetRenderData: page.pageData,
-          pageName: page.pageName
-        });
-      } catch (_e15) {
-        __reportError__(_e15, "", "/thresh-lib/src/manager/RenderManager.ts");
-
-        throw _e15;
-      }
-    };
-    /**
-     * 推出当前页面
-     */
-
-
-    RenderManager.popPage = function () {
-      return __awaiter(this, void 0, void 0, function () {
-        var pageName, shouldPop, popPageCallback;
-        return __generator(this, function (_a) {
-          try {
-            switch (_a.label) {
-              case 0:
-                pageName = AppContainer_1["default"].namesCache[AppContainer_1["default"].namesCache.length - 1];
-                if (!!AppContainer_1["default"].currentShowIsModal) return [3
-                /*break*/
-                , 2];
-                return [4
-                /*yield*/
-                , basicWidget_1.Page.invokeBeforePagePop()];
-
-              case 1:
-                shouldPop = _a.sent();
-                if (!shouldPop) return [2
-                /*return*/
-                ];
-                _a.label = 2;
-
-              case 2:
-                popPageCallback = function popPageCallback(resolve) {
-                  try {
-                    bus_1["default"].register(function () {
-                      try {
-                        resolve();
-                      } catch (_e16) {
-                        __reportError__(_e16, "", "/thresh-lib/src/manager/RenderManager.ts");
-
-                        throw _e16;
-                      }
-                    }, pageName);
-                  } catch (_e17) {
-                    __reportError__(_e17, "", "/thresh-lib/src/manager/RenderManager.ts");
-
-                    throw _e17;
-                  }
-                };
-
-                if (RenderManager.canPop()) {
-                  // 如果当前页面可关闭
-                  // 则在向 flutter 发出关闭页面消息并注册关闭回调
-                  // 回调将会在 flutter 关闭页面并向 js 发出 popPage 消息后，在 Dispatch.popPage() 中被触发，并同时触发 pageOnHide
-                  MethodChannel_1["default"].call('popPage', {
-                    pageName: pageName
-                  });
-                  return [2
-                  /*return*/
-                  , new _promise["default"](function (resolve) {
-                    try {
-                      popPageCallback(resolve);
-                    } catch (_e18) {
-                      __reportError__(_e18, "", "/thresh-lib/src/manager/RenderManager.ts");
-
-                      throw _e18;
-                    }
-                  })];
-                } else {
-                  return [2
-                  /*return*/
-                  , new _promise["default"](function (resolve) {
-                    try {
-                      popPageCallback(resolve); // 当前页面不可关闭，则手动触发 Dispatch.popPage()
-
-                      dispatchMethod_1["default"].popPage({
-                        pageName: pageName
-                      });
-                    } catch (_e19) {
-                      __reportError__(_e19, "", "/thresh-lib/src/manager/RenderManager.ts");
-
-                      throw _e19;
-                    }
-                  })];
-                }
-
-                return [2
-                /*return*/
-                ];
-            }
-          } catch (_e20) {
-            __reportError__(_e20, "", "/thresh-lib/src/manager/RenderManager.ts");
-
-            throw _e20;
-          }
-        });
+"use strict";
+
+var DESCRIPTORS = __webpack_require__(10);
+var fails = __webpack_require__(11);
+var objectKeys = __webpack_require__(61);
+var getOwnPropertySymbolsModule = __webpack_require__(130);
+var propertyIsEnumerableModule = __webpack_require__(12);
+var toObject = __webpack_require__(50);
+var IndexedObject = __webpack_require__(15);
+
+// eslint-disable-next-line es/no-object-assign -- safe
+var $assign = Object.assign;
+// eslint-disable-next-line es/no-object-defineproperty -- required for testing
+var defineProperty = Object.defineProperty;
+
+// `Object.assign` method
+// https://tc39.es/ecma262/#sec-object.assign
+module.exports = !$assign || fails(function () {
+  // should have correct order of operations (Edge bug)
+  if (DESCRIPTORS && $assign({ b: 1 }, $assign(defineProperty({}, 'a', {
+    enumerable: true,
+    get: function () {
+      defineProperty(this, 'b', {
+        value: 3,
+        enumerable: false
       });
-    };
-    /**
-     * DF当前页面是否可以推出
-     */
+    }
+  }), { b: 2 })).b !== 1) return true;
+  // should work with symbols and should have deterministic property order (V8 bug)
+  var A = {};
+  var B = {};
+  // eslint-disable-next-line es/no-symbol -- safe
+  var symbol = Symbol();
+  var alphabet = 'abcdefghijklmnopqrst';
+  A[symbol] = 7;
+  alphabet.split('').forEach(function (chr) { B[chr] = chr; });
+  return $assign({}, A)[symbol] != 7 || objectKeys($assign({}, B)).join('') != alphabet;
+}) ? function assign(target, source) { // eslint-disable-line no-unused-vars -- required for `.length`
+  var T = toObject(target);
+  var argumentsLength = arguments.length;
+  var index = 1;
+  var getOwnPropertySymbols = getOwnPropertySymbolsModule.f;
+  var propertyIsEnumerable = propertyIsEnumerableModule.f;
+  while (argumentsLength > index) {
+    var S = IndexedObject(arguments[index++]);
+    var keys = getOwnPropertySymbols ? objectKeys(S).concat(getOwnPropertySymbols(S)) : objectKeys(S);
+    var length = keys.length;
+    var j = 0;
+    var key;
+    while (length > j) {
+      key = keys[j++];
+      if (!DESCRIPTORS || propertyIsEnumerable.call(S, key)) T[key] = S[key];
+    }
+  } return T;
+} : $assign;
 
-
-    RenderManager.canPop = function () {
-      try {
-        // 存在根flutter页面时一定可以pop
-        // 不存在时只有当页面数量大于1时才可以pop
-        return __1["default"].hasRootFlutterPage || AppContainer_1["default"].namesCache.length > 1;
-      } catch (_e21) {
-        __reportError__(_e21, "", "/thresh-lib/src/manager/RenderManager.ts");
-
-        throw _e21;
-      }
-    };
-    /**
-     * 显示模态
-     */
-
-
-    RenderManager.showModal = function (modalRenderTree, title, popup) {
-      try {
-        RenderManager.modalNumber++;
-        RenderManager.pushPage(modalRenderTree, title, true, popup);
-      } catch (_e22) {
-        __reportError__(_e22, "", "/thresh-lib/src/manager/RenderManager.ts");
-
-        throw _e22;
-      }
-    };
-    /**
-     * 隐藏模态
-     */
-
-
-    RenderManager.hideModal = function () {
-      return __awaiter(this, void 0, void 0, function () {
-        return __generator(this, function (_a) {
-          try {
-            switch (_a.label) {
-              case 0:
-                if (!RenderManager.modalNumber) return [3
-                /*break*/
-                , 2];
-                RenderManager.modalNumber--;
-                return [4
-                /*yield*/
-                , RenderManager.popPage()];
-
-              case 1:
-                return [2
-                /*return*/
-                , _a.sent()];
-
-              case 2:
-                return [2
-                /*return*/
-                ];
-            }
-          } catch (_e23) {
-            __reportError__(_e23, "", "/thresh-lib/src/manager/RenderManager.ts");
-
-            throw _e23;
-          }
-        });
-      });
-    };
-    /**
-     * 显示taost
-     */
-
-
-    RenderManager.showToast = function (toastRenderTree, toastInfo) {
-      try {
-        if (toastInfo === void 0) {
-          toastInfo = {};
-        }
-
-        var toastRenderData = toastRenderTree.toRenderData('toast#' + (toastInfo.name || (0, _now["default"])()));
-        MethodChannel_1["default"].call('showToast', {
-          toastRenderData: Util_1["default"].toString(toastRenderData),
-          toastInfo: Util_1["default"].toString(toastInfo)
-        });
-      } catch (_e24) {
-        __reportError__(_e24, "", "/thresh-lib/src/manager/RenderManager.ts");
-
-        throw _e24;
-      }
-    };
-    /**
-     * 隐藏taost
-     */
-
-
-    RenderManager.hideToast = function (toastName) {
-      try {
-        MethodChannel_1["default"].call('hideToast', {
-          toastName: toastName
-        });
-      } catch (_e25) {
-        __reportError__(_e25, "", "/thresh-lib/src/manager/RenderManager.ts");
-
-        throw _e25;
-      }
-    };
-    /**
-     * 更新widget
-     * @param {VNode} updateRenderTree
-     * @param {String} needUpdateWidgetId
-     * @param {String} invokeDidUpdateWidgetId
-     * @param {String} pageName
-     * @param {bool} setRootBasicStateful 是否设置newWidgetTree的根basic widget为stateful，因为更新时只能拿到render执行结果，无法获取到包裹它的widget是否是stateful的，所以需要手动传入
-     */
-
-
-    RenderManager.updateWidget = function (updateRenderTree, needUpdateWidgetId, invokeDidUpdateWidgetId, pageName) {
-      try {
-        // 当需要更新 widget 时查看 widget cache 中是否已经存在需要被替换的 widget tree 的根节点标记
-        var updateRenderData = updateRenderTree.toRenderData(pageName);
-        MethodChannel_1["default"].call('updateWidget', {
-          widgetUpdateData: Util_1["default"].toString(updateRenderData),
-          needUpdateWidgetId: needUpdateWidgetId,
-          invokeDidUpdateWidgetId: invokeDidUpdateWidgetId,
-          pageName: pageName
-        });
-      } catch (_e26) {
-        __reportError__(_e26, "", "/thresh-lib/src/manager/RenderManager.ts");
-
-        throw _e26;
-      }
-    };
-    /**
-     * 停止 flutter 中永久渲染组件的渲染
-     */
-
-
-    RenderManager.stopAlwaysRender = function () {
-      try {
-        MethodChannel_1["default"].call('stopAlwaysRender');
-      } catch (_e27) {
-        __reportError__(_e27, "", "/thresh-lib/src/manager/RenderManager.ts");
-
-        throw _e27;
-      }
-    };
-    /**
-     * 获取设备媒体信息
-     * 由于mediaQuery是DF中唯一一个双向的方法
-     * 因此在接收到来自flutter的mediaQuery信息时，还会携带上其他的信息
-     * 如：debugMode bizName 等
-     */
-
-
-    RenderManager.getMediaQuery = function (jsVersion) {
-      try {
-        MethodChannel_1["default"].call('mediaQuery', {
-          jsEnv: 'production',
-          jsVersion: jsVersion
-        });
-      } catch (_e28) {
-        __reportError__(_e28, "", "/thresh-lib/src/manager/RenderManager.ts");
-
-        throw _e28;
-      }
-    };
-    /**
-     * 构建页面
-     * 返回一个可以被flutter解析渲染的 jsonTreeString
-     */
-
-
-    RenderManager._buildPage = function (renderTree, pageName) {
-      try {
-        if (!pageName) throw new Error('set up page must has a pageName');
-        pageName = pageName + "#" + RenderManager.pageId++;
-        var renderData = renderTree.toRenderData(pageName);
-        if (!renderTree.fetchRootNode().pageNode && !(0, _startsWith["default"])(pageName).call(pageName, AppContainer_1.MODAL_TAG)) throw new Error('Each page must has one <Page />');
-        return {
-          pageName: pageName,
-          pageData: Util_1["default"].toString(renderData)
-        };
-      } catch (_e29) {
-        __reportError__(_e29, "", "/thresh-lib/src/manager/RenderManager.ts");
-
-        throw _e29;
-      }
-    };
-
-    RenderManager.pageId = 1;
-    RenderManager.modalNumber = 0;
-    return RenderManager;
-  } catch (_e30) {
-    __reportError__(_e30, "", "/thresh-lib/src/manager/RenderManager.ts");
-
-    throw _e30;
-  }
-}();
-
-exports["default"] = RenderManager;
 
 /***/ }),
 /* 204 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(205);
-
-/***/ }),
-/* 205 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var parent = __webpack_require__(206);
-
-module.exports = parent;
-
-
-/***/ }),
-/* 206 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var startsWith = __webpack_require__(207);
-
-var StringPrototype = String.prototype;
-
-module.exports = function (it) {
-  var own = it.startsWith;
-  return typeof it === 'string' || it === StringPrototype
-    || (it instanceof String && own === StringPrototype.startsWith) ? startsWith : own;
-};
-
-
-/***/ }),
-/* 207 */
-/***/ (function(module, exports, __webpack_require__) {
-
-__webpack_require__(208);
-var entryVirtual = __webpack_require__(49);
-
-module.exports = entryVirtual('String').startsWith;
-
-
-/***/ }),
-/* 208 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-var $ = __webpack_require__(7);
-var getOwnPropertyDescriptor = __webpack_require__(10).f;
-var toLength = __webpack_require__(33);
-var notARegExp = __webpack_require__(161);
-var requireObjectCoercible = __webpack_require__(18);
-var correctIsRegExpLogic = __webpack_require__(163);
-var IS_PURE = __webpack_require__(39);
-
-var nativeStartsWith = ''.startsWith;
-var min = Math.min;
-
-var CORRECT_IS_REGEXP_LOGIC = correctIsRegExpLogic('startsWith');
-// https://github.com/zloirock/core-js/pull/702
-var MDN_POLYFILL_BUG = !IS_PURE && !CORRECT_IS_REGEXP_LOGIC && !!function () {
-  var descriptor = getOwnPropertyDescriptor(String.prototype, 'startsWith');
-  return descriptor && !descriptor.writable;
-}();
-
-// `String.prototype.startsWith` method
-// https://tc39.github.io/ecma262/#sec-string.prototype.startswith
-$({ target: 'String', proto: true, forced: !MDN_POLYFILL_BUG && !CORRECT_IS_REGEXP_LOGIC }, {
-  startsWith: function startsWith(searchString /* , position = 0 */) {
-    var that = String(requireObjectCoercible(this));
-    notARegExp(searchString);
-    var index = toLength(min(arguments.length > 1 ? arguments[1] : undefined, that.length));
-    var search = String(searchString);
-    return nativeStartsWith
-      ? nativeStartsWith.call(that, search, index)
-      : that.slice(index, index + search.length) === search;
-  }
-});
-
-
-/***/ }),
-/* 209 */
-/***/ (function(module, exports, __webpack_require__) {
-
-module.exports = __webpack_require__(210);
-
-/***/ }),
-/* 210 */
-/***/ (function(module, exports, __webpack_require__) {
-
-__webpack_require__(52);
-var keys = __webpack_require__(211);
-var classof = __webpack_require__(77);
-var ArrayPrototype = Array.prototype;
-
-var DOMIterables = {
-  DOMTokenList: true,
-  NodeList: true
-};
-
-module.exports = function (it) {
-  var own = it.keys;
-  return it === ArrayPrototype || (it instanceof Array && own === ArrayPrototype.keys)
-    // eslint-disable-next-line no-prototype-builtins
-    || DOMIterables.hasOwnProperty(classof(it)) ? keys : own;
-};
-
-
-/***/ }),
-/* 211 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var parent = __webpack_require__(212);
-
-module.exports = parent;
-
-
-/***/ }),
-/* 212 */
-/***/ (function(module, exports, __webpack_require__) {
-
-__webpack_require__(53);
-var entryVirtual = __webpack_require__(49);
-
-module.exports = entryVirtual('Array').keys;
-
-
-/***/ }),
-/* 213 */
-/***/ (function(module, exports, __webpack_require__) {
-
-module.exports = __webpack_require__(214);
-
-/***/ }),
-/* 214 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var parent = __webpack_require__(215);
-
-module.exports = parent;
-
-
-/***/ }),
-/* 215 */
-/***/ (function(module, exports, __webpack_require__) {
-
-__webpack_require__(105);
-__webpack_require__(216);
-var path = __webpack_require__(25);
-
-module.exports = path.Array.from;
-
-
-/***/ }),
-/* 216 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var $ = __webpack_require__(7);
-var from = __webpack_require__(217);
-var checkCorrectnessOfIteration = __webpack_require__(142);
-
-var INCORRECT_ITERATION = !checkCorrectnessOfIteration(function (iterable) {
-  Array.from(iterable);
-});
-
-// `Array.from` method
-// https://tc39.github.io/ecma262/#sec-array.from
-$({ target: 'Array', stat: true, forced: INCORRECT_ITERATION }, {
-  from: from
-});
-
-
-/***/ }),
-/* 217 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-var bind = __webpack_require__(26);
-var toObject = __webpack_require__(32);
-var callWithSafeIterationClosing = __webpack_require__(141);
-var isArrayIteratorMethod = __webpack_require__(139);
-var toLength = __webpack_require__(33);
-var createProperty = __webpack_require__(35);
-var getIteratorMethod = __webpack_require__(140);
-
-// `Array.from` method implementation
-// https://tc39.github.io/ecma262/#sec-array.from
-module.exports = function from(arrayLike /* , mapfn = undefined, thisArg = undefined */) {
-  var O = toObject(arrayLike);
-  var C = typeof this == 'function' ? this : Array;
-  var argumentsLength = arguments.length;
-  var mapfn = argumentsLength > 1 ? arguments[1] : undefined;
-  var mapping = mapfn !== undefined;
-  var iteratorMethod = getIteratorMethod(O);
-  var index = 0;
-  var length, result, step, iterator, next, value;
-  if (mapping) mapfn = bind(mapfn, argumentsLength > 2 ? arguments[2] : undefined, 2);
-  // if the target is not iterable or it's an array with the default iterator - use a simple case
-  if (iteratorMethod != undefined && !(C == Array && isArrayIteratorMethod(iteratorMethod))) {
-    iterator = iteratorMethod.call(O);
-    next = iterator.next;
-    result = new C();
-    for (;!(step = next.call(iterator)).done; index++) {
-      value = mapping ? callWithSafeIterationClosing(iterator, mapfn, [step.value, index], true) : step.value;
-      createProperty(result, index, value);
-    }
-  } else {
-    length = toLength(O.length);
-    result = new C(length);
-    for (;length > index; index++) {
-      value = mapping ? mapfn(O[index], index) : O[index];
-      createProperty(result, index, value);
-    }
-  }
-  result.length = index;
-  return result;
-};
-
-
-/***/ }),
-/* 218 */
-/***/ (function(module, exports, __webpack_require__) {
-
 
 /**
  * MIT License
@@ -8449,711 +6916,27 @@ module.exports = function from(arrayLike /* , mapfn = undefined, thisArg = undef
 
 var _interopRequireDefault = __webpack_require__(1);
 
-var _now = _interopRequireDefault(__webpack_require__(95));
+var _promise = _interopRequireDefault(__webpack_require__(95));
 
-var _startsWith = _interopRequireDefault(__webpack_require__(204));
+var _symbol = _interopRequireDefault(__webpack_require__(124));
 
-var _stringify = _interopRequireDefault(__webpack_require__(166));
+var _iterator = _interopRequireDefault(__webpack_require__(150));
 
-var _defineProperty = _interopRequireDefault(__webpack_require__(89));
+var _defineProperty = _interopRequireDefault(__webpack_require__(2));
 
-var _iterator = _interopRequireDefault(__webpack_require__(99));
+var _now = _interopRequireDefault(__webpack_require__(153));
 
-var _symbol = _interopRequireDefault(__webpack_require__(107));
+var _isArray = _interopRequireDefault(__webpack_require__(189));
 
-var _promise = _interopRequireDefault(__webpack_require__(130));
+var _forEach = _interopRequireDefault(__webpack_require__(30));
 
-var __awaiter = void 0 && (void 0).__awaiter || function (thisArg, _arguments, P, generator) {
-  try {
-    function adopt(value) {
-      try {
-        return value instanceof P ? value : new P(function (resolve) {
-          try {
-            resolve(value);
-          } catch (_e2) {
-            __reportError__(_e2, "", "/thresh-lib/src/channel/dispatchMethod.ts");
+var _includes = _interopRequireDefault(__webpack_require__(163));
 
-            throw _e2;
-          }
-        });
-      } catch (_e3) {
-        __reportError__(_e3, "", "/thresh-lib/src/channel/dispatchMethod.ts");
+var _assign = _interopRequireDefault(__webpack_require__(199));
 
-        throw _e3;
-      }
-    }
+var _indexOf = _interopRequireDefault(__webpack_require__(205));
 
-    return new (P || (P = _promise["default"]))(function (resolve, reject) {
-      try {
-        function fulfilled(value) {
-          try {
-            try {
-              step(generator.next(value));
-            } catch (e) {
-              reject(e);
-            }
-          } catch (_e4) {
-            __reportError__(_e4, "", "/thresh-lib/src/channel/dispatchMethod.ts");
-
-            throw _e4;
-          }
-        }
-
-        function rejected(value) {
-          try {
-            try {
-              step(generator["throw"](value));
-            } catch (e) {
-              reject(e);
-            }
-          } catch (_e5) {
-            __reportError__(_e5, "", "/thresh-lib/src/channel/dispatchMethod.ts");
-
-            throw _e5;
-          }
-        }
-
-        function step(result) {
-          try {
-            result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected);
-          } catch (_e6) {
-            __reportError__(_e6, "", "/thresh-lib/src/channel/dispatchMethod.ts");
-
-            throw _e6;
-          }
-        }
-
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-      } catch (_e7) {
-        __reportError__(_e7, "", "/thresh-lib/src/channel/dispatchMethod.ts");
-
-        throw _e7;
-      }
-    });
-  } catch (_e8) {
-    __reportError__(_e8, "", "/thresh-lib/src/channel/dispatchMethod.ts");
-
-    throw _e8;
-  }
-};
-
-var __generator = void 0 && (void 0).__generator || function (thisArg, body) {
-  try {
-    var _ = {
-      label: 0,
-      sent: function sent() {
-        try {
-          if (t[0] & 1) throw t[1];
-          return t[1];
-        } catch (_e9) {
-          __reportError__(_e9, "sent", "/thresh-lib/src/channel/dispatchMethod.ts");
-
-          throw _e9;
-        }
-      },
-      trys: [],
-      ops: []
-    },
-        f,
-        y,
-        t,
-        g;
-    return g = {
-      next: verb(0),
-      "throw": verb(1),
-      "return": verb(2)
-    }, typeof _symbol["default"] === "function" && (g[_iterator["default"]] = function () {
-      try {
-        return this;
-      } catch (_e10) {
-        __reportError__(_e10, "", "/thresh-lib/src/channel/dispatchMethod.ts");
-
-        throw _e10;
-      }
-    }), g;
-
-    function verb(n) {
-      try {
-        return function (v) {
-          return step([n, v]);
-        };
-      } catch (_e11) {
-        __reportError__(_e11, "", "/thresh-lib/src/channel/dispatchMethod.ts");
-
-        throw _e11;
-      }
-    }
-
-    function step(op) {
-      if (f) throw new TypeError("Generator is already executing.");
-
-      while (_) {
-        try {
-          if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
-          if (y = 0, t) op = [op[0] & 2, t.value];
-
-          switch (op[0]) {
-            case 0:
-            case 1:
-              t = op;
-              break;
-
-            case 4:
-              _.label++;
-              return {
-                value: op[1],
-                done: false
-              };
-
-            case 5:
-              _.label++;
-              y = op[1];
-              op = [0];
-              continue;
-
-            case 7:
-              op = _.ops.pop();
-
-              _.trys.pop();
-
-              continue;
-
-            default:
-              if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) {
-                _ = 0;
-                continue;
-              }
-
-              if (op[0] === 3 && (!t || op[1] > t[0] && op[1] < t[3])) {
-                _.label = op[1];
-                break;
-              }
-
-              if (op[0] === 6 && _.label < t[1]) {
-                _.label = t[1];
-                t = op;
-                break;
-              }
-
-              if (t && _.label < t[2]) {
-                _.label = t[2];
-
-                _.ops.push(op);
-
-                break;
-              }
-
-              if (t[2]) _.ops.pop();
-
-              _.trys.pop();
-
-              continue;
-          }
-
-          op = body.call(thisArg, _);
-        } catch (e) {
-          op = [6, e];
-          y = 0;
-        } finally {
-          f = t = 0;
-        }
-      }
-
-      if (op[0] & 5) throw op[1];
-      return {
-        value: op[0] ? op[1] : void 0,
-        done: true
-      };
-    }
-  } catch (_e12) {
-    __reportError__(_e12, "", "/thresh-lib/src/channel/dispatchMethod.ts");
-
-    throw _e12;
-  }
-};
-
-(0, _defineProperty["default"])(exports, "__esModule", {
-  value: true
-});
-exports.nativeCallJs = exports.flutterCallJs = void 0;
-
-var __1 = __webpack_require__(93);
-
-var MethodChannel_1 = __webpack_require__(153);
-
-var VNode_1 = __webpack_require__(219);
-
-var AppContainer_1 = __webpack_require__(225);
-
-var UIManager_1 = __webpack_require__(234);
-
-var RenderManager_1 = __webpack_require__(203);
-
-var UtilManager_1 = __webpack_require__(202);
-
-var BridgeManager_1 = __webpack_require__(164);
-
-var bus_1 = __webpack_require__(200);
-
-var Util_1 = __webpack_require__(165);
-
-var initGlobal_1 = __webpack_require__(235);
-
-var basicWidget_1 = __webpack_require__(237);
-/**
- * native与flutter调用js后的方法分发器
- */
-
-
-var Dispatcher =
-/** @class */
-function () {
-  try {
-    function Dispatcher() {}
-
-    Dispatcher.dispatch = function (channelParams, from) {
-      try {
-        var method = channelParams.method,
-            params = channelParams.params;
-
-        if (from === 'Flutter') {
-          if (Util_1["default"].isString(params)) {
-            try {
-              params = JSON.parse(params);
-            } catch (e) {
-              UtilManager_1["default"].warn(e);
-            }
-          }
-        }
-
-        var fn = Dispatcher[method];
-        if (fn) fn(params);
-      } catch (_e13) {
-        __reportError__(_e13, "", "/thresh-lib/src/channel/dispatchMethod.ts");
-
-        throw _e13;
-      }
-    }; // flutter_call_js
-
-
-    Dispatcher.mediaQuery = function (params) {
-      return __awaiter(this, void 0, void 0, function () {
-        var _a, debugMode, platform, flutterVersion, _b, flutterFirstChannelSpend, _c, width, _d, needJsBundlePath, bundleDir, res;
-
-        return __generator(this, function (_e) {
-          try {
-            switch (_e.label) {
-              case 0:
-                if (__1["default"].envReady) return [2
-                /*return*/
-                ];
-                _a = params.debugMode, debugMode = _a === void 0 ? false : _a, platform = params.platform, flutterVersion = params.flutterVersion, _b = params.flutterFirstChannelSpend, flutterFirstChannelSpend = _b === void 0 ? 0 : _b, _c = params.width, width = _c === void 0 ? 0 : _c, _d = params.needJsBundlePath, needJsBundlePath = _d === void 0 ? true : _d;
-                if (!width) return [2
-                /*return*/
-                ];
-                UIManager_1.mediaQuery.setDeviceInfo(params);
-                __1["default"].debugMode = !!debugMode;
-                __1["default"].platform = platform;
-                __1["default"].flutterVersion = flutterVersion;
-                __1["default"].envReady = true;
-                if (!MethodChannel_1["default"].channelFirstSpendTime && flutterFirstChannelSpend) MethodChannel_1["default"].channelFirstSpendTime = flutterFirstChannelSpend;
-                if (true) return [3
-                /*break*/
-                , 1];
-                bundleDir = '/Users/tangjingdong/Desktop/YMM/DF/thresh/example/js/dist';
-                MethodChannel_1["default"].call('setBundleDir', {
-                  bundleDir: bundleDir
-                });
-                return [3
-                /*break*/
-                , 3];
-
-              case 1:
-                if (!needJsBundlePath) return [3
-                /*break*/
-                , 3];
-                return [4
-                /*yield*/
-                , BridgeManager_1["default"].invoke({
-                  module: 'thresh',
-                  method: 'jsbundlePath',
-                  params: {
-                    bizName: 'thresh-demo'
-                  }
-                })];
-
-              case 2:
-                res = _e.sent();
-                bundleDir = res.data || '';
-                if (!bundleDir) throw new Error("cannot get thresh js bundle dir: " + (0, _stringify["default"])(res));
-                MethodChannel_1["default"].call('setBundleDir', {
-                  bundleDir: bundleDir
-                });
-                _e.label = 3;
-
-              case 3:
-                return [2
-                /*return*/
-                ];
-            }
-          } catch (_e14) {
-            __reportError__(_e14, "", "/thresh-lib/src/channel/dispatchMethod.ts");
-
-            throw _e14;
-          }
-        });
-      });
-    }; // flutter_call_js
-
-
-    Dispatcher.ready = function (params) {
-      return __awaiter(this, void 0, void 0, function () {
-        return __generator(this, function (_a) {
-          try {
-            switch (_a.label) {
-              case 0:
-                if (!__1["default"].envReady) {
-                  RenderManager_1["default"].getMediaQuery(__1["default"].jsVersion);
-                  return [2
-                  /*return*/
-                  ];
-                }
-
-                if (__1["default"].hasRunApp) return [2
-                /*return*/
-                ];
-                __1["default"].hasRunApp = true;
-                __1["default"].hasRootFlutterPage = false;
-
-                if (params) {
-                  __1["default"].injectRoute(params);
-                }
-
-                return [4
-                /*yield*/
-                , initGlobal_1.promiseResolveHackForIos_10_0_x()];
-
-              case 1:
-                _a.sent();
-
-                __1["default"].ready();
-
-                return [2
-                /*return*/
-                ];
-            }
-          } catch (_e15) {
-            __reportError__(_e15, "", "/thresh-lib/src/channel/dispatchMethod.ts");
-
-            throw _e15;
-          }
-        });
-      });
-    }; // flutter_call_js
-
-
-    Dispatcher.setupPage = function (params) {
-      try {
-        var pageName = params ? params.pageName : void 0;
-        var query = params ? params.params || {} : void 0;
-
-        var pageRes = __1["default"]['_findPage'](pageName, query);
-
-        if (!pageRes.pageData) return;
-        RenderManager_1["default"].pushPage(pageRes.pageData, pageRes.pageName);
-      } catch (_e16) {
-        __reportError__(_e16, "", "/thresh-lib/src/channel/dispatchMethod.ts");
-
-        throw _e16;
-      }
-    }; // flutter_call_js
-    // flutter 触发 pop 时通知 js 执行 popPage
-    // 然后回到 flutter 执行实际的 popPage
-    // 最后回到 js 执行 popPage 后的工作
-
-
-    Dispatcher.needPopPage = function (params) {
-      try {
-        RenderManager_1["default"].popPage();
-      } catch (_e17) {
-        __reportError__(_e17, "", "/thresh-lib/src/channel/dispatchMethod.ts");
-
-        throw _e17;
-      }
-    }; // flutter_call_js
-    // 执行该方法时 flutter 实际 popPage 已完成
-
-
-    Dispatcher.popPage = function (params) {
-      try {
-        if (params === void 0) {
-          params = {};
-        }
-
-        var pageName = params.pageName;
-        if (!pageName) pageName = AppContainer_1["default"].namesCache[AppContainer_1["default"].namesCache.length - 1];
-
-        if (AppContainer_1["default"].hasPage(pageName, true)) {
-          var renderTree = AppContainer_1["default"].getPageData(pageName); // 页面 pop 流程：
-          // 先触发 pageOnHide
-          // 再执行 pop 完成回调
-          // 移除当前页面缓存或关闭窗口
-          // 然后执行组件已卸载操作
-          // 如果存在前一个页面还需要触发该页面的 pageOnShow
-
-          basicWidget_1.Page.invokePageOnHide();
-          bus_1["default"].fire(pageName);
-          bus_1["default"].remove(pageName);
-
-          if (!__1["default"].canPop()) {
-            // 关闭容器
-            Dispatcher.closeWindow(); // 触发当前页面的 didUnmount 方法
-
-            renderTree.invokeLifeCycle(VNode_1.LifeCycle.widgetDidUnmount);
-          } else {
-            // 移除当前显示页面
-            AppContainer_1["default"].removeCurrentShow(); // 触发当前显示页面的 didUnmount 方法
-
-            renderTree.invokeLifeCycle(VNode_1.LifeCycle.widgetDidUnmount); // 如果当前显示的是弹窗则中断
-            // TODO - 弹窗中包含 Page 组件时也需要触发 onShow onHide，目前暂未触发
-
-            if ((0, _startsWith["default"])(pageName).call(pageName, AppContainer_1.MODAL_TAG)) return; // 触发即将显示页面的 onShow 方法
-
-            basicWidget_1.Page.invokePageOnShow(pageName);
-          }
-        }
-      } catch (_e18) {
-        __reportError__(_e18, "", "/thresh-lib/src/channel/dispatchMethod.ts");
-
-        throw _e18;
-      }
-    }; // flutter_call_js
-
-
-    Dispatcher.triggerEvent = function (params) {
-      try {
-        if (!params) return;
-        var pageName = params.pageName,
-            widgetId = params.widgetId,
-            eventId = params.eventId,
-            eventType = params.eventType,
-            args = params.args;
-        var pageNode = AppContainer_1["default"].getPageData(pageName);
-        if (!pageNode) return;
-        pageNode.invokeEvent(widgetId, eventId, eventType, args);
-      } catch (_e19) {
-        __reportError__(_e19, "", "/thresh-lib/src/channel/dispatchMethod.ts");
-
-        throw _e19;
-      }
-    }; // flutter_call_js
-
-
-    Dispatcher.lifeCycle = function (params) {
-      try {
-        if (!params) return;
-        var pageName = params.pageName;
-        var lifeStep = params.lifeStep;
-        var widgetId = params.widgetId;
-        var pageNode = AppContainer_1["default"].getPageData(pageName);
-        if (!pageName || !pageNode || !lifeStep) return;
-
-        if (!widgetId) {
-          pageNode.invokeLifeCycle(lifeStep);
-        } else {
-          var renderNode = pageNode.fetch(widgetId);
-          if (renderNode) renderNode.invokeLifeCycle(lifeStep);
-        }
-      } catch (_e20) {
-        __reportError__(_e20, "", "/thresh-lib/src/channel/dispatchMethod.ts");
-
-        throw _e20;
-      }
-    }; // flutter_call_js
-
-
-    Dispatcher.fireTimer = function (params) {
-      try {
-        bus_1["default"].fire(params.timerId);
-      } catch (_e21) {
-        __reportError__(_e21, "", "/thresh-lib/src/channel/dispatchMethod.ts");
-
-        throw _e21;
-      }
-    }; // flutter_call_js
-
-
-    Dispatcher.clearTimer = function (params) {
-      try {
-        UtilManager_1["default"].clearTimer(params.timerId);
-      } catch (_e22) {
-        __reportError__(_e22, "", "/thresh-lib/src/channel/dispatchMethod.ts");
-
-        throw _e22;
-      }
-    }; // flutter_call_js native_call_js
-
-
-    Dispatcher.bridgeResponse = function (params) {
-      try {
-        var methodId = params.methodId,
-            response = params.response; // response 内部还包装了一层，需要读取内层
-
-        var res = response.data || response;
-
-        try {
-          if (res.data && typeof res.data === 'string') {
-            res.data = JSON.parse(res.data);
-          }
-        } catch (e) {}
-
-        BridgeManager_1["default"].response(methodId, res);
-      } catch (_e23) {
-        __reportError__(_e23, "", "/thresh-lib/src/channel/dispatchMethod.ts");
-
-        throw _e23;
-      }
-    }; // flutter_call_js
-
-
-    Dispatcher.closeWindow = function () {
-      try {
-        RenderManager_1["default"].stopAlwaysRender();
-        UtilManager_1["default"].setTimeout(function () {
-          try {
-            Dispatcher.onDestroyed();
-            BridgeManager_1["default"].invoke({
-              module: 'base',
-              method: 'closeWindow'
-            });
-          } catch (_e24) {
-            __reportError__(_e24, "", "/thresh-lib/src/channel/dispatchMethod.ts");
-
-            throw _e24;
-          }
-        }, 100);
-      } catch (_e25) {
-        __reportError__(_e25, "", "/thresh-lib/src/channel/dispatchMethod.ts");
-
-        throw _e25;
-      }
-    }; // flutter_call_js
-
-
-    Dispatcher.pageDidLoad = function () {
-      try {
-        MethodChannel_1["default"].pageDidLoadTime = (0, _now["default"])();
-      } catch (_e26) {
-        __reportError__(_e26, "", "/thresh-lib/src/channel/dispatchMethod.ts");
-
-        throw _e26;
-      }
-    }; // native_call_js
-
-
-    Dispatcher.onDestroyed = function () {
-      try {
-        MethodChannel_1["default"].call('onDestroyed', {});
-        __1["default"]._alive = false;
-      } catch (_e27) {
-        __reportError__(_e27, "", "/thresh-lib/src/channel/dispatchMethod.ts");
-
-        throw _e27;
-      }
-    };
-
-    return Dispatcher;
-  } catch (_e28) {
-    __reportError__(_e28, "", "/thresh-lib/src/channel/dispatchMethod.ts");
-
-    throw _e28;
-  }
-}();
-
-exports["default"] = Dispatcher;
-/**
- * js 暴露给 flutter 调用的方法
- */
-
-function methodChannel_flutter_call_js(channelParams) {
-  try {
-    if (!__1["default"]._alive) return;
-    Dispatcher.dispatch(channelParams, 'Flutter');
-  } catch (_e29) {
-    __reportError__(_e29, "methodChannel_flutter_call_js", "/thresh-lib/src/channel/dispatchMethod.ts");
-
-    throw _e29;
-  }
-}
-
-exports.flutterCallJs = methodChannel_flutter_call_js;
-/**
- * js 暴露给 native 调用的方法
- */
-
-function methodChannel_native_call_js(channelParams) {
-  try {
-    if (!__1["default"]._alive) return;
-    Dispatcher.dispatch(channelParams, 'Native');
-  } catch (_e30) {
-    __reportError__(_e30, "methodChannel_native_call_js", "/thresh-lib/src/channel/dispatchMethod.ts");
-
-    throw _e30;
-  }
-}
-
-exports.nativeCallJs = methodChannel_native_call_js;
-
-/***/ }),
-/* 219 */
-/***/ (function(module, exports, __webpack_require__) {
-
-
-/**
- * MIT License
- *
- * Copyright (c) 2020 ManBang Group
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- *
- */
-
-var _interopRequireDefault = __webpack_require__(1);
-
-var _splice = _interopRequireDefault(__webpack_require__(195));
-
-var _indexOf = _interopRequireDefault(__webpack_require__(220));
-
-var _assign = _interopRequireDefault(__webpack_require__(170));
-
-var _includes = _interopRequireDefault(__webpack_require__(154));
-
-var _forEach = _interopRequireDefault(__webpack_require__(50));
-
-var _isArray = _interopRequireDefault(__webpack_require__(181));
-
-var _defineProperty = _interopRequireDefault(__webpack_require__(89));
-
-var _iterator = _interopRequireDefault(__webpack_require__(99));
-
-var _symbol = _interopRequireDefault(__webpack_require__(107));
-
-var _promise = _interopRequireDefault(__webpack_require__(130));
+var _splice = _interopRequireDefault(__webpack_require__(184));
 
 var __awaiter = void 0 && (void 0).__awaiter || function (thisArg, _arguments, P, generator) {
   try {
@@ -9389,7 +7172,11 @@ var __spreadArrays = void 0 && (void 0).__spreadArrays || function () {
 });
 exports.LifeCycle = void 0;
 
-var Util_1 = __webpack_require__(165);
+var Util_1 = __webpack_require__(173);
+
+var ThreshApp_1 = __webpack_require__(94);
+
+var AppContainer_1 = __webpack_require__(210);
 
 var ChildrenKey = 'children';
 
@@ -9419,7 +7206,9 @@ function () {
 
         this.events = {}; // 节点是否已挂载
 
-        this.isMount = false;
+        this.isMount = false; // context id
+
+        this.contextId = AppContainer_1["default"].contextId;
         this.shouldRender = true;
         this.type = type;
         this.props = props;
@@ -9431,6 +7220,11 @@ function () {
         this.key = key;
         this.ref = ref;
         this.nodeId = VNode.getNodeId(type);
+
+        if (this.isNativeViewNode()) {
+          this.nativeViewId = this.nodeId + "#" + this.props.type + "#" + (0, _now["default"])();
+        }
+
         this.findVNodeInProps();
       } catch (_e13) {
         __reportError__(_e13, "VNode", "/thresh-lib/src/core/VNode.ts");
@@ -9578,8 +7372,10 @@ function () {
 
     VNode.prototype.doMerge = function (oldNode) {
       try {
+        this.contextId = oldNode.contextId;
         this.isMount = true;
         this.nodeId = oldNode.nodeId;
+        this.nativeViewId = oldNode.nativeViewId;
         this.widget = oldNode.widget;
         this.widget.__vNode__ = this;
       } catch (_e22) {
@@ -9633,7 +7429,7 @@ function () {
             }
           });
 
-          if (this.type === 'Page') {
+          if (this.isPageNode()) {
             var rootNode = this.fetchRootNode();
 
             if (rootNode.pageNode) {
@@ -9643,12 +7439,21 @@ function () {
             rootNode.pageNode = this;
           }
 
+          if (this.isNativeViewNode()) {
+            var params = this.props.params || {};
+
+            if (!params.__viewId__) {
+              params.__viewId__ = this.nativeViewId;
+              this.props.params = params;
+            }
+          }
+
           return {
             name: this.type,
             widgetId: this.nodeId,
             isStateful: setStateful,
             pageName: pageName,
-            props: (0, _assign["default"])({}, this.props, childrenRenderData_1),
+            props: this.execPropsProvider((0, _assign["default"])({}, this.props, childrenRenderData_1)),
             key: this.key || this.parentKey
           };
         }
@@ -9656,6 +7461,25 @@ function () {
         __reportError__(_e24, "", "/thresh-lib/src/core/VNode.ts");
 
         throw _e24;
+      }
+    };
+
+    VNode.prototype.execPropsProvider = function (props) {
+      try {
+        var propsProviders = ThreshApp_1["default"].providers.propsProvider || [];
+        var index = propsProviders.length - 1;
+
+        while (index > -1) {
+          var provider = propsProviders[index--];
+          var tempProps = provider.propsProvider(props);
+          if (tempProps) props = tempProps;
+        }
+
+        return props;
+      } catch (_e25) {
+        __reportError__(_e25, "", "/thresh-lib/src/core/VNode.ts");
+
+        throw _e25;
       }
     }; // 在当前 vnode 上查找目标节点
 
@@ -9673,17 +7497,17 @@ function () {
 
             targetVNode = vNode.fetch(targetNodeId);
             return !targetVNode;
-          } catch (_e25) {
-            __reportError__(_e25, "", "/thresh-lib/src/core/VNode.ts");
+          } catch (_e26) {
+            __reportError__(_e26, "", "/thresh-lib/src/core/VNode.ts");
 
-            throw _e25;
+            throw _e26;
           }
         });
         return targetVNode;
-      } catch (_e26) {
-        __reportError__(_e26, "", "/thresh-lib/src/core/VNode.ts");
+      } catch (_e27) {
+        __reportError__(_e27, "", "/thresh-lib/src/core/VNode.ts");
 
-        throw _e26;
+        throw _e27;
       }
     }; // 查找距离当前节点向上最近的可更新的原子节点
 
@@ -9698,10 +7522,10 @@ function () {
         }
 
         return firstChildNode;
-      } catch (_e27) {
-        __reportError__(_e27, "", "/thresh-lib/src/core/VNode.ts");
+      } catch (_e28) {
+        __reportError__(_e28, "", "/thresh-lib/src/core/VNode.ts");
 
-        throw _e27;
+        throw _e28;
       }
     }; // 查找距离当前节点向上最近的非原子节点
 
@@ -9712,10 +7536,10 @@ function () {
         var parent = this.parent;
         if (parent) return parent.fetchNearlyCustomNode();
         return this;
-      } catch (_e28) {
-        __reportError__(_e28, "", "/thresh-lib/src/core/VNode.ts");
+      } catch (_e29) {
+        __reportError__(_e29, "", "/thresh-lib/src/core/VNode.ts");
 
-        throw _e28;
+        throw _e29;
       }
     }; // 查找距离当前节点向下最近的原子节点
 
@@ -9724,10 +7548,10 @@ function () {
       try {
         if (this.isBasicWidget) return this;
         return this.children[0].fetchNearlyBasicNode();
-      } catch (_e29) {
-        __reportError__(_e29, "", "/thresh-lib/src/core/VNode.ts");
+      } catch (_e30) {
+        __reportError__(_e30, "", "/thresh-lib/src/core/VNode.ts");
 
-        throw _e29;
+        throw _e30;
       }
     }; // 查找根节点
 
@@ -9738,10 +7562,10 @@ function () {
         var parent = this.parent;
         if (parent) return parent.fetchRootNode();
         return this;
-      } catch (_e30) {
-        __reportError__(_e30, "", "/thresh-lib/src/core/VNode.ts");
+      } catch (_e31) {
+        __reportError__(_e31, "", "/thresh-lib/src/core/VNode.ts");
 
-        throw _e30;
+        throw _e31;
       }
     }; // 查找页面名
 
@@ -9751,10 +7575,10 @@ function () {
         if (this.pageName) return this.pageName;
         if (this.parent) return this.parent.fetchNodePageName();
         return '';
-      } catch (_e31) {
-        __reportError__(_e31, "", "/thresh-lib/src/core/VNode.ts");
+      } catch (_e32) {
+        __reportError__(_e32, "", "/thresh-lib/src/core/VNode.ts");
 
-        throw _e31;
+        throw _e32;
       }
     }; // 毕竟两个节点的 type & key 是否相等
 
@@ -9762,10 +7586,30 @@ function () {
     VNode.prototype.isSameAs = function (otherNode) {
       try {
         return this.type === otherNode.type && this.key === otherNode.key;
-      } catch (_e32) {
-        __reportError__(_e32, "", "/thresh-lib/src/core/VNode.ts");
+      } catch (_e33) {
+        __reportError__(_e33, "", "/thresh-lib/src/core/VNode.ts");
 
-        throw _e32;
+        throw _e33;
+      }
+    };
+
+    VNode.prototype.isPageNode = function () {
+      try {
+        return this.isBasicWidget && this.type === 'Page';
+      } catch (_e34) {
+        __reportError__(_e34, "", "/thresh-lib/src/core/VNode.ts");
+
+        throw _e34;
+      }
+    };
+
+    VNode.prototype.isNativeViewNode = function () {
+      try {
+        return this.isBasicWidget && this.type === 'NativeView';
+      } catch (_e35) {
+        __reportError__(_e35, "", "/thresh-lib/src/core/VNode.ts");
+
+        throw _e35;
       }
     }; // 触发组件上的事件
 
@@ -9839,10 +7683,10 @@ function () {
         if (node.type === 'ListView') {
           node.widget.stopAsyncOperate(eventType === 'onRefresh' ? 'refresh' : 'loadMore');
         }
-      } catch (_e33) {
-        __reportError__(_e33, "", "/thresh-lib/src/core/VNode.ts");
+      } catch (_e36) {
+        __reportError__(_e36, "", "/thresh-lib/src/core/VNode.ts");
 
-        throw _e33;
+        throw _e36;
       }
     }; // 触发组件生命周期方法
 
@@ -9862,16 +7706,16 @@ function () {
         this.mapChildren(function (vNode) {
           try {
             vNode.invokeLifeCycle(lifeStep);
-          } catch (_e34) {
-            __reportError__(_e34, "", "/thresh-lib/src/core/VNode.ts");
+          } catch (_e37) {
+            __reportError__(_e37, "", "/thresh-lib/src/core/VNode.ts");
 
-            throw _e34;
+            throw _e37;
           }
         });
-      } catch (_e35) {
-        __reportError__(_e35, "", "/thresh-lib/src/core/VNode.ts");
+      } catch (_e38) {
+        __reportError__(_e38, "", "/thresh-lib/src/core/VNode.ts");
 
-        throw _e35;
+        throw _e38;
       }
     }; // 向数组尾部添加子节点
 
@@ -9884,10 +7728,10 @@ function () {
 
         if ((0, _includes["default"])(target).call(target, child)) this.removeChild(child);
         target.push(child);
-      } catch (_e36) {
-        __reportError__(_e36, "", "/thresh-lib/src/core/VNode.ts");
+      } catch (_e39) {
+        __reportError__(_e39, "", "/thresh-lib/src/core/VNode.ts");
 
-        throw _e36;
+        throw _e39;
       }
     }; // 移除数组中的某个节点
 
@@ -9900,10 +7744,10 @@ function () {
 
         var removeIndex = (0, _indexOf["default"])(target).call(target, child);
         if (removeIndex > -1) (0, _splice["default"])(target).call(target, removeIndex, 1);
-      } catch (_e37) {
-        __reportError__(_e37, "", "/thresh-lib/src/core/VNode.ts");
+      } catch (_e40) {
+        __reportError__(_e40, "", "/thresh-lib/src/core/VNode.ts");
 
-        throw _e37;
+        throw _e40;
       }
     }; // 向 basicWidgetPropChildren 中的某个数组属性添加子节点
 
@@ -9911,10 +7755,10 @@ function () {
     VNode.prototype.appendChildInArrayProps = function (child, propName) {
       try {
         this.appendChild(child, this.getTargetChildrenArrayInPropChildren(propName));
-      } catch (_e38) {
-        __reportError__(_e38, "", "/thresh-lib/src/core/VNode.ts");
+      } catch (_e41) {
+        __reportError__(_e41, "", "/thresh-lib/src/core/VNode.ts");
 
-        throw _e38;
+        throw _e41;
       }
     }; // 遍历当前节点或目标中的所有子节点
 
@@ -9958,10 +7802,10 @@ function () {
             }
           }
         }
-      } catch (_e39) {
-        __reportError__(_e39, "", "/thresh-lib/src/core/VNode.ts");
+      } catch (_e42) {
+        __reportError__(_e42, "", "/thresh-lib/src/core/VNode.ts");
 
-        throw _e39;
+        throw _e42;
       }
     }; // 获取 basicWidgetPropChildren 中的某个数组属性
 
@@ -9970,22 +7814,22 @@ function () {
       try {
         if (!this.basicWidgetPropChildren[propName]) this.basicWidgetPropChildren[propName] = [];
         return this.basicWidgetPropChildren[propName];
-      } catch (_e40) {
-        __reportError__(_e40, "", "/thresh-lib/src/core/VNode.ts");
+      } catch (_e43) {
+        __reportError__(_e43, "", "/thresh-lib/src/core/VNode.ts");
 
-        throw _e40;
+        throw _e43;
       }
     };
 
     VNode.nodeIdIndex = 0;
     VNode.asyncEventTypes = ['onRefresh', 'onLoadMore'];
-    VNode.eventTypes = __spreadArrays(['onTap', 'onLongTap', 'onPan', 'onScroll', 'onChange', 'onLoad', 'onLayout', 'onFocus', 'onBlur', 'onActionsOpen', 'onActionsClose', 'onDragStatusChange'], VNode.asyncEventTypes);
+    VNode.eventTypes = __spreadArrays(['onTap', 'onLongTap', 'onPan', 'onScroll', 'onChange', 'onLoad', 'onLayout', 'onFocus', 'onBlur', 'onActionsOpen', 'onActionsClose', 'onDragStatusChange', 'onDragPositionChange', 'onOpen', 'onSubmitted'], VNode.asyncEventTypes);
     VNode.throttledEventTypes = ['onTap'];
     return VNode;
-  } catch (_e41) {
-    __reportError__(_e41, "", "/thresh-lib/src/core/VNode.ts");
+  } catch (_e44) {
+    __reportError__(_e44, "", "/thresh-lib/src/core/VNode.ts");
 
-    throw _e41;
+    throw _e44;
   }
 }();
 
@@ -10005,10 +7849,10 @@ function () {
         var _context5;
 
         return (0, _indexOf["default"])(_context5 = LifeCycle.lifes).call(_context5, lifeStep) > -1;
-      } catch (_e42) {
-        __reportError__(_e42, "", "/thresh-lib/src/core/VNode.ts");
+      } catch (_e45) {
+        __reportError__(_e45, "", "/thresh-lib/src/core/VNode.ts");
 
-        throw _e42;
+        throw _e45;
       }
     };
 
@@ -10017,35 +7861,35 @@ function () {
     LifeCycle.widgetDidUpdate = LifeCycle.lifes[1];
     LifeCycle.widgetDidUnmount = LifeCycle.lifes[2];
     return LifeCycle;
-  } catch (_e43) {
-    __reportError__(_e43, "", "/thresh-lib/src/core/VNode.ts");
+  } catch (_e46) {
+    __reportError__(_e46, "", "/thresh-lib/src/core/VNode.ts");
 
-    throw _e43;
+    throw _e46;
   }
 }();
 
 exports.LifeCycle = LifeCycle;
 
 /***/ }),
-/* 220 */
+/* 205 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(221);
+module.exports = __webpack_require__(206);
 
 /***/ }),
-/* 221 */
+/* 206 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var parent = __webpack_require__(222);
+var parent = __webpack_require__(207);
 
 module.exports = parent;
 
 
 /***/ }),
-/* 222 */
+/* 207 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var indexOf = __webpack_require__(223);
+var indexOf = __webpack_require__(208);
 
 var ArrayPrototype = Array.prototype;
 
@@ -10056,35 +7900,34 @@ module.exports = function (it) {
 
 
 /***/ }),
-/* 223 */
+/* 208 */
 /***/ (function(module, exports, __webpack_require__) {
 
-__webpack_require__(224);
-var entryVirtual = __webpack_require__(49);
+__webpack_require__(209);
+var entryVirtual = __webpack_require__(85);
 
 module.exports = entryVirtual('Array').indexOf;
 
 
 /***/ }),
-/* 224 */
+/* 209 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
-var $ = __webpack_require__(7);
-var $indexOf = __webpack_require__(70).indexOf;
-var arrayMethodIsStrict = __webpack_require__(87);
-var arrayMethodUsesToLength = __webpack_require__(88);
+/* eslint-disable es/no-array-prototype-indexof -- required for testing */
+var $ = __webpack_require__(6);
+var $indexOf = __webpack_require__(63).indexOf;
+var arrayMethodIsStrict = __webpack_require__(84);
 
 var nativeIndexOf = [].indexOf;
 
 var NEGATIVE_ZERO = !!nativeIndexOf && 1 / [1].indexOf(1, -0) < 0;
 var STRICT_METHOD = arrayMethodIsStrict('indexOf');
-var USES_TO_LENGTH = arrayMethodUsesToLength('indexOf', { ACCESSORS: true, 1: 0 });
 
 // `Array.prototype.indexOf` method
-// https://tc39.github.io/ecma262/#sec-array.prototype.indexof
-$({ target: 'Array', proto: true, forced: NEGATIVE_ZERO || !STRICT_METHOD || !USES_TO_LENGTH }, {
+// https://tc39.es/ecma262/#sec-array.prototype.indexof
+$({ target: 'Array', proto: true, forced: NEGATIVE_ZERO || !STRICT_METHOD }, {
   indexOf: function indexOf(searchElement /* , fromIndex = 0 */) {
     return NEGATIVE_ZERO
       // convert -0 to +0
@@ -10095,7 +7938,7 @@ $({ target: 'Array', proto: true, forced: NEGATIVE_ZERO || !STRICT_METHOD || !US
 
 
 /***/ }),
-/* 225 */
+/* 210 */
 /***/ (function(module, exports, __webpack_require__) {
 
 
@@ -10125,23 +7968,21 @@ $({ target: 'Array', proto: true, forced: NEGATIVE_ZERO || !STRICT_METHOD || !US
 
 var _interopRequireDefault = __webpack_require__(1);
 
-var _splice = _interopRequireDefault(__webpack_require__(195));
+var _defineProperty = _interopRequireDefault(__webpack_require__(2));
 
-var _includes = _interopRequireDefault(__webpack_require__(154));
+var _map = _interopRequireDefault(__webpack_require__(211));
 
-var _indexOf = _interopRequireDefault(__webpack_require__(220));
+var _indexOf = _interopRequireDefault(__webpack_require__(205));
 
-var _startsWith = _interopRequireDefault(__webpack_require__(204));
+var _splice = _interopRequireDefault(__webpack_require__(184));
 
-var _map = _interopRequireDefault(__webpack_require__(226));
-
-var _defineProperty = _interopRequireDefault(__webpack_require__(89));
+var _includes = _interopRequireDefault(__webpack_require__(163));
 
 (0, _defineProperty["default"])(exports, "__esModule", {
   value: true
 });
-exports.MODAL_TAG = void 0;
-exports.MODAL_TAG = 'modal#';
+
+var PageContainer_1 = __webpack_require__(219);
 
 var AppContainer =
 /** @class */
@@ -10149,69 +7990,178 @@ function () {
   try {
     function AppContainer() {
       try {
-        // 路由
-        this.routes = new _map["default"](); // 所有 page 与 modal name 的缓存
+        this._pageId = 0; // 路由
 
-        this.namesCache = []; // page names
+        this.routes = new _map["default"](); // 页面容器
+        // native 端每个 flutter vc 对应一个 pageContainer
+        // 由于每个 flutter vc 必然会调用一次 thresh.runApp()
+        // 因此在 runApp 时创建当前 flutter vc 对应的 pageContainer
+        // 在接收到 onDestroy 消息时销毁当前的 pageContainer
 
-        this.pageNamesCache = []; // modal names
-
-        this.modalNamesCache = []; // 所有 page 与 modal 的节点树缓存
-
-        this.pageDataCache = new _map["default"]();
+        this.pageContainerContextIds = [];
+        this.pageContainers = new _map["default"]();
       } catch (_e) {
         __reportError__(_e, "AppContainer", "/thresh-lib/src/core/AppContainer.ts");
 
         throw _e;
       }
-    } // 路由操作
+    }
 
-
-    AppContainer.prototype.addRoute = function (routeName, pageBuilder) {
+    AppContainer.prototype.clear = function () {
       try {
-        if (this.routes.has(routeName)) throw new Error("Route name \"" + routeName + "\" is already exist!");
-        this.routes.set(routeName, pageBuilder);
+        this._pageId = 0;
+
+        while (this.currentPageContainer) {
+          this.destroyPageContainer();
+        }
       } catch (_e2) {
         __reportError__(_e2, "", "/thresh-lib/src/core/AppContainer.ts");
 
         throw _e2;
       }
     };
+    /**
+     * 添加路由
+     */
 
-    AppContainer.prototype.hasRoute = function (routeName) {
+
+    AppContainer.prototype.addRoute = function (routeName, pageBuilder) {
       try {
-        return this.routes.has(routeName);
+        if (this.routes.has(routeName)) throw new Error("Route name \"" + routeName + "\" has already exist!");
+        this.routes.set(routeName, pageBuilder);
       } catch (_e3) {
         __reportError__(_e3, "", "/thresh-lib/src/core/AppContainer.ts");
 
         throw _e3;
       }
     };
+    /**
+     * 判断路由是否存在
+     */
 
-    AppContainer.prototype.getRoute = function (routeName) {
+
+    AppContainer.prototype.hasRoute = function (routeName) {
       try {
-        if (!this.hasRoute(routeName)) return;
-        return this.routes.get(routeName);
+        return this.routes.has(routeName);
       } catch (_e4) {
         __reportError__(_e4, "", "/thresh-lib/src/core/AppContainer.ts");
 
         throw _e4;
       }
     };
+    /**
+     * 获取路由
+     */
 
-    (0, _defineProperty["default"])(AppContainer.prototype, "isEmpty", {
-      // 页面操作
 
+    AppContainer.prototype.getRoute = function (routeName) {
+      try {
+        if (!this.hasRoute(routeName)) return;
+        return this.routes.get(routeName);
+      } catch (_e5) {
+        __reportError__(_e5, "", "/thresh-lib/src/core/AppContainer.ts");
+
+        throw _e5;
+      }
+    };
+
+    (0, _defineProperty["default"])(AppContainer.prototype, "contextId", {
       /**
-       * 当前 container 是否不存在内容
+       * 获取当前显示页面的 contextId
        */
       get: function get() {
         try {
-          return this.pageNamesCache.length === 0;
-        } catch (_e5) {
-          __reportError__(_e5, "", "/thresh-lib/src/core/AppContainer.ts");
+          if (this.isEmpty) return;
+          return this.currentPageContainer.contextId;
+        } catch (_e6) {
+          __reportError__(_e6, "get", "/thresh-lib/src/core/AppContainer.ts");
 
-          throw _e5;
+          throw _e6;
+        }
+      },
+      enumerable: false,
+      configurable: true
+    });
+    (0, _defineProperty["default"])(AppContainer.prototype, "pageId", {
+      /**
+       * 获取 pageId
+       */
+      get: function get() {
+        try {
+          return ++this._pageId;
+        } catch (_e7) {
+          __reportError__(_e7, "", "/thresh-lib/src/core/AppContainer.ts");
+
+          throw _e7;
+        }
+      },
+      enumerable: false,
+      configurable: true
+    });
+    (0, _defineProperty["default"])(AppContainer.prototype, "isEmpty", {
+      /**
+       * 当前容器是否无内容
+       */
+      get: function get() {
+        try {
+          return this.pageContainerCount === 0;
+        } catch (_e8) {
+          __reportError__(_e8, "", "/thresh-lib/src/core/AppContainer.ts");
+
+          throw _e8;
+        }
+      },
+      enumerable: false,
+      configurable: true
+    });
+    (0, _defineProperty["default"])(AppContainer.prototype, "canPop", {
+      /**
+       * 当前容器是否可以执行 pop 操作
+       */
+      get: function get() {
+        try {
+          var _a;
+
+          if (this.isEmpty) return false;
+          return ((_a = this.currentPageContainer) === null || _a === void 0 ? void 0 : _a.canPop) || false;
+        } catch (_e9) {
+          __reportError__(_e9, "get", "/thresh-lib/src/core/AppContainer.ts");
+
+          throw _e9;
+        }
+      },
+      enumerable: false,
+      configurable: true
+    });
+    (0, _defineProperty["default"])(AppContainer.prototype, "pageContainerCount", {
+      /**
+       * 当前页面容器数量
+       */
+      get: function get() {
+        try {
+          return this.pageContainers.size;
+        } catch (_e10) {
+          __reportError__(_e10, "", "/thresh-lib/src/core/AppContainer.ts");
+
+          throw _e10;
+        }
+      },
+      enumerable: false,
+      configurable: true
+    });
+    (0, _defineProperty["default"])(AppContainer.prototype, "currentPageContainer", {
+      /**
+       * 获取当前页面容器
+       */
+      get: function get() {
+        try {
+          if (this.isEmpty) return;
+          var currentPageContainerContextId = this.pageContainerContextIds[this.pageContainerCount - 1];
+          return this.pageContainers.get(currentPageContainerContextId);
+        } catch (_e11) {
+          __reportError__(_e11, "get", "/thresh-lib/src/core/AppContainer.ts");
+
+          throw _e11;
         }
       },
       enumerable: false,
@@ -10223,14 +8173,30 @@ function () {
        */
       get: function get() {
         try {
-          var _context;
-
           if (this.isEmpty) return false;
-          return (0, _startsWith["default"])(_context = this.namesCache[this.namesCache.length - 1]).call(_context, exports.MODAL_TAG);
-        } catch (_e6) {
-          __reportError__(_e6, "get", "/thresh-lib/src/core/AppContainer.ts");
+          return this.currentPageContainer.currentShowIsModal;
+        } catch (_e12) {
+          __reportError__(_e12, "get", "/thresh-lib/src/core/AppContainer.ts");
 
-          throw _e6;
+          throw _e12;
+        }
+      },
+      enumerable: false,
+      configurable: true
+    });
+    (0, _defineProperty["default"])(AppContainer.prototype, "currentShowName", {
+      /**
+       * 当前显示视图的名称
+       * 可能是 page 也可能是 modal
+       */
+      get: function get() {
+        try {
+          if (this.isEmpty) return;
+          return this.currentPageContainer.currentShowName;
+        } catch (_e13) {
+          __reportError__(_e13, "get", "/thresh-lib/src/core/AppContainer.ts");
+
+          throw _e13;
         }
       },
       enumerable: false,
@@ -10243,11 +8209,11 @@ function () {
       get: function get() {
         try {
           if (this.isEmpty) return;
-          return this.pageNamesCache[this.pageNamesCache.length - 1];
-        } catch (_e7) {
-          __reportError__(_e7, "get", "/thresh-lib/src/core/AppContainer.ts");
+          return this.currentPageContainer.currentPageName;
+        } catch (_e14) {
+          __reportError__(_e14, "get", "/thresh-lib/src/core/AppContainer.ts");
 
-          throw _e7;
+          throw _e14;
         }
       },
       enumerable: false,
@@ -10259,13 +8225,12 @@ function () {
        */
       get: function get() {
         try {
-          var pageName = this.currentPageName;
-          if (!pageName) return;
-          return this.pageDataCache.get(pageName);
-        } catch (_e8) {
-          __reportError__(_e8, "get", "/thresh-lib/src/core/AppContainer.ts");
+          if (this.isEmpty) return;
+          return this.currentPageContainer.currentPageData;
+        } catch (_e15) {
+          __reportError__(_e15, "get", "/thresh-lib/src/core/AppContainer.ts");
 
-          throw _e8;
+          throw _e15;
         }
       },
       enumerable: false,
@@ -10277,86 +8242,150 @@ function () {
        */
       get: function get() {
         try {
-          if (this.pageNamesCache.length < 2) return;
-          return this.pageNamesCache[this.pageNamesCache.length - 2];
-        } catch (_e9) {
-          __reportError__(_e9, "get", "/thresh-lib/src/core/AppContainer.ts");
+          if (this.isEmpty) return;
+          var referPageName = this.currentPageContainer.referPageName;
+          if (referPageName || this.pageContainerCount === 1) return referPageName;
+          var prevPageContainer = this.pageContainers[this.pageContainerCount - 2];
+          return prevPageContainer.referPageName;
+        } catch (_e16) {
+          __reportError__(_e16, "get", "/thresh-lib/src/core/AppContainer.ts");
 
-          throw _e9;
+          throw _e16;
         }
       },
       enumerable: false,
       configurable: true
     });
     /**
+     * 创建新的页面容器
+     */
+
+    AppContainer.prototype.createPageContainer = function (contextId) {
+      try {
+        this.pageContainerContextIds.push(contextId);
+        this.pageContainers.set(contextId, new PageContainer_1["default"](contextId));
+      } catch (_e17) {
+        __reportError__(_e17, "", "/thresh-lib/src/core/AppContainer.ts");
+
+        throw _e17;
+      }
+    };
+    /**
+     * 销毁页面容器
+     */
+
+
+    AppContainer.prototype.destroyPageContainer = function (contextId) {
+      try {
+        var _context, _context2;
+
+        if (!contextId) contextId = this.currentPageContainer.contextId;
+        var targetPageContainer = this.pageContainers.get(contextId);
+
+        if (targetPageContainer) {
+          targetPageContainer.destroy();
+          this.pageContainers["delete"](contextId);
+        }
+
+        var index = (0, _indexOf["default"])(_context = this.pageContainerContextIds).call(_context, contextId);
+        if (index > -1) (0, _splice["default"])(_context2 = this.pageContainerContextIds).call(_context2, index, 1);
+      } catch (_e18) {
+        __reportError__(_e18, "", "/thresh-lib/src/core/AppContainer.ts");
+
+        throw _e18;
+      }
+    };
+    /**
+     * 判断页面是否是 modal
+     */
+
+
+    AppContainer.prototype.pageIsModal = function (pageName) {
+      try {
+        return PageContainer_1["default"].pageIsModal(pageName);
+      } catch (_e19) {
+        __reportError__(_e19, "", "/thresh-lib/src/core/AppContainer.ts");
+
+        throw _e19;
+      }
+    };
+    /**
+     * 格式化 modal name
+     */
+
+
+    AppContainer.prototype.formatModalName = function (modalName) {
+      try {
+        return PageContainer_1["default"].formatModalName(modalName);
+      } catch (_e20) {
+        __reportError__(_e20, "", "/thresh-lib/src/core/AppContainer.ts");
+
+        throw _e20;
+      }
+    };
+    /**
      * 是否存在某一页面
      * @param pageName 页面名称
      * @param withModal 是否同时在 modal 中查找，默认只在 page 中查找
      */
 
+
     AppContainer.prototype.hasPage = function (pageName, withModal) {
       try {
-        var _context2, _context3;
-
         if (withModal === void 0) {
           withModal = false;
         }
 
-        if (!withModal) return (0, _indexOf["default"])(_context2 = this.pageNamesCache).call(_context2, pageName) > -1;
-        return (0, _indexOf["default"])(_context3 = this.namesCache).call(_context3, pageName) > -1;
-      } catch (_e10) {
-        __reportError__(_e10, "", "/thresh-lib/src/core/AppContainer.ts");
+        if (this.isEmpty) return false;
+        var containerCount = this.pageContainerCount;
 
-        throw _e10;
+        for (var i = containerCount - 1; i > -1; i--) {
+          var contextId = this.pageContainerContextIds[i];
+          var targetPageContainer = this.pageContainers.get(contextId);
+          var exist = targetPageContainer.hasPage(pageName, withModal);
+          if (exist) return true;
+        }
+
+        return false;
+      } catch (_e21) {
+        __reportError__(_e21, "", "/thresh-lib/src/core/AppContainer.ts");
+
+        throw _e21;
       }
     };
     /**
      * 存入页面
      * @param pageName 页面名
      * @param vnodeTree 页面 vnode
+     */
+
+
+    AppContainer.prototype.pushPage = function (pageName, vnodeTree, createTimestamp) {
+      try {
+        if (this.isEmpty) return;
+        this.currentPageContainer.pushPage(pageName, vnodeTree, createTimestamp);
+      } catch (_e22) {
+        __reportError__(_e22, "", "/thresh-lib/src/core/AppContainer.ts");
+
+        throw _e22;
+      }
+    };
+    /**
+     * 存入 modal
+     * @param pageName 页面名
+     * @param vnodeTree 页面 vnode
      * @param isModal 是否为 modal
      */
 
 
-    AppContainer.prototype.pushPage = function (pageName, vnodeTree, isModal) {
+    AppContainer.prototype.showModal = function (modalName, vnodeTree) {
       try {
-        var _context4;
+        if (this.isEmpty) return;
+        this.currentPageContainer.showModal(modalName, vnodeTree);
+      } catch (_e23) {
+        __reportError__(_e23, "", "/thresh-lib/src/core/AppContainer.ts");
 
-        if (isModal === void 0) {
-          isModal = false;
-        }
-
-        if ((0, _includes["default"])(_context4 = this.namesCache).call(_context4, pageName)) throw new Error("Route name \"" + pageName + "\" is already exist!");
-        this.namesCache.push(pageName);
-        this.pageDataCache.set(pageName, vnodeTree);
-        if (!isModal) this.pageNamesCache.push(pageName);else this.modalNamesCache.push(pageName);
-      } catch (_e11) {
-        __reportError__(_e11, "", "/thresh-lib/src/core/AppContainer.ts");
-
-        throw _e11;
-      }
-    };
-    /**
-     * 替换当前显示的页面
-     * @param newPageName 新页面名
-     * @param newVNodeTree 新页面 vnode
-     */
-
-
-    AppContainer.prototype.replacePage = function (newPageName, newVNodeTree) {
-      try {
-        var _context5, _context6;
-
-        var oldPageName = this.pageNamesCache.pop();
-        var index = (0, _indexOf["default"])(_context5 = this.namesCache).call(_context5, oldPageName);
-        (0, _splice["default"])(_context6 = this.namesCache).call(_context6, index, 1, newPageName);
-        this.pageNamesCache.push(newPageName);
-        this.pageDataCache.set(newPageName, newVNodeTree);
-        this.pageDataCache["delete"](oldPageName);
-      } catch (_e12) {
-        __reportError__(_e12, "", "/thresh-lib/src/core/AppContainer.ts");
-
-        throw _e12;
+        throw _e23;
       }
     };
     /**
@@ -10367,105 +8396,199 @@ function () {
     AppContainer.prototype.removeCurrentShow = function () {
       try {
         if (this.isEmpty) return;
-        var name = this.namesCache.pop();
-        if (!(0, _startsWith["default"])(name).call(name, exports.MODAL_TAG)) this.pageNamesCache.pop();else this.modalNamesCache.pop();
-        this.pageDataCache["delete"](name);
-      } catch (_e13) {
-        __reportError__(_e13, "", "/thresh-lib/src/core/AppContainer.ts");
+        this.currentPageContainer.removeCurrentShow();
+      } catch (_e24) {
+        __reportError__(_e24, "", "/thresh-lib/src/core/AppContainer.ts");
 
-        throw _e13;
+        throw _e24;
       }
     };
     /**
-     * 获取页面或 modal 的 vnode 数据
-     * @param pageName 页面名称
+     * 通过名称获取页面或 modal 的 vnode 数据
      */
 
 
-    AppContainer.prototype.getPageData = function (pageName) {
+    AppContainer.prototype.getPageDataWithPageName = function (pageName) {
       try {
-        if (!pageName) return;
-        if (this.pageDataCache.has(pageName)) return this.pageDataCache.get(pageName);
-      } catch (_e14) {
-        __reportError__(_e14, "", "/thresh-lib/src/core/AppContainer.ts");
+        if (this.isEmpty) return;
+        var containerCount = this.pageContainerCount;
 
-        throw _e14;
+        for (var i = containerCount - 1; i > -1; i--) {
+          var contextId = this.pageContainerContextIds[i];
+          var targetPageContainer = this.pageContainers.get(contextId);
+          var pageData = targetPageContainer.getPageData(pageName);
+          if (pageData) return pageData;
+        }
+      } catch (_e25) {
+        __reportError__(_e25, "", "/thresh-lib/src/core/AppContainer.ts");
+
+        throw _e25;
+      }
+    };
+    /**
+     * 通过 contextId 判断 container 是否存在
+     */
+
+
+    AppContainer.prototype.pageContainerExisted = function (contextId) {
+      try {
+        var _context3;
+
+        return (0, _includes["default"])(_context3 = this.pageContainerContextIds).call(_context3, contextId);
+      } catch (_e26) {
+        __reportError__(_e26, "", "/thresh-lib/src/core/AppContainer.ts");
+
+        throw _e26;
+      }
+    };
+    /**
+     * 通过 contextId 获取页面的 vnode 数据
+     */
+
+
+    AppContainer.prototype.getPageDataWithContextId = function (contextId) {
+      try {
+        if (this.isEmpty) return;
+        var targetPageContainer = this.pageContainers.get(contextId);
+        if (!targetPageContainer) return;
+        return targetPageContainer.currentPageData;
+      } catch (_e27) {
+        __reportError__(_e27, "", "/thresh-lib/src/core/AppContainer.ts");
+
+        throw _e27;
+      }
+    };
+    /**
+     * 通过页面名获取该页面所在的容器
+     */
+
+
+    AppContainer.prototype.getPageContainerWithPageName = function (pageName) {
+      try {
+        if (this.isEmpty) return;
+        var containerCount = this.pageContainerCount;
+
+        for (var i = containerCount - 1; i > -1; i--) {
+          var contextId = this.pageContainerContextIds[i];
+          var targetPageContainer = this.pageContainers.get(contextId);
+          var exist = targetPageContainer.hasPage(pageName);
+          if (exist) return targetPageContainer;
+        }
+
+        return;
+      } catch (_e28) {
+        __reportError__(_e28, "", "/thresh-lib/src/core/AppContainer.ts");
+
+        throw _e28;
+      }
+    };
+    /**
+     * 设置页面渲染数据
+     */
+
+
+    AppContainer.prototype.setPagePerformanceInfo = function (pageName, loadTimestamp) {
+      try {
+        var targetPageContainer = this.getPageContainerWithPageName(pageName);
+        if (!targetPageContainer) return;
+        targetPageContainer.setPagePerformanceInfo(pageName, loadTimestamp);
+      } catch (_e29) {
+        __reportError__(_e29, "", "/thresh-lib/src/core/AppContainer.ts");
+
+        throw _e29;
+      }
+    };
+    /**
+     * 获取页面渲染数据
+     */
+
+
+    AppContainer.prototype.getPagePerformanceInfo = function (pageName) {
+      try {
+        var targetPageContainer = pageName ? this.getPageContainerWithPageName(pageName) : this.currentPageContainer;
+        if (!targetPageContainer) return;
+        return targetPageContainer.getPagePerformanceInfo(pageName);
+      } catch (_e30) {
+        __reportError__(_e30, "", "/thresh-lib/src/core/AppContainer.ts");
+
+        throw _e30;
       }
     };
 
     return AppContainer;
-  } catch (_e15) {
-    __reportError__(_e15, "", "/thresh-lib/src/core/AppContainer.ts");
+  } catch (_e31) {
+    __reportError__(_e31, "", "/thresh-lib/src/core/AppContainer.ts");
 
-    throw _e15;
+    throw _e31;
   }
 }();
 
-exports["default"] = new AppContainer();
+var appContainer = new AppContainer();
+exports["default"] = appContainer;
 
 /***/ }),
-/* 226 */
+/* 211 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(227);
+module.exports = __webpack_require__(212);
 
 /***/ }),
-/* 227 */
+/* 212 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var parent = __webpack_require__(228);
+var parent = __webpack_require__(213);
 
 module.exports = parent;
 
 
 /***/ }),
-/* 228 */
+/* 213 */
 /***/ (function(module, exports, __webpack_require__) {
 
-__webpack_require__(229);
-__webpack_require__(110);
-__webpack_require__(105);
-__webpack_require__(52);
-var path = __webpack_require__(25);
+__webpack_require__(214);
+__webpack_require__(103);
+__webpack_require__(122);
+__webpack_require__(32);
+var path = __webpack_require__(24);
 
 module.exports = path.Map;
 
 
 /***/ }),
-/* 229 */
+/* 214 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
-var collection = __webpack_require__(230);
-var collectionStrong = __webpack_require__(233);
+var collection = __webpack_require__(215);
+var collectionStrong = __webpack_require__(218);
 
 // `Map` constructor
-// https://tc39.github.io/ecma262/#sec-map-objects
+// https://tc39.es/ecma262/#sec-map-objects
 module.exports = collection('Map', function (init) {
   return function Map() { return init(this, arguments.length ? arguments[0] : undefined); };
 }, collectionStrong);
 
 
 /***/ }),
-/* 230 */
+/* 215 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
-var $ = __webpack_require__(7);
-var global = __webpack_require__(8);
-var InternalMetadataModule = __webpack_require__(231);
-var fails = __webpack_require__(12);
-var createNonEnumerableProperty = __webpack_require__(28);
-var iterate = __webpack_require__(138);
-var anInstance = __webpack_require__(137);
-var isObject = __webpack_require__(20);
-var setToStringTag = __webpack_require__(74);
-var defineProperty = __webpack_require__(29).f;
-var forEach = __webpack_require__(86).forEach;
-var DESCRIPTORS = __webpack_require__(11);
-var InternalStateModule = __webpack_require__(56);
+var $ = __webpack_require__(6);
+var global = __webpack_require__(7);
+var InternalMetadataModule = __webpack_require__(216);
+var fails = __webpack_require__(11);
+var createNonEnumerableProperty = __webpack_require__(27);
+var iterate = __webpack_require__(99);
+var anInstance = __webpack_require__(108);
+var isObject = __webpack_require__(19);
+var setToStringTag = __webpack_require__(69);
+var defineProperty = __webpack_require__(28).f;
+var forEach = __webpack_require__(81).forEach;
+var DESCRIPTORS = __webpack_require__(10);
+var InternalStateModule = __webpack_require__(36);
 
 var setInternalState = InternalStateModule.set;
 var internalStateGetterFor = InternalStateModule.getterFor;
@@ -10491,7 +8614,7 @@ module.exports = function (CONSTRUCTOR_NAME, wrapper, common) {
         type: CONSTRUCTOR_NAME,
         collection: new NativeConstructor()
       });
-      if (iterable != undefined) iterate(iterable, target[ADDER], target, IS_MAP);
+      if (iterable != undefined) iterate(iterable, target[ADDER], { that: target, AS_ENTRIES: IS_MAP });
     });
 
     var getInternalState = internalStateGetterFor(CONSTRUCTOR_NAME);
@@ -10528,19 +8651,20 @@ module.exports = function (CONSTRUCTOR_NAME, wrapper, common) {
 
 
 /***/ }),
-/* 231 */
+/* 216 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var hiddenKeys = __webpack_require__(60);
-var isObject = __webpack_require__(20);
-var has = __webpack_require__(21);
-var defineProperty = __webpack_require__(29).f;
-var uid = __webpack_require__(42);
-var FREEZING = __webpack_require__(232);
+var hiddenKeys = __webpack_require__(45);
+var isObject = __webpack_require__(19);
+var has = __webpack_require__(20);
+var defineProperty = __webpack_require__(28).f;
+var uid = __webpack_require__(44);
+var FREEZING = __webpack_require__(217);
 
 var METADATA = uid('meta');
 var id = 0;
 
+// eslint-disable-next-line es/no-object-isextensible -- safe
 var isExtensible = Object.isExtensible || function () {
   return true;
 };
@@ -10595,33 +8719,34 @@ hiddenKeys[METADATA] = true;
 
 
 /***/ }),
-/* 232 */
+/* 217 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var fails = __webpack_require__(12);
+var fails = __webpack_require__(11);
 
 module.exports = !fails(function () {
+  // eslint-disable-next-line es/no-object-isextensible, es/no-object-preventextensions -- required for testing
   return Object.isExtensible(Object.preventExtensions({}));
 });
 
 
 /***/ }),
-/* 233 */
+/* 218 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
-var defineProperty = __webpack_require__(29).f;
-var create = __webpack_require__(66);
-var redefineAll = __webpack_require__(135);
-var bind = __webpack_require__(26);
-var anInstance = __webpack_require__(137);
-var iterate = __webpack_require__(138);
-var defineIterator = __webpack_require__(61);
-var setSpecies = __webpack_require__(136);
-var DESCRIPTORS = __webpack_require__(11);
-var fastKey = __webpack_require__(231).fastKey;
-var InternalStateModule = __webpack_require__(56);
+var defineProperty = __webpack_require__(28).f;
+var create = __webpack_require__(59);
+var redefineAll = __webpack_require__(106);
+var bind = __webpack_require__(25);
+var anInstance = __webpack_require__(108);
+var iterate = __webpack_require__(99);
+var defineIterator = __webpack_require__(46);
+var setSpecies = __webpack_require__(107);
+var DESCRIPTORS = __webpack_require__(10);
+var fastKey = __webpack_require__(216).fastKey;
+var InternalStateModule = __webpack_require__(36);
 
 var setInternalState = InternalStateModule.set;
 var internalStateGetterFor = InternalStateModule.getterFor;
@@ -10638,7 +8763,7 @@ module.exports = {
         size: 0
       });
       if (!DESCRIPTORS) that.size = 0;
-      if (iterable != undefined) iterate(iterable, that[ADDER], that, IS_MAP);
+      if (iterable != undefined) iterate(iterable, that[ADDER], { that: that, AS_ENTRIES: IS_MAP });
     });
 
     var getInternalState = internalStateGetterFor(CONSTRUCTOR_NAME);
@@ -10799,6 +8924,1580 @@ module.exports = {
 
 
 /***/ }),
+/* 219 */
+/***/ (function(module, exports, __webpack_require__) {
+
+
+/**
+ * MIT License
+ *
+ * Copyright (c) 2020 ManBang Group
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ *
+ */
+
+var _interopRequireDefault = __webpack_require__(1);
+
+var _defineProperty = _interopRequireDefault(__webpack_require__(2));
+
+var _map = _interopRequireDefault(__webpack_require__(211));
+
+var _startsWith = _interopRequireDefault(__webpack_require__(220));
+
+var _now = _interopRequireDefault(__webpack_require__(153));
+
+var _indexOf = _interopRequireDefault(__webpack_require__(205));
+
+var _includes = _interopRequireDefault(__webpack_require__(163));
+
+(0, _defineProperty["default"])(exports, "__esModule", {
+  value: true
+});
+exports.MODAL_TAG = void 0;
+
+var VNode_1 = __webpack_require__(204);
+
+exports.MODAL_TAG = 'modal#';
+
+var PageContainer =
+/** @class */
+function () {
+  try {
+    function PageContainer(contextId) {
+      try {
+        // 所有 page 与 modal name 的缓存
+        this.namesCache = []; // page names
+
+        this.pageNamesCache = []; // modal names
+
+        this.modalNamesCache = []; // 所有 page 与 modal 的节点树缓存
+
+        this.nodeDataCache = new _map["default"](); // 页面采集信息
+
+        this.pagePerformanceInfos = new _map["default"]();
+        this.contextId = contextId;
+      } catch (_e) {
+        __reportError__(_e, "PageContainer", "/thresh-lib/src/core/PageContainer.ts");
+
+        throw _e;
+      }
+    }
+
+    PageContainer.pageIsModal = function (pageName) {
+      try {
+        return pageName && (0, _startsWith["default"])(pageName).call(pageName, exports.MODAL_TAG);
+      } catch (_e2) {
+        __reportError__(_e2, "", "/thresh-lib/src/core/PageContainer.ts");
+
+        throw _e2;
+      }
+    };
+
+    PageContainer.formatModalName = function (modalName) {
+      try {
+        return "" + exports.MODAL_TAG + (modalName || (0, _now["default"])().toString());
+      } catch (_e3) {
+        __reportError__(_e3, "", "/thresh-lib/src/core/PageContainer.ts");
+
+        throw _e3;
+      }
+    };
+
+    (0, _defineProperty["default"])(PageContainer.prototype, "isEmpty", {
+      /**
+       * 当前容器是否无内容
+       */
+      get: function get() {
+        try {
+          return this.namesCache.length === 0;
+        } catch (_e4) {
+          __reportError__(_e4, "", "/thresh-lib/src/core/PageContainer.ts");
+
+          throw _e4;
+        }
+      },
+      enumerable: false,
+      configurable: true
+    });
+    (0, _defineProperty["default"])(PageContainer.prototype, "canPop", {
+      /**
+       * 当前容器是否可以执行 pop 操作
+       */
+      get: function get() {
+        try {
+          return this.namesCache.length > 1;
+        } catch (_e5) {
+          __reportError__(_e5, "", "/thresh-lib/src/core/PageContainer.ts");
+
+          throw _e5;
+        }
+      },
+      enumerable: false,
+      configurable: true
+    });
+    (0, _defineProperty["default"])(PageContainer.prototype, "currentShowIsModal", {
+      /**
+       * 当前屏幕显示的内容是否为 modal
+       */
+      get: function get() {
+        try {
+          if (this.isEmpty) return false;
+          return PageContainer.pageIsModal(this.namesCache[this.namesCache.length - 1]);
+        } catch (_e6) {
+          __reportError__(_e6, "get", "/thresh-lib/src/core/PageContainer.ts");
+
+          throw _e6;
+        }
+      },
+      enumerable: false,
+      configurable: true
+    });
+    (0, _defineProperty["default"])(PageContainer.prototype, "currentShowName", {
+      /**
+       * 当前显示视图的名称
+       * 可能是 page 也可能是 modal
+       */
+      get: function get() {
+        try {
+          if (this.isEmpty) return;
+          return this.namesCache[this.namesCache.length - 1];
+        } catch (_e7) {
+          __reportError__(_e7, "get", "/thresh-lib/src/core/PageContainer.ts");
+
+          throw _e7;
+        }
+      },
+      enumerable: false,
+      configurable: true
+    });
+    (0, _defineProperty["default"])(PageContainer.prototype, "currentPageName", {
+      /**
+       * 当前显示页面的名称
+       */
+      get: function get() {
+        try {
+          if (this.isEmpty) return;
+          return this.pageNamesCache[this.pageNamesCache.length - 1];
+        } catch (_e8) {
+          __reportError__(_e8, "get", "/thresh-lib/src/core/PageContainer.ts");
+
+          throw _e8;
+        }
+      },
+      enumerable: false,
+      configurable: true
+    });
+    (0, _defineProperty["default"])(PageContainer.prototype, "currentPageData", {
+      /**
+       * 当前显示页面的 vnode
+       */
+      get: function get() {
+        try {
+          var pageName = this.currentPageName;
+          if (!pageName) return;
+          return this.nodeDataCache.get(pageName);
+        } catch (_e9) {
+          __reportError__(_e9, "get", "/thresh-lib/src/core/PageContainer.ts");
+
+          throw _e9;
+        }
+      },
+      enumerable: false,
+      configurable: true
+    });
+    (0, _defineProperty["default"])(PageContainer.prototype, "referPageName", {
+      /**
+       * 当前显示页面的前一页面名称
+       */
+      get: function get() {
+        try {
+          if (this.pageNamesCache.length < 2) return;
+          return this.pageNamesCache[this.pageNamesCache.length - 2];
+        } catch (_e10) {
+          __reportError__(_e10, "get", "/thresh-lib/src/core/PageContainer.ts");
+
+          throw _e10;
+        }
+      },
+      enumerable: false,
+      configurable: true
+    });
+    /**
+     * 销毁容器
+     */
+
+    PageContainer.prototype.destroy = function () {
+      try {
+        var name = this.namesCache.pop(); // 从后往前一次处罚所有 页面/modal 的 unmount 事件
+
+        while (name) {
+          this.nodeDataCache.get(name).invokeLifeCycle(VNode_1.LifeCycle.widgetDidUnmount);
+          name = this.namesCache.pop();
+        }
+
+        this.pageNamesCache = [];
+        this.modalNamesCache = [];
+        this.nodeDataCache.clear();
+        this.pagePerformanceInfos.clear();
+      } catch (_e11) {
+        __reportError__(_e11, "", "/thresh-lib/src/core/PageContainer.ts");
+
+        throw _e11;
+      }
+    };
+    /**
+     * 是否存在某一页面
+     * @param pageName 页面名称
+     * @param includeModal 是否同时在 modal 中查找，默认只在 page 中查找
+     */
+
+
+    PageContainer.prototype.hasPage = function (pageName, includeModal) {
+      try {
+        var _context, _context2;
+
+        if (includeModal === void 0) {
+          includeModal = false;
+        }
+
+        if (!includeModal) return (0, _indexOf["default"])(_context = this.pageNamesCache).call(_context, pageName) > -1;
+        return (0, _indexOf["default"])(_context2 = this.namesCache).call(_context2, pageName) > -1;
+      } catch (_e12) {
+        __reportError__(_e12, "", "/thresh-lib/src/core/PageContainer.ts");
+
+        throw _e12;
+      }
+    };
+    /**
+     * 存入页面
+     */
+
+
+    PageContainer.prototype.pushPage = function (pageName, vnodeTree, createTimestamp) {
+      try {
+        var _context3;
+
+        if ((0, _includes["default"])(_context3 = this.namesCache).call(_context3, pageName)) throw new Error("Route name \"" + pageName + "\" has already exist!");
+        this.namesCache.push(pageName);
+        this.pageNamesCache.push(pageName);
+        this.nodeDataCache.set(pageName, vnodeTree);
+        this.pagePerformanceInfos.set(pageName, {
+          hasReported: false,
+          createTimestamp: createTimestamp
+        });
+      } catch (_e13) {
+        __reportError__(_e13, "", "/thresh-lib/src/core/PageContainer.ts");
+
+        throw _e13;
+      }
+    };
+    /**
+     * 存入 modal
+     */
+
+
+    PageContainer.prototype.showModal = function (modalName, vnodeTree) {
+      try {
+        var _context4;
+
+        if ((0, _includes["default"])(_context4 = this.namesCache).call(_context4, modalName)) throw new Error("Route name \"" + modalName + "\" has already exist!");
+        this.namesCache.push(modalName);
+        this.nodeDataCache.set(modalName, vnodeTree);
+        this.modalNamesCache.push(modalName);
+      } catch (_e14) {
+        __reportError__(_e14, "", "/thresh-lib/src/core/PageContainer.ts");
+
+        throw _e14;
+      }
+    };
+    /**
+     * 移除当前显示的页面或 modal
+     */
+
+
+    PageContainer.prototype.removeCurrentShow = function () {
+      try {
+        if (this.isEmpty) return;
+        var name = this.namesCache.pop();
+        if (!PageContainer.pageIsModal(name)) this.pageNamesCache.pop();else this.modalNamesCache.pop();
+        this.nodeDataCache["delete"](name);
+        this.pagePerformanceInfos["delete"](name);
+      } catch (_e15) {
+        __reportError__(_e15, "", "/thresh-lib/src/core/PageContainer.ts");
+
+        throw _e15;
+      }
+    };
+    /**
+     * 获取页面或 modal 的 vnode 数据
+     * @param pageName 页面名称
+     */
+
+
+    PageContainer.prototype.getPageData = function (pageName) {
+      try {
+        if (!pageName) return;
+        if (this.nodeDataCache.has(pageName)) return this.nodeDataCache.get(pageName);
+      } catch (_e16) {
+        __reportError__(_e16, "", "/thresh-lib/src/core/PageContainer.ts");
+
+        throw _e16;
+      }
+    };
+    /**
+     * 设置页面渲染数据
+     */
+
+
+    PageContainer.prototype.setPagePerformanceInfo = function (pageName, loadTimestamp) {
+      try {
+        var currentPerformanceInfo = this.getPagePerformanceInfo(pageName);
+        if (!currentPerformanceInfo || currentPerformanceInfo.hasReported || currentPerformanceInfo.loadTimestamp) return;
+        currentPerformanceInfo.loadTimestamp = loadTimestamp;
+      } catch (_e17) {
+        __reportError__(_e17, "", "/thresh-lib/src/core/PageContainer.ts");
+
+        throw _e17;
+      }
+    };
+    /**
+     * 获取页面渲染数据
+     */
+
+
+    PageContainer.prototype.getPagePerformanceInfo = function (pageName) {
+      try {
+        return this.pagePerformanceInfos.get(pageName || this.currentPageName || '');
+      } catch (_e18) {
+        __reportError__(_e18, "", "/thresh-lib/src/core/PageContainer.ts");
+
+        throw _e18;
+      }
+    };
+
+    return PageContainer;
+  } catch (_e19) {
+    __reportError__(_e19, "", "/thresh-lib/src/core/PageContainer.ts");
+
+    throw _e19;
+  }
+}();
+
+exports["default"] = PageContainer;
+
+/***/ }),
+/* 220 */
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports = __webpack_require__(221);
+
+/***/ }),
+/* 221 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var parent = __webpack_require__(222);
+
+module.exports = parent;
+
+
+/***/ }),
+/* 222 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var startsWith = __webpack_require__(223);
+
+var StringPrototype = String.prototype;
+
+module.exports = function (it) {
+  var own = it.startsWith;
+  return typeof it === 'string' || it === StringPrototype
+    || (it instanceof String && own === StringPrototype.startsWith) ? startsWith : own;
+};
+
+
+/***/ }),
+/* 223 */
+/***/ (function(module, exports, __webpack_require__) {
+
+__webpack_require__(224);
+var entryVirtual = __webpack_require__(85);
+
+module.exports = entryVirtual('String').startsWith;
+
+
+/***/ }),
+/* 224 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var $ = __webpack_require__(6);
+var getOwnPropertyDescriptor = __webpack_require__(9).f;
+var toLength = __webpack_require__(64);
+var notARegExp = __webpack_require__(170);
+var requireObjectCoercible = __webpack_require__(17);
+var correctIsRegExpLogic = __webpack_require__(172);
+var IS_PURE = __webpack_require__(43);
+
+// eslint-disable-next-line es/no-string-prototype-startswith -- safe
+var $startsWith = ''.startsWith;
+var min = Math.min;
+
+var CORRECT_IS_REGEXP_LOGIC = correctIsRegExpLogic('startsWith');
+// https://github.com/zloirock/core-js/pull/702
+var MDN_POLYFILL_BUG = !IS_PURE && !CORRECT_IS_REGEXP_LOGIC && !!function () {
+  var descriptor = getOwnPropertyDescriptor(String.prototype, 'startsWith');
+  return descriptor && !descriptor.writable;
+}();
+
+// `String.prototype.startsWith` method
+// https://tc39.es/ecma262/#sec-string.prototype.startswith
+$({ target: 'String', proto: true, forced: !MDN_POLYFILL_BUG && !CORRECT_IS_REGEXP_LOGIC }, {
+  startsWith: function startsWith(searchString /* , position = 0 */) {
+    var that = String(requireObjectCoercible(this));
+    notARegExp(searchString);
+    var index = toLength(min(arguments.length > 1 ? arguments[1] : undefined, that.length));
+    var search = String(searchString);
+    return $startsWith
+      ? $startsWith.call(that, search, index)
+      : that.slice(index, index + search.length) === search;
+  }
+});
+
+
+/***/ }),
+/* 225 */
+/***/ (function(module, exports, __webpack_require__) {
+
+
+/**
+ * MIT License
+ *
+ * Copyright (c) 2020 ManBang Group
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ *
+ */
+
+var _interopRequireDefault = __webpack_require__(1);
+
+var _assign = _interopRequireDefault(__webpack_require__(199));
+
+var _defineProperty = _interopRequireDefault(__webpack_require__(2));
+
+var __assign = void 0 && (void 0).__assign || function () {
+  try {
+    __assign = _assign["default"] || function (t) {
+      try {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+          s = arguments[i];
+
+          for (var p in s) {
+            if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
+          }
+        }
+
+        return t;
+      } catch (_e) {
+        __reportError__(_e, "", "/thresh-lib/src/manager/DevtoolsManager.ts");
+
+        throw _e;
+      }
+    };
+
+    return __assign.apply(this, arguments);
+  } catch (_e2) {
+    __reportError__(_e2, "", "/thresh-lib/src/manager/DevtoolsManager.ts");
+
+    throw _e2;
+  }
+};
+
+(0, _defineProperty["default"])(exports, "__esModule", {
+  value: true
+});
+exports.DevtoolsManager = exports.SHOW_DIVIDER_KEY = exports.InfoType = void 0;
+
+var MethodChannel_1 = __webpack_require__(157);
+
+var BridgeManager_1 = __webpack_require__(162);
+
+var Util_1 = __webpack_require__(173);
+
+var ThreshApp_1 = __webpack_require__(94);
+
+var InfoType;
+
+(function (InfoType) {
+  try {
+    InfoType["log"] = "log";
+    InfoType["warn"] = "warn";
+    InfoType["error"] = "error";
+    InfoType["network"] = "network";
+    InfoType["bridge"] = "bridge";
+    InfoType["event"] = "event";
+  } catch (_e3) {
+    __reportError__(_e3, "", "/thresh-lib/src/manager/DevtoolsManager.ts");
+
+    throw _e3;
+  }
+})(InfoType = exports.InfoType || (exports.InfoType = {}));
+
+exports.SHOW_DIVIDER_KEY = '__showDivider__';
+
+var DevtoolsManager =
+/** @class */
+function () {
+  try {
+    function DevtoolsManager() {
+      try {
+        this.pool = {};
+      } catch (_e4) {
+        __reportError__(_e4, "", "/thresh-lib/src/manager/DevtoolsManager.ts");
+
+        throw _e4;
+      }
+    }
+
+    DevtoolsManager.prototype.show = function (type, content, title, contextId) {
+      try {
+        if (!ThreshApp_1["default"] || !ThreshApp_1["default"].debugMode) return;
+        MethodChannel_1["default"].call({
+          contextId: contextId,
+          method: MethodChannel_1.FlutterMethodChannelType.devtools,
+          params: {
+            type: type,
+            title: title,
+            content: content
+          }
+        });
+      } catch (_e5) {
+        __reportError__(_e5, "", "/thresh-lib/src/manager/DevtoolsManager.ts");
+
+        throw _e5;
+      }
+    };
+
+    DevtoolsManager.prototype.log = function () {
+      try {
+        var args = [];
+
+        for (var _i = 0; _i < arguments.length; _i++) {
+          args[_i] = arguments[_i];
+        }
+
+        if (!ThreshApp_1["default"] || !ThreshApp_1["default"].debugMode) return;
+        this.show(InfoType.log, Util_1["default"].anyToRawString.apply(Util_1["default"], args));
+      } catch (_e6) {
+        __reportError__(_e6, "", "/thresh-lib/src/manager/DevtoolsManager.ts");
+
+        throw _e6;
+      }
+    };
+
+    DevtoolsManager.prototype.warn = function () {
+      try {
+        var args = [];
+
+        for (var _i = 0; _i < arguments.length; _i++) {
+          args[_i] = arguments[_i];
+        }
+
+        if (!ThreshApp_1["default"] || !ThreshApp_1["default"].debugMode) return;
+        this.show(InfoType.warn, Util_1["default"].anyToRawString.apply(Util_1["default"], args));
+      } catch (_e7) {
+        __reportError__(_e7, "", "/thresh-lib/src/manager/DevtoolsManager.ts");
+
+        throw _e7;
+      }
+    };
+
+    DevtoolsManager.prototype.error = function () {
+      try {
+        var args = [];
+
+        for (var _i = 0; _i < arguments.length; _i++) {
+          args[_i] = arguments[_i];
+        }
+
+        if (!ThreshApp_1["default"] || !ThreshApp_1["default"].debugMode) return;
+        this.show(InfoType.error, Util_1["default"].anyToRawString.apply(Util_1["default"], args));
+      } catch (_e8) {
+        __reportError__(_e8, "", "/thresh-lib/src/manager/DevtoolsManager.ts");
+
+        throw _e8;
+      }
+    };
+
+    DevtoolsManager.prototype.bridge = function (methodId, data, isRequest) {
+      try {
+        var _a, _b;
+
+        if (isRequest === void 0) {
+          isRequest = false;
+        }
+
+        if (!ThreshApp_1["default"] || !ThreshApp_1["default"].debugMode) return;
+        var bridgeParams;
+
+        if (isRequest) {
+          this.pool[methodId] = data;
+          bridgeParams = data;
+        } else {
+          bridgeParams = this.pool[methodId];
+          delete this.pool[methodId];
+        }
+
+        if (!bridgeParams) return;
+        var module = bridgeParams.module,
+            business = bridgeParams.business,
+            method = bridgeParams.method,
+            params = bridgeParams.params;
+
+        if (BridgeManager_1["default"].isNetworkRequest(bridgeParams)) {
+          var showInfo = void 0;
+
+          if (isRequest) {
+            showInfo = __assign((_a = {
+              method: params.method
+            }, _a[exports.SHOW_DIVIDER_KEY] = 'params', _a), params.data || params.query || {});
+          } else {
+            showInfo = __assign((_b = {
+              code: data.code,
+              reason: data.reason
+            }, _b[exports.SHOW_DIVIDER_KEY] = 'data', _b), Util_1["default"].isString(data.data) || Util_1["default"].isNil(data.data) || !Util_1["default"].isObject(data.data) ? {
+              data: data.data
+            } : data.data);
+          }
+
+          this.network(params.url, showInfo, isRequest);
+          return;
+        }
+
+        if (!ThreshApp_1["default"] || !ThreshApp_1["default"].debugMode) return;
+        var logInfos = [isRequest ? 'Request' : 'Response', "Module: " + module];
+        if (business) logInfos.push("Business: " + business);
+        logInfos.push("Method: " + method);
+        logInfos.push("MethodId: " + methodId);
+        this.show(InfoType.bridge, Util_1["default"].anyToRawString(data), logInfos.join('\n'));
+      } catch (_e9) {
+        __reportError__(_e9, "", "/thresh-lib/src/manager/DevtoolsManager.ts");
+
+        throw _e9;
+      }
+    };
+
+    DevtoolsManager.prototype.network = function (url, params, isRequest) {
+      try {
+        if (isRequest === void 0) {
+          isRequest = false;
+        }
+
+        if (!ThreshApp_1["default"] || !ThreshApp_1["default"].debugMode) return;
+        this.show(InfoType.network, Util_1["default"].anyToRawString(params), (isRequest ? 'Request' : 'Response') + "\n" + url);
+      } catch (_e10) {
+        __reportError__(_e10, "", "/thresh-lib/src/manager/DevtoolsManager.ts");
+
+        throw _e10;
+      }
+    };
+
+    return DevtoolsManager;
+  } catch (_e11) {
+    __reportError__(_e11, "", "/thresh-lib/src/manager/DevtoolsManager.ts");
+
+    throw _e11;
+  }
+}();
+
+exports.DevtoolsManager = DevtoolsManager;
+var devtools = new DevtoolsManager();
+exports["default"] = devtools;
+
+/***/ }),
+/* 226 */
+/***/ (function(module, exports, __webpack_require__) {
+
+
+/**
+ * MIT License
+ *
+ * Copyright (c) 2020 ManBang Group
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ *
+ */
+
+var _interopRequireDefault = __webpack_require__(1);
+
+var _defineProperty = _interopRequireDefault(__webpack_require__(2));
+
+var _map = _interopRequireDefault(__webpack_require__(227));
+
+var _indexOf = _interopRequireDefault(__webpack_require__(205));
+
+var _splice = _interopRequireDefault(__webpack_require__(184));
+
+(0, _defineProperty["default"])(exports, "__esModule", {
+  value: true
+});
+
+var Util_1 = __webpack_require__(173);
+/**
+ * 简易实现的事件触发器
+ * 仅框架内部使用
+ * 未传入name时默认会有自增id作为name
+ * 主要为 定时器 bridge 等服务
+ */
+
+
+var Bus =
+/** @class */
+function () {
+  try {
+    function Bus() {
+      try {
+        this._busId = 0;
+        this._pool = {};
+      } catch (_e) {
+        __reportError__(_e, "Bus", "/thresh-lib/src/shared/bus.ts");
+
+        throw _e;
+      }
+    }
+
+    Bus.prototype.register = function (callback, name) {
+      try {
+        if (!Util_1["default"].isFunc(callback)) return;
+        var busName = name ? name.toString() : (++this._busId).toString();
+        if (!this._pool[busName]) this._pool[busName] = [];
+
+        this._pool[busName].push(callback);
+
+        return busName;
+      } catch (_e2) {
+        __reportError__(_e2, "", "/thresh-lib/src/shared/bus.ts");
+
+        throw _e2;
+      }
+    };
+
+    Bus.prototype.fire = function (name) {
+      try {
+        var args = [];
+
+        for (var _i = 1; _i < arguments.length; _i++) {
+          args[_i - 1] = arguments[_i];
+        }
+
+        if (!name) return;
+        var callbacks = this._pool[name];
+        if (!callbacks || !callbacks.length) return;
+        return (0, _map["default"])(callbacks).call(callbacks, function (callback) {
+          try {
+            return callback.apply(void 0, args);
+          } catch (_e3) {
+            __reportError__(_e3, "", "/thresh-lib/src/shared/bus.ts");
+
+            throw _e3;
+          }
+        });
+      } catch (_e4) {
+        __reportError__(_e4, "", "/thresh-lib/src/shared/bus.ts");
+
+        throw _e4;
+      }
+    };
+
+    Bus.prototype.has = function (name, callback) {
+      try {
+        if (!name || !this._pool[name]) return false;
+        if (!callback) return true;
+        var callbacks = this._pool[name];
+        var index = (0, _indexOf["default"])(callbacks).call(callbacks, callback);
+        return index > -1;
+      } catch (_e5) {
+        __reportError__(_e5, "", "/thresh-lib/src/shared/bus.ts");
+
+        throw _e5;
+      }
+    };
+
+    Bus.prototype.remove = function (name, callback) {
+      try {
+        if (!name || !this._pool[name]) return;
+
+        if (!callback) {
+          delete this._pool[name];
+          return;
+        }
+
+        var callbacks = this._pool[name];
+        var index = (0, _indexOf["default"])(callbacks).call(callbacks, callback);
+        if (index > -1) (0, _splice["default"])(callbacks).call(callbacks, index, 1);
+      } catch (_e6) {
+        __reportError__(_e6, "", "/thresh-lib/src/shared/bus.ts");
+
+        throw _e6;
+      }
+    };
+
+    Bus.prototype.clear = function () {
+      try {
+        this._busId = 0;
+        this._pool = {};
+      } catch (_e7) {
+        __reportError__(_e7, "", "/thresh-lib/src/shared/bus.ts");
+
+        throw _e7;
+      }
+    };
+
+    return Bus;
+  } catch (_e8) {
+    __reportError__(_e8, "", "/thresh-lib/src/shared/bus.ts");
+
+    throw _e8;
+  }
+}();
+
+var bus = new Bus();
+exports["default"] = bus;
+
+/***/ }),
+/* 227 */
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports = __webpack_require__(228);
+
+/***/ }),
+/* 228 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var parent = __webpack_require__(229);
+
+module.exports = parent;
+
+
+/***/ }),
+/* 229 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var map = __webpack_require__(230);
+
+var ArrayPrototype = Array.prototype;
+
+module.exports = function (it) {
+  var own = it.map;
+  return it === ArrayPrototype || (it instanceof Array && own === ArrayPrototype.map) ? map : own;
+};
+
+
+/***/ }),
+/* 230 */
+/***/ (function(module, exports, __webpack_require__) {
+
+__webpack_require__(231);
+var entryVirtual = __webpack_require__(85);
+
+module.exports = entryVirtual('Array').map;
+
+
+/***/ }),
+/* 231 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var $ = __webpack_require__(6);
+var $map = __webpack_require__(81).map;
+var arrayMethodHasSpeciesSupport = __webpack_require__(92);
+
+var HAS_SPECIES_SUPPORT = arrayMethodHasSpeciesSupport('map');
+
+// `Array.prototype.map` method
+// https://tc39.es/ecma262/#sec-array.prototype.map
+// with adding support of @@species
+$({ target: 'Array', proto: true, forced: !HAS_SPECIES_SUPPORT }, {
+  map: function map(callbackfn /* , thisArg */) {
+    return $map(this, callbackfn, arguments.length > 1 ? arguments[1] : undefined);
+  }
+});
+
+
+/***/ }),
+/* 232 */
+/***/ (function(module, exports, __webpack_require__) {
+
+
+/**
+ * MIT License
+ *
+ * Copyright (c) 2020 ManBang Group
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ *
+ */
+
+var _interopRequireDefault = __webpack_require__(1);
+
+var _defineProperty = _interopRequireDefault(__webpack_require__(2));
+
+var _now = _interopRequireDefault(__webpack_require__(153));
+
+(0, _defineProperty["default"])(exports, "__esModule", {
+  value: true
+});
+exports.methodChannel_timer_fire = void 0;
+
+var Util_1 = __webpack_require__(173);
+
+var bus_1 = __webpack_require__(226); // 定时器类型
+
+
+var TimerType;
+
+(function (TimerType) {
+  try {
+    TimerType[TimerType["timeout"] = 0] = "timeout";
+    TimerType[TimerType["interval"] = 1] = "interval";
+  } catch (_e) {
+    __reportError__(_e, "", "/thresh-lib/src/manager/TimerManager.ts");
+
+    throw _e;
+  }
+})(TimerType || (TimerType = {}));
+
+var TimerManager =
+/** @class */
+function () {
+  try {
+    function TimerManager() {}
+    /**
+     * 定时执行器
+     */
+
+
+    TimerManager.setTimeout = function (callback, duration) {
+      try {
+        if (duration === void 0) {
+          duration = 0;
+        }
+
+        return TimerManager.registerTimer(TimerType.timeout, callback, duration);
+      } catch (_e2) {
+        __reportError__(_e2, "", "/thresh-lib/src/manager/TimerManager.ts");
+
+        throw _e2;
+      }
+    };
+    /**
+     * 循环定时执行器
+     */
+
+
+    TimerManager.setInterval = function (callback, duration) {
+      try {
+        if (duration === void 0) {
+          duration = 0;
+        }
+
+        return TimerManager.registerTimer(TimerType.interval, callback, duration);
+      } catch (_e3) {
+        __reportError__(_e3, "", "/thresh-lib/src/manager/TimerManager.ts");
+
+        throw _e3;
+      }
+    };
+    /**
+     * 清除定时器
+     */
+
+
+    TimerManager.clearTimer = function (timerId) {
+      try {
+        if (!timerId) return;
+        bus_1["default"].remove(timerId);
+        methodChannel_timer_operator({
+          type: 'clear',
+          id: timerId
+        });
+      } catch (_e4) {
+        __reportError__(_e4, "", "/thresh-lib/src/manager/TimerManager.ts");
+
+        throw _e4;
+      }
+    };
+    /**
+     * 执行定时器
+     */
+
+
+    TimerManager.fireTimer = function (timerId) {
+      try {
+        if (!timerId) return;
+        bus_1["default"].fire(timerId);
+      } catch (_e5) {
+        __reportError__(_e5, "", "/thresh-lib/src/manager/TimerManager.ts");
+
+        throw _e5;
+      }
+    };
+    /**
+     * 注册定时器
+     */
+
+
+    TimerManager.registerTimer = function (type, callback, duration) {
+      try {
+        if (!Util_1["default"].isFunc(callback)) return;
+        if (!duration || duration < 0) duration = 0;
+        var loop = type === TimerType.interval;
+        var timerId = bus_1["default"].register(loop ? callback // 如果是单次定时器
+        // 执行回调后立刻清除
+        : function () {
+          try {
+            callback();
+            bus_1["default"].remove(timerId);
+          } catch (_e6) {
+            __reportError__(_e6, "", "/thresh-lib/src/manager/TimerManager.ts");
+
+            throw _e6;
+          }
+        }, this.timerId);
+        methodChannel_timer_operator({
+          type: 'register',
+          id: timerId,
+          duration: duration,
+          loop: loop
+        });
+        return timerId;
+      } catch (_e7) {
+        __reportError__(_e7, "", "/thresh-lib/src/manager/TimerManager.ts");
+
+        throw _e7;
+      }
+    };
+
+    (0, _defineProperty["default"])(TimerManager, "timerId", {
+      get: function get() {
+        try {
+          return "timer_" + Math.random().toString(16).replace('0', (0, _now["default"])().toString());
+        } catch (_e8) {
+          __reportError__(_e8, "", "/thresh-lib/src/manager/TimerManager.ts");
+
+          throw _e8;
+        }
+      },
+      enumerable: false,
+      configurable: true
+    });
+    return TimerManager;
+  } catch (_e9) {
+    __reportError__(_e9, "", "/thresh-lib/src/manager/TimerManager.ts");
+
+    throw _e9;
+  }
+}();
+
+exports["default"] = TimerManager; // 暴露到全局的 timer 触发方法
+
+function methodChannel_timer_fire(params) {
+  try {
+    if (!params) return;
+    var id = params.id;
+    if (!id) return;
+    TimerManager.fireTimer(id);
+  } catch (_e10) {
+    __reportError__(_e10, "methodChannel_timer_fire", "/thresh-lib/src/manager/TimerManager.ts");
+
+    throw _e10;
+  }
+}
+
+exports.methodChannel_timer_fire = methodChannel_timer_fire;
+
+/***/ }),
+/* 233 */
+/***/ (function(module, exports, __webpack_require__) {
+
+
+/**
+ * MIT License
+ *
+ * Copyright (c) 2020 ManBang Group
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ *
+ */
+
+var _interopRequireDefault = __webpack_require__(1);
+
+var _promise = _interopRequireDefault(__webpack_require__(95));
+
+var _symbol = _interopRequireDefault(__webpack_require__(124));
+
+var _iterator = _interopRequireDefault(__webpack_require__(150));
+
+var _defineProperty = _interopRequireDefault(__webpack_require__(2));
+
+var _includes = _interopRequireDefault(__webpack_require__(163));
+
+var __awaiter = void 0 && (void 0).__awaiter || function (thisArg, _arguments, P, generator) {
+  try {
+    function adopt(value) {
+      try {
+        return value instanceof P ? value : new P(function (resolve) {
+          try {
+            resolve(value);
+          } catch (_e) {
+            __reportError__(_e, "", "/thresh-lib/src/manager/UtilManager.ts");
+
+            throw _e;
+          }
+        });
+      } catch (_e2) {
+        __reportError__(_e2, "", "/thresh-lib/src/manager/UtilManager.ts");
+
+        throw _e2;
+      }
+    }
+
+    return new (P || (P = _promise["default"]))(function (resolve, reject) {
+      try {
+        function fulfilled(value) {
+          try {
+            try {
+              step(generator.next(value));
+            } catch (e) {
+              reject(e);
+            }
+          } catch (_e3) {
+            __reportError__(_e3, "", "/thresh-lib/src/manager/UtilManager.ts");
+
+            throw _e3;
+          }
+        }
+
+        function rejected(value) {
+          try {
+            try {
+              step(generator["throw"](value));
+            } catch (e) {
+              reject(e);
+            }
+          } catch (_e4) {
+            __reportError__(_e4, "", "/thresh-lib/src/manager/UtilManager.ts");
+
+            throw _e4;
+          }
+        }
+
+        function step(result) {
+          try {
+            result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected);
+          } catch (_e5) {
+            __reportError__(_e5, "", "/thresh-lib/src/manager/UtilManager.ts");
+
+            throw _e5;
+          }
+        }
+
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+      } catch (_e6) {
+        __reportError__(_e6, "", "/thresh-lib/src/manager/UtilManager.ts");
+
+        throw _e6;
+      }
+    });
+  } catch (_e7) {
+    __reportError__(_e7, "", "/thresh-lib/src/manager/UtilManager.ts");
+
+    throw _e7;
+  }
+};
+
+var __generator = void 0 && (void 0).__generator || function (thisArg, body) {
+  try {
+    var _ = {
+      label: 0,
+      sent: function sent() {
+        try {
+          if (t[0] & 1) throw t[1];
+          return t[1];
+        } catch (_e8) {
+          __reportError__(_e8, "sent", "/thresh-lib/src/manager/UtilManager.ts");
+
+          throw _e8;
+        }
+      },
+      trys: [],
+      ops: []
+    },
+        f,
+        y,
+        t,
+        g;
+    return g = {
+      next: verb(0),
+      "throw": verb(1),
+      "return": verb(2)
+    }, typeof _symbol["default"] === "function" && (g[_iterator["default"]] = function () {
+      try {
+        return this;
+      } catch (_e9) {
+        __reportError__(_e9, "", "/thresh-lib/src/manager/UtilManager.ts");
+
+        throw _e9;
+      }
+    }), g;
+
+    function verb(n) {
+      try {
+        return function (v) {
+          return step([n, v]);
+        };
+      } catch (_e10) {
+        __reportError__(_e10, "", "/thresh-lib/src/manager/UtilManager.ts");
+
+        throw _e10;
+      }
+    }
+
+    function step(op) {
+      if (f) throw new TypeError("Generator is already executing.");
+
+      while (_) {
+        try {
+          if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+          if (y = 0, t) op = [op[0] & 2, t.value];
+
+          switch (op[0]) {
+            case 0:
+            case 1:
+              t = op;
+              break;
+
+            case 4:
+              _.label++;
+              return {
+                value: op[1],
+                done: false
+              };
+
+            case 5:
+              _.label++;
+              y = op[1];
+              op = [0];
+              continue;
+
+            case 7:
+              op = _.ops.pop();
+
+              _.trys.pop();
+
+              continue;
+
+            default:
+              if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) {
+                _ = 0;
+                continue;
+              }
+
+              if (op[0] === 3 && (!t || op[1] > t[0] && op[1] < t[3])) {
+                _.label = op[1];
+                break;
+              }
+
+              if (op[0] === 6 && _.label < t[1]) {
+                _.label = t[1];
+                t = op;
+                break;
+              }
+
+              if (t && _.label < t[2]) {
+                _.label = t[2];
+
+                _.ops.push(op);
+
+                break;
+              }
+
+              if (t[2]) _.ops.pop();
+
+              _.trys.pop();
+
+              continue;
+          }
+
+          op = body.call(thisArg, _);
+        } catch (e) {
+          op = [6, e];
+          y = 0;
+        } finally {
+          f = t = 0;
+        }
+      }
+
+      if (op[0] & 5) throw op[1];
+      return {
+        value: op[0] ? op[1] : void 0,
+        done: true
+      };
+    }
+  } catch (_e11) {
+    __reportError__(_e11, "", "/thresh-lib/src/manager/UtilManager.ts");
+
+    throw _e11;
+  }
+};
+
+(0, _defineProperty["default"])(exports, "__esModule", {
+  value: true
+});
+
+var MethodChannel_1 = __webpack_require__(157);
+
+var BridgeManager_1 = __webpack_require__(162);
+
+var Util_1 = __webpack_require__(173);
+
+var DevtoolsManager_1 = __webpack_require__(225);
+/**
+ * 工具方法管理器
+ */
+
+
+var UtilManager =
+/** @class */
+function () {
+  try {
+    function UtilManager() {}
+    /**
+     * 发起网络请求
+     * debugMode状态下会通过flutter发起请求
+     * 否则通过native bridge发起请求
+     */
+
+
+    UtilManager.request = function (params, module, method) {
+      try {
+        if (module === void 0) {
+          module = 'base';
+        }
+
+        if (method === void 0) {
+          method = 'request';
+        }
+
+        return __awaiter(this, void 0, void 0, function () {
+          return __generator(this, function (_a) {
+            if (false) { var _context, _context2; }
+
+            return [2
+            /*return*/
+            , BridgeManager_1["default"].invoke({
+              module: module,
+              method: method,
+              params: params
+            })];
+          });
+        });
+      } catch (_e12) {
+        __reportError__(_e12, "", "/thresh-lib/src/manager/UtilManager.ts");
+
+        throw _e12;
+      }
+    };
+    /**
+     * 复制到剪贴板
+     * @param {any} data
+     */
+
+
+    UtilManager.copy = function (data, showSuccess) {
+      try {
+        if (showSuccess === void 0) {
+          showSuccess = true;
+        }
+
+        MethodChannel_1["default"].call({
+          method: MethodChannel_1.FlutterMethodChannelType.copy,
+          params: {
+            data: Util_1["default"].toString(data),
+            showSuccess: showSuccess
+          }
+        });
+      } catch (_e13) {
+        __reportError__(_e13, "", "/thresh-lib/src/manager/UtilManager.ts");
+
+        throw _e13;
+      }
+    };
+    /**
+     * 收起键盘
+     */
+
+
+    UtilManager.blur = function () {
+      try {
+        MethodChannel_1["default"].call({
+          method: MethodChannel_1.FlutterMethodChannelType.blur
+        });
+      } catch (_e14) {
+        __reportError__(_e14, "", "/thresh-lib/src/manager/UtilManager.ts");
+
+        throw _e14;
+      }
+    };
+
+    UtilManager.log = function () {
+      try {
+        var args = [];
+
+        for (var _i = 0; _i < arguments.length; _i++) {
+          args[_i] = arguments[_i];
+        }
+
+        if (console && console.log) {
+          console.log.apply(console, args);
+        }
+
+        DevtoolsManager_1["default"].log.apply(DevtoolsManager_1["default"], args);
+      } catch (_e15) {
+        __reportError__(_e15, "", "/thresh-lib/src/manager/UtilManager.ts");
+
+        throw _e15;
+      }
+    };
+
+    UtilManager.warn = function () {
+      try {
+        var args = [];
+
+        for (var _i = 0; _i < arguments.length; _i++) {
+          args[_i] = arguments[_i];
+        }
+
+        if (console && console.warn) {
+          console.warn.apply(console, args);
+        }
+
+        DevtoolsManager_1["default"].warn.apply(DevtoolsManager_1["default"], args);
+      } catch (_e16) {
+        __reportError__(_e16, "", "/thresh-lib/src/manager/UtilManager.ts");
+
+        throw _e16;
+      }
+    };
+
+    UtilManager.error = function () {
+      try {
+        var args = [];
+
+        for (var _i = 0; _i < arguments.length; _i++) {
+          args[_i] = arguments[_i];
+        }
+
+        if (console && console.error) {
+          console.error.apply(console, args);
+        }
+
+        DevtoolsManager_1["default"].error.apply(DevtoolsManager_1["default"], args);
+      } catch (_e17) {
+        __reportError__(_e17, "", "/thresh-lib/src/manager/UtilManager.ts");
+
+        throw _e17;
+      }
+    };
+
+    return UtilManager;
+  } catch (_e18) {
+    __reportError__(_e18, "", "/thresh-lib/src/manager/UtilManager.ts");
+
+    throw _e18;
+  }
+}();
+
+exports["default"] = UtilManager;
+
+/***/ }),
 /* 234 */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -10829,14 +10528,1541 @@ module.exports = {
 
 var _interopRequireDefault = __webpack_require__(1);
 
-var _defineProperty = _interopRequireDefault(__webpack_require__(89));
+var _promise = _interopRequireDefault(__webpack_require__(95));
+
+var _symbol = _interopRequireDefault(__webpack_require__(124));
+
+var _iterator = _interopRequireDefault(__webpack_require__(150));
+
+var _defineProperty = _interopRequireDefault(__webpack_require__(2));
+
+var _from = _interopRequireDefault(__webpack_require__(235));
+
+var _keys = _interopRequireDefault(__webpack_require__(241));
+
+var _now = _interopRequireDefault(__webpack_require__(153));
+
+var _stringify = _interopRequireDefault(__webpack_require__(158));
+
+var __awaiter = void 0 && (void 0).__awaiter || function (thisArg, _arguments, P, generator) {
+  try {
+    function adopt(value) {
+      try {
+        return value instanceof P ? value : new P(function (resolve) {
+          try {
+            resolve(value);
+          } catch (_e) {
+            __reportError__(_e, "", "/thresh-lib/src/manager/RenderManager.ts");
+
+            throw _e;
+          }
+        });
+      } catch (_e2) {
+        __reportError__(_e2, "", "/thresh-lib/src/manager/RenderManager.ts");
+
+        throw _e2;
+      }
+    }
+
+    return new (P || (P = _promise["default"]))(function (resolve, reject) {
+      try {
+        function fulfilled(value) {
+          try {
+            try {
+              step(generator.next(value));
+            } catch (e) {
+              reject(e);
+            }
+          } catch (_e3) {
+            __reportError__(_e3, "", "/thresh-lib/src/manager/RenderManager.ts");
+
+            throw _e3;
+          }
+        }
+
+        function rejected(value) {
+          try {
+            try {
+              step(generator["throw"](value));
+            } catch (e) {
+              reject(e);
+            }
+          } catch (_e4) {
+            __reportError__(_e4, "", "/thresh-lib/src/manager/RenderManager.ts");
+
+            throw _e4;
+          }
+        }
+
+        function step(result) {
+          try {
+            result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected);
+          } catch (_e5) {
+            __reportError__(_e5, "", "/thresh-lib/src/manager/RenderManager.ts");
+
+            throw _e5;
+          }
+        }
+
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+      } catch (_e6) {
+        __reportError__(_e6, "", "/thresh-lib/src/manager/RenderManager.ts");
+
+        throw _e6;
+      }
+    });
+  } catch (_e7) {
+    __reportError__(_e7, "", "/thresh-lib/src/manager/RenderManager.ts");
+
+    throw _e7;
+  }
+};
+
+var __generator = void 0 && (void 0).__generator || function (thisArg, body) {
+  try {
+    var _ = {
+      label: 0,
+      sent: function sent() {
+        try {
+          if (t[0] & 1) throw t[1];
+          return t[1];
+        } catch (_e8) {
+          __reportError__(_e8, "sent", "/thresh-lib/src/manager/RenderManager.ts");
+
+          throw _e8;
+        }
+      },
+      trys: [],
+      ops: []
+    },
+        f,
+        y,
+        t,
+        g;
+    return g = {
+      next: verb(0),
+      "throw": verb(1),
+      "return": verb(2)
+    }, typeof _symbol["default"] === "function" && (g[_iterator["default"]] = function () {
+      try {
+        return this;
+      } catch (_e9) {
+        __reportError__(_e9, "", "/thresh-lib/src/manager/RenderManager.ts");
+
+        throw _e9;
+      }
+    }), g;
+
+    function verb(n) {
+      try {
+        return function (v) {
+          return step([n, v]);
+        };
+      } catch (_e10) {
+        __reportError__(_e10, "", "/thresh-lib/src/manager/RenderManager.ts");
+
+        throw _e10;
+      }
+    }
+
+    function step(op) {
+      if (f) throw new TypeError("Generator is already executing.");
+
+      while (_) {
+        try {
+          if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+          if (y = 0, t) op = [op[0] & 2, t.value];
+
+          switch (op[0]) {
+            case 0:
+            case 1:
+              t = op;
+              break;
+
+            case 4:
+              _.label++;
+              return {
+                value: op[1],
+                done: false
+              };
+
+            case 5:
+              _.label++;
+              y = op[1];
+              op = [0];
+              continue;
+
+            case 7:
+              op = _.ops.pop();
+
+              _.trys.pop();
+
+              continue;
+
+            default:
+              if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) {
+                _ = 0;
+                continue;
+              }
+
+              if (op[0] === 3 && (!t || op[1] > t[0] && op[1] < t[3])) {
+                _.label = op[1];
+                break;
+              }
+
+              if (op[0] === 6 && _.label < t[1]) {
+                _.label = t[1];
+                t = op;
+                break;
+              }
+
+              if (t && _.label < t[2]) {
+                _.label = t[2];
+
+                _.ops.push(op);
+
+                break;
+              }
+
+              if (t[2]) _.ops.pop();
+
+              _.trys.pop();
+
+              continue;
+          }
+
+          op = body.call(thisArg, _);
+        } catch (e) {
+          op = [6, e];
+          y = 0;
+        } finally {
+          f = t = 0;
+        }
+      }
+
+      if (op[0] & 5) throw op[1];
+      return {
+        value: op[0] ? op[1] : void 0,
+        done: true
+      };
+    }
+  } catch (_e11) {
+    __reportError__(_e11, "", "/thresh-lib/src/manager/RenderManager.ts");
+
+    throw _e11;
+  }
+};
+
+(0, _defineProperty["default"])(exports, "__esModule", {
+  value: true
+});
+
+var MethodChannel_1 = __webpack_require__(157);
+
+var dispatchMethod_1 = __webpack_require__(245);
+
+var AppContainer_1 = __webpack_require__(210);
+
+var bus_1 = __webpack_require__(226);
+
+var UIManager_1 = __webpack_require__(246);
+
+var basicWidget_1 = __webpack_require__(247);
+/**
+ * 页面渲染管理器
+ */
+
+
+var RenderManager =
+/** @class */
+function () {
+  try {
+    function RenderManager() {}
+
+    (0, _defineProperty["default"])(RenderManager, "currentPage", {
+      /**
+       * 获取当前页面信息
+       */
+      get: function get() {
+        try {
+          if (AppContainer_1["default"].isEmpty) return;
+          var pageName = AppContainer_1["default"].currentPageName;
+          if (!pageName) return;
+          var pageData = AppContainer_1["default"].currentPageData;
+          if (!pageData) return;
+          var temp = pageName.split('#');
+          temp.pop();
+          pageName = temp.join('#');
+          return {
+            pageName: pageName,
+            pageData: pageData
+          };
+        } catch (_e12) {
+          __reportError__(_e12, "get", "/thresh-lib/src/manager/RenderManager.ts");
+
+          throw _e12;
+        }
+      },
+      enumerable: false,
+      configurable: true
+    });
+    /**
+     * 页面不存在
+     */
+
+    RenderManager.pageNotFound = function (nextPath) {
+      try {
+        var _context;
+
+        var allPaths = (0, _from["default"])((0, _keys["default"])(_context = AppContainer_1["default"].routes).call(_context));
+        MethodChannel_1["default"].call({
+          method: MethodChannel_1.FlutterMethodChannelType.pageNotFound,
+          params: {
+            allPath: allPaths.join('\n'),
+            nextPath: nextPath,
+            prevPath: AppContainer_1["default"].referPageName || ''
+          }
+        });
+      } catch (_e13) {
+        __reportError__(_e13, "", "/thresh-lib/src/manager/RenderManager.ts");
+
+        throw _e13;
+      }
+    };
+    /**
+     * 建立页面/模态框
+     * @param {VNode} renderTree
+     * @param {String} pageName
+     * @param {number} createTimestamp 页面创建时间
+     */
+
+
+    RenderManager.pushPage = function (renderTree, pageName, createTimestamp) {
+      try {
+        if (AppContainer_1["default"].isEmpty && (UIManager_1["default"].screenWidth === 0 || UIManager_1["default"].screenHeight === 0)) {
+          throw new Error("[UI ERROR] screenWidth: " + UIManager_1["default"].screenWidth + ", screenHeight: " + UIManager_1["default"].screenHeight);
+        }
+
+        var contextId = AppContainer_1["default"].contextId;
+        if (!AppContainer_1["default"].isEmpty) basicWidget_1.Page.invokePageOnHide(contextId);
+
+        var page = RenderManager._buildPage(renderTree, pageName);
+
+        AppContainer_1["default"].pushPage(page.pageName, renderTree, createTimestamp);
+        MethodChannel_1["default"].call({
+          method: MethodChannel_1.FlutterMethodChannelType.pushPage,
+          params: {
+            pageName: page.pageName,
+            widgetRenderData: page.pageData
+          }
+        });
+        var pageOnShowEventName = "pageOnShow#" + page.pageName;
+        bus_1["default"].register(function () {
+          try {
+            basicWidget_1.Page.invokePageOnShow(contextId);
+            bus_1["default"].remove(pageOnShowEventName);
+          } catch (_e14) {
+            __reportError__(_e14, "", "/thresh-lib/src/manager/RenderManager.ts");
+
+            throw _e14;
+          }
+        }, pageOnShowEventName);
+      } catch (_e15) {
+        __reportError__(_e15, "", "/thresh-lib/src/manager/RenderManager.ts");
+
+        throw _e15;
+      }
+    };
+    /**
+     * 推出当前页面
+     */
+
+
+    RenderManager.popPage = function () {
+      return __awaiter(this, void 0, void 0, function () {
+        var showName, shouldPop, popPageCallback_1;
+        return __generator(this, function (_a) {
+          try {
+            switch (_a.label) {
+              case 0:
+                showName = AppContainer_1["default"].currentShowName;
+                if (!showName) return [2
+                /*return*/
+                ];
+                if (!!AppContainer_1["default"].currentShowIsModal) return [3
+                /*break*/
+                , 2];
+                return [4
+                /*yield*/
+                , basicWidget_1.Page.invokeBeforePagePop()];
+
+              case 1:
+                shouldPop = _a.sent();
+                if (!shouldPop) return [2
+                /*return*/
+                ];
+                _a.label = 2;
+
+              case 2:
+                // 如果当前页面可执行 popPage 操作
+                // 则向 flutter 发出 popPage 消息
+                // flutter 完成相关操作后向 js 发出 hasPopPage 消息
+                if (AppContainer_1["default"].canPop) {
+                  MethodChannel_1["default"].call({
+                    method: MethodChannel_1.FlutterMethodChannelType.popPage,
+                    params: {
+                      pageName: showName
+                    }
+                  });
+
+                  popPageCallback_1 = function popPageCallback_1(resolve) {
+                    try {
+                      bus_1["default"].register(function () {
+                        try {
+                          resolve();
+                        } catch (_e16) {
+                          __reportError__(_e16, "", "/thresh-lib/src/manager/RenderManager.ts");
+
+                          throw _e16;
+                        }
+                      }, showName);
+                    } catch (_e17) {
+                      __reportError__(_e17, "", "/thresh-lib/src/manager/RenderManager.ts");
+
+                      throw _e17;
+                    }
+                  };
+
+                  return [2
+                  /*return*/
+                  , new _promise["default"](function (resolve) {
+                    try {
+                      popPageCallback_1(resolve);
+                    } catch (_e18) {
+                      __reportError__(_e18, "", "/thresh-lib/src/manager/RenderManager.ts");
+
+                      throw _e18;
+                    }
+                  })];
+                } // 当前页面不可执行 popPage 操作
+                // 则直接调用 closeWindow 关闭当前 native 窗口
+                // 页面 onHide onShow onDestroy 等操作由 native 来触发
+                else {
+                    dispatchMethod_1["default"].closeWindow();
+                  }
+
+                return [2
+                /*return*/
+                ];
+            }
+          } catch (_e19) {
+            __reportError__(_e19, "", "/thresh-lib/src/manager/RenderManager.ts");
+
+            throw _e19;
+          }
+        });
+      });
+    };
+    /**
+     * 显示 modal
+     */
+
+
+    RenderManager.showModal = function (modalRenderTree, title, popup) {
+      try {
+        var modal = RenderManager._buildPage(modalRenderTree, title);
+
+        AppContainer_1["default"].showModal(modal.pageName, modalRenderTree);
+        MethodChannel_1["default"].call({
+          method: MethodChannel_1.FlutterMethodChannelType.showModal,
+          params: {
+            modalName: modal.pageName,
+            widgetRenderData: modal.pageData,
+            popup: popup
+          }
+        });
+      } catch (_e20) {
+        __reportError__(_e20, "", "/thresh-lib/src/manager/RenderManager.ts");
+
+        throw _e20;
+      }
+    };
+    /**
+     * 隐藏 modal
+     */
+
+
+    RenderManager.hideModal = function () {
+      try {
+        return RenderManager.popPage();
+      } catch (_e21) {
+        __reportError__(_e21, "", "/thresh-lib/src/manager/RenderManager.ts");
+
+        throw _e21;
+      }
+    };
+    /**
+     * 显示taost
+     */
+
+
+    RenderManager.showToast = function (toastRenderTree, toastInfo) {
+      try {
+        if (toastInfo === void 0) {
+          toastInfo = {};
+        }
+
+        var toastRenderData = toastRenderTree.toRenderData('toast#' + (toastInfo.name || (0, _now["default"])()));
+        MethodChannel_1["default"].call({
+          method: MethodChannel_1.FlutterMethodChannelType.showToast,
+          params: {
+            toastRenderData: (0, _stringify["default"])(toastRenderData),
+            toastInfo: (0, _stringify["default"])(toastInfo)
+          }
+        });
+      } catch (_e22) {
+        __reportError__(_e22, "", "/thresh-lib/src/manager/RenderManager.ts");
+
+        throw _e22;
+      }
+    };
+    /**
+     * 隐藏taost
+     */
+
+
+    RenderManager.hideToast = function (toastName) {
+      try {
+        MethodChannel_1["default"].call({
+          method: MethodChannel_1.FlutterMethodChannelType.hideToast,
+          params: {
+            toastName: toastName
+          }
+        });
+      } catch (_e23) {
+        __reportError__(_e23, "", "/thresh-lib/src/manager/RenderManager.ts");
+
+        throw _e23;
+      }
+    };
+    /**
+     * 更新widget
+     * @param {VNode} updateRenderTree
+     * @param {String} needUpdateWidgetId
+     * @param {String} invokeDidUpdateWidgetId
+     * @param {String} pageName
+     * @param {bool} setRootBasicStateful 是否设置newWidgetTree的根basic widget为stateful，因为更新时只能拿到render执行结果，无法获取到包裹它的widget是否是stateful的，所以需要手动传入
+     */
+
+
+    RenderManager.updateWidget = function (updateRenderTree, needUpdateWidgetId, invokeDidUpdateWidgetId, pageName) {
+      try {
+        // 当需要更新 widget 时查看 widget cache 中是否已经存在需要被替换的 widget tree 的根节点标记
+        var updateRenderData = updateRenderTree.toRenderData(pageName);
+        MethodChannel_1["default"].call({
+          method: MethodChannel_1.FlutterMethodChannelType.updateWidget,
+          params: {
+            pageName: pageName,
+            needUpdateWidgetId: needUpdateWidgetId,
+            invokeDidUpdateWidgetId: invokeDidUpdateWidgetId,
+            widgetUpdateData: (0, _stringify["default"])(updateRenderData)
+          },
+          contextId: updateRenderTree.contextId
+        });
+      } catch (_e24) {
+        __reportError__(_e24, "", "/thresh-lib/src/manager/RenderManager.ts");
+
+        throw _e24;
+      }
+    };
+    /**
+     * 停止 flutter 中永久渲染组件的渲染
+     */
+
+
+    RenderManager.stopAlwaysRender = function (contextId) {
+      try {
+        MethodChannel_1["default"].call({
+          method: MethodChannel_1.FlutterMethodChannelType.stopAlwaysRender,
+          contextId: contextId
+        });
+      } catch (_e25) {
+        __reportError__(_e25, "", "/thresh-lib/src/manager/RenderManager.ts");
+
+        throw _e25;
+      }
+    };
+    /**
+     * 获取设备媒体信息
+     * 由于mediaQuery是threshApp中唯一一个双向的方法
+     * 因此在接收到来自flutter的mediaQuery信息时，还会携带上其他的信息
+     * 如：debugMode bizName 等
+     */
+
+
+    RenderManager.getMediaQuery = function (jsVersion) {
+      try {
+        MethodChannel_1["default"].call({
+          method: MethodChannel_1.FlutterMethodChannelType.mediaQuery,
+          params: {
+            jsEnv: 'production',
+            jsVersion: jsVersion
+          }
+        });
+      } catch (_e26) {
+        __reportError__(_e26, "", "/thresh-lib/src/manager/RenderManager.ts");
+
+        throw _e26;
+      }
+    };
+    /**
+     * 构建页面
+     * 返回一个可以被flutter解析渲染的 jsonTreeString
+     */
+
+
+    RenderManager._buildPage = function (renderTree, pageName) {
+      try {
+        if (!pageName) throw new Error('set up page must have a pageName');
+        pageName = pageName + "#" + AppContainer_1["default"].pageId;
+        var renderData = renderTree.toRenderData(pageName);
+        if (!renderTree.fetchRootNode().pageNode && !AppContainer_1["default"].pageIsModal(pageName)) throw new Error('Each page must have one <Page />');
+        return {
+          pageName: pageName,
+          pageData: (0, _stringify["default"])(renderData)
+        };
+      } catch (_e27) {
+        __reportError__(_e27, "", "/thresh-lib/src/manager/RenderManager.ts");
+
+        throw _e27;
+      }
+    };
+
+    return RenderManager;
+  } catch (_e28) {
+    __reportError__(_e28, "", "/thresh-lib/src/manager/RenderManager.ts");
+
+    throw _e28;
+  }
+}();
+
+exports["default"] = RenderManager;
+
+/***/ }),
+/* 235 */
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports = __webpack_require__(236);
+
+/***/ }),
+/* 236 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var parent = __webpack_require__(237);
+
+module.exports = parent;
+
+
+/***/ }),
+/* 237 */
+/***/ (function(module, exports, __webpack_require__) {
+
+__webpack_require__(122);
+__webpack_require__(238);
+var path = __webpack_require__(24);
+
+module.exports = path.Array.from;
+
+
+/***/ }),
+/* 238 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var $ = __webpack_require__(6);
+var from = __webpack_require__(239);
+var checkCorrectnessOfIteration = __webpack_require__(109);
+
+var INCORRECT_ITERATION = !checkCorrectnessOfIteration(function (iterable) {
+  // eslint-disable-next-line es/no-array-from -- required for testing
+  Array.from(iterable);
+});
+
+// `Array.from` method
+// https://tc39.es/ecma262/#sec-array.from
+$({ target: 'Array', stat: true, forced: INCORRECT_ITERATION }, {
+  from: from
+});
+
+
+/***/ }),
+/* 239 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var bind = __webpack_require__(25);
+var toObject = __webpack_require__(50);
+var callWithSafeIterationClosing = __webpack_require__(240);
+var isArrayIteratorMethod = __webpack_require__(100);
+var toLength = __webpack_require__(64);
+var createProperty = __webpack_require__(91);
+var getIteratorMethod = __webpack_require__(101);
+
+// `Array.from` method implementation
+// https://tc39.es/ecma262/#sec-array.from
+module.exports = function from(arrayLike /* , mapfn = undefined, thisArg = undefined */) {
+  var O = toObject(arrayLike);
+  var C = typeof this == 'function' ? this : Array;
+  var argumentsLength = arguments.length;
+  var mapfn = argumentsLength > 1 ? arguments[1] : undefined;
+  var mapping = mapfn !== undefined;
+  var iteratorMethod = getIteratorMethod(O);
+  var index = 0;
+  var length, result, step, iterator, next, value;
+  if (mapping) mapfn = bind(mapfn, argumentsLength > 2 ? arguments[2] : undefined, 2);
+  // if the target is not iterable or it's an array with the default iterator - use a simple case
+  if (iteratorMethod != undefined && !(C == Array && isArrayIteratorMethod(iteratorMethod))) {
+    iterator = iteratorMethod.call(O);
+    next = iterator.next;
+    result = new C();
+    for (;!(step = next.call(iterator)).done; index++) {
+      value = mapping ? callWithSafeIterationClosing(iterator, mapfn, [step.value, index], true) : step.value;
+      createProperty(result, index, value);
+    }
+  } else {
+    length = toLength(O.length);
+    result = new C(length);
+    for (;length > index; index++) {
+      value = mapping ? mapfn(O[index], index) : O[index];
+      createProperty(result, index, value);
+    }
+  }
+  result.length = index;
+  return result;
+};
+
+
+/***/ }),
+/* 240 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var anObject = __webpack_require__(29);
+var iteratorClose = __webpack_require__(102);
+
+// call something on iterator step with safe closing on error
+module.exports = function (iterator, fn, value, ENTRIES) {
+  try {
+    return ENTRIES ? fn(anObject(value)[0], value[1]) : fn(value);
+  // 7.4.6 IteratorClose(iterator, completion)
+  } catch (error) {
+    iteratorClose(iterator);
+    throw error;
+  }
+};
+
+
+/***/ }),
+/* 241 */
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports = __webpack_require__(242);
+
+/***/ }),
+/* 242 */
+/***/ (function(module, exports, __webpack_require__) {
+
+__webpack_require__(32);
+var keys = __webpack_require__(243);
+var classof = __webpack_require__(72);
+var ArrayPrototype = Array.prototype;
+
+var DOMIterables = {
+  DOMTokenList: true,
+  NodeList: true
+};
+
+module.exports = function (it) {
+  var own = it.keys;
+  return it === ArrayPrototype || (it instanceof Array && own === ArrayPrototype.keys)
+    // eslint-disable-next-line no-prototype-builtins -- safe
+    || DOMIterables.hasOwnProperty(classof(it)) ? keys : own;
+};
+
+
+/***/ }),
+/* 243 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var parent = __webpack_require__(244);
+
+module.exports = parent;
+
+
+/***/ }),
+/* 244 */
+/***/ (function(module, exports, __webpack_require__) {
+
+__webpack_require__(33);
+var entryVirtual = __webpack_require__(85);
+
+module.exports = entryVirtual('Array').keys;
+
+
+/***/ }),
+/* 245 */
+/***/ (function(module, exports, __webpack_require__) {
+
+
+/**
+ * MIT License
+ *
+ * Copyright (c) 2020 ManBang Group
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ *
+ */
+
+var _interopRequireDefault = __webpack_require__(1);
+
+var _promise = _interopRequireDefault(__webpack_require__(95));
+
+var _symbol = _interopRequireDefault(__webpack_require__(124));
+
+var _iterator = _interopRequireDefault(__webpack_require__(150));
+
+var _defineProperty = _interopRequireDefault(__webpack_require__(2));
+
+var _stringify = _interopRequireDefault(__webpack_require__(158));
+
+var __awaiter = void 0 && (void 0).__awaiter || function (thisArg, _arguments, P, generator) {
+  try {
+    function adopt(value) {
+      try {
+        return value instanceof P ? value : new P(function (resolve) {
+          try {
+            resolve(value);
+          } catch (_e) {
+            __reportError__(_e, "", "/thresh-lib/src/channel/dispatchMethod.ts");
+
+            throw _e;
+          }
+        });
+      } catch (_e2) {
+        __reportError__(_e2, "", "/thresh-lib/src/channel/dispatchMethod.ts");
+
+        throw _e2;
+      }
+    }
+
+    return new (P || (P = _promise["default"]))(function (resolve, reject) {
+      try {
+        function fulfilled(value) {
+          try {
+            try {
+              step(generator.next(value));
+            } catch (e) {
+              reject(e);
+            }
+          } catch (_e3) {
+            __reportError__(_e3, "", "/thresh-lib/src/channel/dispatchMethod.ts");
+
+            throw _e3;
+          }
+        }
+
+        function rejected(value) {
+          try {
+            try {
+              step(generator["throw"](value));
+            } catch (e) {
+              reject(e);
+            }
+          } catch (_e4) {
+            __reportError__(_e4, "", "/thresh-lib/src/channel/dispatchMethod.ts");
+
+            throw _e4;
+          }
+        }
+
+        function step(result) {
+          try {
+            result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected);
+          } catch (_e5) {
+            __reportError__(_e5, "", "/thresh-lib/src/channel/dispatchMethod.ts");
+
+            throw _e5;
+          }
+        }
+
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+      } catch (_e6) {
+        __reportError__(_e6, "", "/thresh-lib/src/channel/dispatchMethod.ts");
+
+        throw _e6;
+      }
+    });
+  } catch (_e7) {
+    __reportError__(_e7, "", "/thresh-lib/src/channel/dispatchMethod.ts");
+
+    throw _e7;
+  }
+};
+
+var __generator = void 0 && (void 0).__generator || function (thisArg, body) {
+  try {
+    var _ = {
+      label: 0,
+      sent: function sent() {
+        try {
+          if (t[0] & 1) throw t[1];
+          return t[1];
+        } catch (_e8) {
+          __reportError__(_e8, "sent", "/thresh-lib/src/channel/dispatchMethod.ts");
+
+          throw _e8;
+        }
+      },
+      trys: [],
+      ops: []
+    },
+        f,
+        y,
+        t,
+        g;
+    return g = {
+      next: verb(0),
+      "throw": verb(1),
+      "return": verb(2)
+    }, typeof _symbol["default"] === "function" && (g[_iterator["default"]] = function () {
+      try {
+        return this;
+      } catch (_e9) {
+        __reportError__(_e9, "", "/thresh-lib/src/channel/dispatchMethod.ts");
+
+        throw _e9;
+      }
+    }), g;
+
+    function verb(n) {
+      try {
+        return function (v) {
+          return step([n, v]);
+        };
+      } catch (_e10) {
+        __reportError__(_e10, "", "/thresh-lib/src/channel/dispatchMethod.ts");
+
+        throw _e10;
+      }
+    }
+
+    function step(op) {
+      if (f) throw new TypeError("Generator is already executing.");
+
+      while (_) {
+        try {
+          if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+          if (y = 0, t) op = [op[0] & 2, t.value];
+
+          switch (op[0]) {
+            case 0:
+            case 1:
+              t = op;
+              break;
+
+            case 4:
+              _.label++;
+              return {
+                value: op[1],
+                done: false
+              };
+
+            case 5:
+              _.label++;
+              y = op[1];
+              op = [0];
+              continue;
+
+            case 7:
+              op = _.ops.pop();
+
+              _.trys.pop();
+
+              continue;
+
+            default:
+              if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) {
+                _ = 0;
+                continue;
+              }
+
+              if (op[0] === 3 && (!t || op[1] > t[0] && op[1] < t[3])) {
+                _.label = op[1];
+                break;
+              }
+
+              if (op[0] === 6 && _.label < t[1]) {
+                _.label = t[1];
+                t = op;
+                break;
+              }
+
+              if (t && _.label < t[2]) {
+                _.label = t[2];
+
+                _.ops.push(op);
+
+                break;
+              }
+
+              if (t[2]) _.ops.pop();
+
+              _.trys.pop();
+
+              continue;
+          }
+
+          op = body.call(thisArg, _);
+        } catch (e) {
+          op = [6, e];
+          y = 0;
+        } finally {
+          f = t = 0;
+        }
+      }
+
+      if (op[0] & 5) throw op[1];
+      return {
+        value: op[0] ? op[1] : void 0,
+        done: true
+      };
+    }
+  } catch (_e11) {
+    __reportError__(_e11, "", "/thresh-lib/src/channel/dispatchMethod.ts");
+
+    throw _e11;
+  }
+};
+
+(0, _defineProperty["default"])(exports, "__esModule", {
+  value: true
+});
+exports.nativeCallJs = exports.flutterCallJs = exports.Dispatcher = void 0;
+
+var __1 = __webpack_require__(93);
+
+var MethodChannel_1 = __webpack_require__(157);
+
+var VNode_1 = __webpack_require__(204);
+
+var AppContainer_1 = __webpack_require__(210);
+
+var UIManager_1 = __webpack_require__(246);
+
+var RenderManager_1 = __webpack_require__(234);
+
+var UtilManager_1 = __webpack_require__(233);
+
+var BridgeManager_1 = __webpack_require__(162);
+
+var bus_1 = __webpack_require__(226);
+
+var Util_1 = __webpack_require__(173);
+
+var basicWidget_1 = __webpack_require__(247);
+
+var DispatcherFromType;
+
+(function (DispatcherFromType) {
+  try {
+    DispatcherFromType[DispatcherFromType["Flutter"] = 0] = "Flutter";
+    DispatcherFromType[DispatcherFromType["Native"] = 1] = "Native";
+  } catch (_e12) {
+    __reportError__(_e12, "", "/thresh-lib/src/channel/dispatchMethod.ts");
+
+    throw _e12;
+  }
+})(DispatcherFromType || (DispatcherFromType = {}));
+/**
+ * native与flutter调用js后的方法分发器
+ */
+
+
+var Dispatcher =
+/** @class */
+function () {
+  try {
+    function Dispatcher() {} // 事件分发中心
+
+
+    Dispatcher.prototype.dispatch = function (channelParams, from) {
+      try {
+        var method = channelParams.method,
+            params = channelParams.params,
+            contextId = channelParams.contextId; // 来自 flutter 的消息是被 stringify 的
+        // 需要先解析为 Object
+
+        if (from === DispatcherFromType.Flutter) {
+          if (Util_1["default"].isString(params)) {
+            try {
+              params = JSON.parse(params);
+            } catch (e) {
+              UtilManager_1["default"].warn(e);
+            }
+          }
+        }
+
+        var fn = this[method];
+        if (fn) fn(params, (contextId || '').toString());
+      } catch (_e13) {
+        __reportError__(_e13, "", "/thresh-lib/src/channel/dispatchMethod.ts");
+
+        throw _e13;
+      }
+    };
+    /**
+     * flutter_call_js
+     * flutter 在获取到设备媒介参数后会通过该消息发送给 js
+     */
+
+
+    Dispatcher.prototype[MethodChannel_1.MethodChannelReceiveType.mediaQuery] = function (params) {
+      return __awaiter(this, void 0, void 0, function () {
+        var _a, debugMode, platform, flutterVersion, _b, width, _c, needJsBundlePath, bundleDir, res;
+
+        return __generator(this, function (_d) {
+          try {
+            switch (_d.label) {
+              case 0:
+                // 防止重复获取
+                if (__1["default"].envReady) return [2
+                /*return*/
+                ];
+                _a = params.debugMode, debugMode = _a === void 0 ? false : _a, platform = params.platform, flutterVersion = params.flutterVersion, _b = params.width, width = _b === void 0 ? 0 : _b, _c = params.needJsBundlePath, needJsBundlePath = _c === void 0 ? true : _c; // width 不存在时认为该条消息无效
+
+                if (!width) return [2
+                /*return*/
+                ]; // fix promise bug
+
+                return [4
+                /*yield*/
+                , Util_1["default"].promiseResolveHackForIos_10_0_x()];
+
+              case 1:
+                // fix promise bug
+                _d.sent();
+
+                __1["default"].debugMode = !!debugMode;
+                __1["default"].platform = platform;
+                __1["default"].flutterVersion = flutterVersion;
+                __1["default"].envReady = true;
+                UIManager_1.mediaQuery.setDeviceInfo(params);
+                if (true) return [3
+                /*break*/
+                , 2];
+                bundleDir = '/Users/tangjingdong/Desktop/github/thresh/example/js/dist';
+                MethodChannel_1["default"].call({
+                  method: MethodChannel_1.FlutterMethodChannelType.setBundleDir,
+                  params: {
+                    bundleDir: bundleDir
+                  }
+                });
+                return [3
+                /*break*/
+                , 4];
+
+              case 2:
+                if (!needJsBundlePath) return [3
+                /*break*/
+                , 4];
+                return [4
+                /*yield*/
+                , BridgeManager_1["default"].invoke({
+                  module: 'thresh',
+                  method: 'jsbundlePath',
+                  params: {
+                    bizName: 'thresh-demo'
+                  }
+                })];
+
+              case 3:
+                res = _d.sent();
+                bundleDir = res.data || '';
+                if (!bundleDir) throw new Error("cannot get thresh js bundle dir: " + (0, _stringify["default"])(res));
+                MethodChannel_1["default"].call({
+                  method: MethodChannel_1.FlutterMethodChannelType.setBundleDir,
+                  params: {
+                    bundleDir: bundleDir
+                  }
+                });
+                _d.label = 4;
+
+              case 4:
+                Util_1["default"].log('Flutter env is ready');
+                return [2
+                /*return*/
+                ];
+            }
+          } catch (_e14) {
+            __reportError__(_e14, "", "/thresh-lib/src/channel/dispatchMethod.ts");
+
+            throw _e14;
+          }
+        });
+      });
+    };
+    /**
+     * flutter_call_js
+     * flutter 端环境准备完成后发送该消息
+     * 该消息可能会携带需要显示的页面数据
+     */
+
+
+    Dispatcher.prototype[MethodChannel_1.MethodChannelReceiveType.ready] = function (params) {
+      return __awaiter(this, void 0, void 0, function () {
+        var contextId;
+        return __generator(this, function (_a) {
+          if (!__1["default"].envReady) {
+            RenderManager_1["default"].getMediaQuery(__1["default"].jsVersion);
+            return [2
+            /*return*/
+            ];
+          }
+
+          contextId = params.jsContextId;
+          if (!contextId || AppContainer_1["default"].pageContainerExisted(contextId)) return [2
+          /*return*/
+          ];
+
+          if (params.pageName) {
+            __1["default"].injectRoute(params);
+          }
+
+          AppContainer_1["default"].createPageContainer(contextId);
+
+          __1["default"].ready();
+
+          return [2
+          /*return*/
+          ];
+        });
+      });
+    };
+    /**
+     * flutter_call_js
+     * flutter 通过该消息通知 js 显示某个页面
+     */
+
+
+    Dispatcher.prototype[MethodChannel_1.MethodChannelReceiveType.setupPage] = function (params) {
+      try {
+        var pageName = params ? params.pageName : void 0;
+        var query = params ? params.params || {} : void 0;
+
+        __1["default"].pushPage(pageName, query);
+      } catch (_e15) {
+        __reportError__(_e15, "", "/thresh-lib/src/channel/dispatchMethod.ts");
+
+        throw _e15;
+      }
+    };
+    /**
+     * flutter_call_js
+     * flutter 触发 popPage 时通过该方法将 popPage 的决定权交给 js
+     * flutter 本身触发的 popPage 不生效，通过 js 触发的 popPage 才生效
+     * 以便执行 popPage 前的一些额外操作
+     */
+
+
+    Dispatcher.prototype[MethodChannel_1.MethodChannelReceiveType.needPopPage] = function () {
+      try {
+        __1["default"].popPage();
+      } catch (_e16) {
+        __reportError__(_e16, "", "/thresh-lib/src/channel/dispatchMethod.ts");
+
+        throw _e16;
+      }
+    };
+    /**
+     * flutter_call_js
+     * 执行该方法时 flutter 实际 hasPopPage 已完成
+     */
+
+
+    Dispatcher.prototype[MethodChannel_1.MethodChannelReceiveType.hasPopPage] = function (params) {
+      try {
+        if (params === void 0) {
+          params = {};
+        }
+
+        var hidePageName = params.pageName; // 获取到当前被退出页面的名字
+
+        if (!hidePageName) hidePageName = AppContainer_1["default"].currentShowName;
+
+        if (AppContainer_1["default"].hasPage(hidePageName, true)) {
+          var contextId = AppContainer_1["default"].contextId; // 判断当前被关闭的页面是不是 modal
+          // 如果是 modal 页面，将不会触发当前 modal 内部 Page.onHide 以及即将显示的页面的 Page.onShow
+
+          var isModalPage = AppContainer_1["default"].pageIsModal(hidePageName);
+          var renderTree = AppContainer_1["default"].getPageDataWithPageName(hidePageName); // popPage 后续流程：
+          // 1. 触发 pageOnHide
+
+          if (!isModalPage) basicWidget_1.Page.invokePageOnHide(contextId); // 2. 执行 popPage 结束回调并移除
+
+          bus_1["default"].fire(hidePageName);
+          bus_1["default"].remove(hidePageName); // 3. 移除当前显示页面
+
+          AppContainer_1["default"].removeCurrentShow(); // 4. 触发当前显示页面的 didUnmount
+
+          renderTree.invokeLifeCycle(VNode_1.LifeCycle.widgetDidUnmount); // 5. 触发即将显示页面的 onShow 方法
+
+          if (!isModalPage) basicWidget_1.Page.invokePageOnShow(contextId);
+        }
+      } catch (_e17) {
+        __reportError__(_e17, "", "/thresh-lib/src/channel/dispatchMethod.ts");
+
+        throw _e17;
+      }
+    };
+    /**
+     * flutter_call_js
+     * 触发组件事件
+     */
+
+
+    Dispatcher.prototype[MethodChannel_1.MethodChannelReceiveType.triggerEvent] = function (params) {
+      try {
+        if (!params) return;
+        var pageName = params.pageName,
+            widgetId = params.widgetId,
+            eventId = params.eventId,
+            eventType = params.eventType,
+            args = params.args;
+        var pageNode = AppContainer_1["default"].getPageDataWithPageName(pageName);
+        if (!pageNode) return;
+        pageNode.invokeEvent(widgetId, eventId, eventType, args);
+      } catch (_e18) {
+        __reportError__(_e18, "", "/thresh-lib/src/channel/dispatchMethod.ts");
+
+        throw _e18;
+      }
+    };
+    /**
+     * flutter_call_js
+     * 触发组件生命周期
+     */
+
+
+    Dispatcher.prototype[MethodChannel_1.MethodChannelReceiveType.lifeCycle] = function (params) {
+      try {
+        if (!params) return;
+        var pageName = params.pageName;
+        var lifeStep = params.lifeStep;
+        var widgetId = params.widgetId;
+        var pageNode = AppContainer_1["default"].getPageDataWithPageName(pageName);
+        if (!pageName || !pageNode || !lifeStep) return;
+
+        if (!widgetId) {
+          pageNode.invokeLifeCycle(lifeStep);
+        } else {
+          var renderNode = pageNode.fetch(widgetId);
+          if (renderNode) renderNode.invokeLifeCycle(lifeStep);
+        }
+
+        if (lifeStep === VNode_1.LifeCycle.widgetDidMount) {
+          bus_1["default"].fire("pageOnShow#" + pageName);
+        }
+      } catch (_e19) {
+        __reportError__(_e19, "", "/thresh-lib/src/channel/dispatchMethod.ts");
+
+        throw _e19;
+      }
+    };
+    /**
+     * flutter_call_js native_call_js
+     * bridge 响应
+     */
+
+
+    Dispatcher.prototype[MethodChannel_1.MethodChannelReceiveType.bridgeResponse] = function (params) {
+      try {
+        var methodId = params.methodId,
+            response = params.response; // response 内部还包装了一层，需要读取内层
+
+        var res = response.data || response;
+
+        try {
+          if (res.data && typeof res.data === 'string') {
+            res.data = JSON.parse(res.data);
+          }
+        } catch (e) {}
+
+        BridgeManager_1["default"].response(methodId, res);
+      } catch (_e20) {
+        __reportError__(_e20, "", "/thresh-lib/src/channel/dispatchMethod.ts");
+
+        throw _e20;
+      }
+    };
+    /**
+     * flutter_call_js
+     * 关闭当前 native 窗口
+     */
+
+
+    Dispatcher.prototype[MethodChannel_1.MethodChannelReceiveType.closeWindow] = function () {
+      try {
+        BridgeManager_1["default"].invoke({
+          module: 'base',
+          method: 'closeWindow'
+        });
+      } catch (_e21) {
+        __reportError__(_e21, "", "/thresh-lib/src/channel/dispatchMethod.ts");
+
+        throw _e21;
+      }
+    };
+    /**
+     * flutter_call_js
+     * flutter 通知 js 当前页面首帧加载已完成
+     */
+
+
+    Dispatcher.prototype[MethodChannel_1.MethodChannelReceiveType.pageDidLoad] = function (params) {
+      try {
+        var pageName = params.pageName,
+            loadTimestamp = params.loadTimestamp;
+        AppContainer_1["default"].setPagePerformanceInfo(pageName, loadTimestamp);
+      } catch (_e22) {
+        __reportError__(_e22, "", "/thresh-lib/src/channel/dispatchMethod.ts");
+
+        throw _e22;
+      }
+    };
+    /**
+     * native_call_js
+     * native 通知 js 当前 flutter 容器已销毁
+     */
+
+
+    Dispatcher.prototype[MethodChannel_1.MethodChannelReceiveType.onDestroyed] = function (_, contextId) {
+      try {
+        // 销毁当前 flutter 容器中的无限渲染组件
+        // 如：Spin gif ...
+        RenderManager_1["default"].stopAlwaysRender(contextId); // 销毁 flutter thresh 实例
+
+        MethodChannel_1["default"].call({
+          method: MethodChannel_1.FlutterMethodChannelType.onDestroyed,
+          contextId: contextId
+        });
+        AppContainer_1["default"].destroyPageContainer(contextId); // 如果当前 app container 中不存在页面
+        // 则清空 threshApp 的相关数据
+
+        if (AppContainer_1["default"].isEmpty) __1["default"].clear();
+      } catch (_e23) {
+        __reportError__(_e23, "", "/thresh-lib/src/channel/dispatchMethod.ts");
+
+        throw _e23;
+      }
+    };
+
+    return Dispatcher;
+  } catch (_e24) {
+    __reportError__(_e24, "", "/thresh-lib/src/channel/dispatchMethod.ts");
+
+    throw _e24;
+  }
+}();
+
+exports.Dispatcher = Dispatcher;
+var dispatcher = new Dispatcher();
+exports["default"] = dispatcher;
+/**
+ * js 暴露给 flutter 调用的方法
+ */
+
+function methodChannel_flutter_call_js(channelParams) {
+  try {
+    // console.log('methodChannel_flutter_call_js', channelParams)
+    dispatcher.dispatch(channelParams, DispatcherFromType.Flutter);
+  } catch (_e25) {
+    __reportError__(_e25, "", "/thresh-lib/src/channel/dispatchMethod.ts");
+
+    throw _e25;
+  }
+}
+
+exports.flutterCallJs = methodChannel_flutter_call_js;
+/**
+ * js 暴露给 native 调用的方法
+ */
+
+function methodChannel_native_call_js(channelParams) {
+  try {
+    // console.log('methodChannel_native_call_js', channelParams)
+    dispatcher.dispatch(channelParams, DispatcherFromType.Native);
+  } catch (_e26) {
+    __reportError__(_e26, "", "/thresh-lib/src/channel/dispatchMethod.ts");
+
+    throw _e26;
+  }
+}
+
+exports.nativeCallJs = methodChannel_native_call_js;
+
+/***/ }),
+/* 246 */
+/***/ (function(module, exports, __webpack_require__) {
+
+
+/**
+ * MIT License
+ *
+ * Copyright (c) 2020 ManBang Group
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ *
+ */
+
+var _interopRequireDefault = __webpack_require__(1);
+
+var _defineProperty = _interopRequireDefault(__webpack_require__(2));
 
 (0, _defineProperty["default"])(exports, "__esModule", {
   value: true
 });
 exports.mediaQuery = void 0;
 
-var MethodChannel_1 = __webpack_require__(153);
+var MethodChannel_1 = __webpack_require__(157);
 
 var APP_BAR_DEFAULT_HEIGHT = 56;
 /**
@@ -10969,8 +12195,11 @@ function () {
     UIManager.setAppBarHeight = function (appBarHeight) {
       try {
         exports.mediaQuery.appBarHeight = appBarHeight;
-        MethodChannel_1["default"].call('setAppBarHeight', {
-          appBarHeight: appBarHeight
+        MethodChannel_1["default"].call({
+          method: MethodChannel_1.FlutterMethodChannelType.setAppBarHeight,
+          params: {
+            appBarHeight: appBarHeight
+          }
         });
       } catch (_e10) {
         __reportError__(_e10, "", "/thresh-lib/src/manager/UIManager.ts");
@@ -11181,7 +12410,7 @@ function () {
 exports.mediaQuery = new MediaQuery();
 
 /***/ }),
-/* 235 */
+/* 247 */
 /***/ (function(module, exports, __webpack_require__) {
 
 
@@ -11211,393 +12440,21 @@ exports.mediaQuery = new MediaQuery();
 
 var _interopRequireDefault = __webpack_require__(1);
 
-var _promise = _interopRequireDefault(__webpack_require__(130));
+var _setPrototypeOf = _interopRequireDefault(__webpack_require__(248));
 
-var _indexOf = _interopRequireDefault(__webpack_require__(220));
+var _create = _interopRequireDefault(__webpack_require__(252));
 
-var _typeof2 = _interopRequireDefault(__webpack_require__(185));
+var _assign = _interopRequireDefault(__webpack_require__(199));
 
-var _defineProperty = _interopRequireDefault(__webpack_require__(89));
+var _promise = _interopRequireDefault(__webpack_require__(95));
 
-(0, _defineProperty["default"])(exports, "__esModule", {
-  value: true
-});
-exports.promiseResolveHackForIos_10_0_x = void 0;
+var _symbol = _interopRequireDefault(__webpack_require__(124));
 
-var MethodChannel_1 = __webpack_require__(153);
+var _iterator = _interopRequireDefault(__webpack_require__(150));
 
-var dispatchMethod_1 = __webpack_require__(218);
+var _defineProperty = _interopRequireDefault(__webpack_require__(2));
 
-var UtilManager_1 = __webpack_require__(202);
-
-var EventManager_1 = __webpack_require__(236);
-
-var Util_1 = __webpack_require__(165); // 记录上一个错误信息，防止误报
-
-
-var lastErrorMessage;
-
-function initGlobal(DF) {
-  try {
-    var g;
-
-    g = function () {
-      try {
-        return this;
-      } catch (_e) {
-        __reportError__(_e, "", "/thresh-lib/src/shared/initGlobal.ts");
-
-        throw _e;
-      }
-    }();
-
-    try {
-      g = g || new Function("return this")();
-    } catch (e) {
-      if ((typeof window === "undefined" ? "undefined" : (0, _typeof2["default"])(window)) === "object") g = window;
-    }
-
-    g['Thresh'] = DF;
-    g['methodChannel_flutter_call_js'] = dispatchMethod_1.flutterCallJs;
-    g['methodChannel_native_call_js'] = dispatchMethod_1.nativeCallJs;
-    g['methodChannel_fire_js_event'] = EventManager_1.methodChannel_fire_js_event;
-    g['methodChannel_register_js_event'] = EventManager_1.methodChannel_register_js_event;
-
-    g['__reportError__'] = function (error, functionName, fileName) {
-      try {
-        var _context, _context2;
-
-        if (Util_1["default"].isNil(error)) return; // 上报时需要排除非 Error 类型
-        // 尽量保证上报准确
-
-        if (!error.message) return; // 以下两个类型的 error 为 async 函数中主要 error 伴随产生的 error
-
-        if ((0, _indexOf["default"])(_context = error.message).call(_context, 'result.done') > -1 || (0, _indexOf["default"])(_context2 = error.message).call(_context2, 'op[0]') > -1) return;
-        if (console && console.error) console.error(error);
-        var messages = [error.message ? error.message : error.toString()];
-        if (functionName) messages.push("In function: " + functionName);
-        if (fileName) messages.push("In file: " + fileName); // 如果上一个异常与当前异常相同则忽略
-
-        if (lastErrorMessage === messages[0]) return;
-        lastErrorMessage = messages[0];
-        var message = messages.join('\n'); // 开发模式下向 flutter 发送异常，将会显示在调试面板上
-
-        if (DF.debugMode) {
-          MethodChannel_1["default"].call('onError', {
-            message: message,
-            stack: error.stack || '',
-            pageName: DF.pageName || 'unknown',
-            referPageName: DF.referPageName || 'unknown'
-          });
-        }
-
-        DF.onError({
-          message: message,
-          stack: error.stack || ''
-        });
-      } catch (_e2) {
-        __reportError__(_e2, "", "/thresh-lib/src/shared/initGlobal.ts");
-
-        throw _e2;
-      }
-    }; // @ts-ignore
-
-
-    g['setTimeout'] = UtilManager_1["default"].setTimeout; // @ts-ignore
-
-    g['setInterval'] = UtilManager_1["default"].setInterval; // @ts-ignore
-
-    g['clearTimeout'] = UtilManager_1["default"].clearTimer; // @ts-ignore
-
-    g['clearInterval'] = UtilManager_1["default"].clearTimer;
-  } catch (_e3) {
-    __reportError__(_e3, "initGlobal", "/thresh-lib/src/shared/initGlobal.ts");
-
-    throw _e3;
-  }
-}
-
-exports["default"] = initGlobal; // ios 10.0.x 版本上 Promise 回调中的 resolve 存在异常
-// 必须先通过 Promise.resolve() 进行一遍类似初始化的操作
-
-function promiseResolveHackForIos_10_0_x() {
-  try {
-    return _promise["default"].resolve();
-  } catch (_e4) {
-    __reportError__(_e4, "", "/thresh-lib/src/shared/initGlobal.ts");
-
-    throw _e4;
-  }
-}
-
-exports.promiseResolveHackForIos_10_0_x = promiseResolveHackForIos_10_0_x;
-
-/***/ }),
-/* 236 */
-/***/ (function(module, exports, __webpack_require__) {
-
-
-/**
- * MIT License
- *
- * Copyright (c) 2020 ManBang Group
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- *
- */
-
-var _interopRequireDefault = __webpack_require__(1);
-
-var _isArray = _interopRequireDefault(__webpack_require__(181));
-
-var _defineProperty = _interopRequireDefault(__webpack_require__(89));
-
-var __spreadArrays = void 0 && (void 0).__spreadArrays || function () {
-  try {
-    for (var s = 0, i = 0, il = arguments.length; i < il; i++) {
-      s += arguments[i].length;
-    }
-
-    for (var r = Array(s), k = 0, i = 0; i < il; i++) {
-      for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++) {
-        r[k] = a[j];
-      }
-    }
-
-    return r;
-  } catch (_e) {
-    __reportError__(_e, "", "/thresh-lib/src/manager/EventManager.ts");
-
-    throw _e;
-  }
-};
-
-(0, _defineProperty["default"])(exports, "__esModule", {
-  value: true
-});
-exports.methodChannel_register_js_event = exports.methodChannel_fire_js_event = void 0;
-
-var bus_1 = __webpack_require__(200);
-
-var Util_1 = __webpack_require__(165);
-
-var DevtoolsManager_1 = __webpack_require__(201);
-/**
- * 事件管理器
- * 暴露给外部使用，可以与 native 之间进行事件通信
- */
-
-
-var EventManager =
-/** @class */
-function () {
-  try {
-    function EventManager() {}
-    /**
-     * 注册事件
-     * native 可以通过 methodChannel_register_js_event 注册一个 js 事件
-     */
-
-
-    EventManager.register = function (name, callback) {
-      try {
-        if (!Util_1["default"].isFunc(callback)) return;
-        bus_1["default"].register(callback, name);
-        DevtoolsManager_1["default"].show(DevtoolsManager_1.InfoType.event, Util_1["default"].anyToRawString({
-          type: 'register',
-          name: name
-        }), "\u6CE8\u518C\u4E8B\u4EF6\uFF1A" + name);
-      } catch (_e2) {
-        __reportError__(_e2, "", "/thresh-lib/src/manager/EventManager.ts");
-
-        throw _e2;
-      }
-    };
-    /**
-     * 执行事件
-     * js 可以通过 EventManager.fire 执行一个事件
-     * native 则使用 methodChannel_fire_js_event
-     * 1. 执行事件是会先查询是否已注册
-     * 2. 当未在 js 中查询到注册的事件时，会向 native 发送执行事件的通知
-     */
-
-
-    EventManager.fire = function (name) {
-      try {
-        var args = [];
-
-        for (var _i = 1; _i < arguments.length; _i++) {
-          args[_i - 1] = arguments[_i];
-        }
-
-        if (typeof name !== 'string') {
-          if (!(0, _isArray["default"])(name)) return;
-          if (!name.length) return;
-          var temp = name.shift();
-          args = __spreadArrays(name, args);
-          name = temp;
-        }
-
-        if (typeof name !== 'string') return;
-
-        if (bus_1["default"].has(name)) {
-          bus_1["default"].fire.apply(bus_1["default"], __spreadArrays([name], args));
-          DevtoolsManager_1["default"].show(DevtoolsManager_1.InfoType.event, Util_1["default"].anyToRawString({
-            type: 'fire',
-            name: name,
-            args: args
-          }), "\u89E6\u53D1JS\u6CE8\u518C\u4E8B\u4EF6\uFF1A" + name);
-        } else {
-          // TODO - call native method
-          DevtoolsManager_1["default"].show(DevtoolsManager_1.InfoType.event, Util_1["default"].anyToRawString({
-            type: 'fire',
-            name: name,
-            args: args
-          }), "\u89E6\u53D1Native\u6CE8\u518C\u4E8B\u4EF6\uFF1A" + name);
-        }
-      } catch (_e3) {
-        __reportError__(_e3, "", "/thresh-lib/src/manager/EventManager.ts");
-
-        throw _e3;
-      }
-    };
-    /**
-     * 查询某个事件是否已注册在 js 中
-     * 无法查询是否在 native 中注册
-     */
-
-
-    EventManager.has = function (name) {
-      try {
-        return bus_1["default"].has(name);
-      } catch (_e4) {
-        __reportError__(_e4, "", "/thresh-lib/src/manager/EventManager.ts");
-
-        throw _e4;
-      }
-    };
-    /**
-     * 从已注册在 js 的事件中移除某个事件
-     * 无法移除 native 中注册的事件
-     * @param name
-     */
-
-
-    EventManager.remove = function (name) {
-      try {
-        bus_1["default"].remove(name);
-        DevtoolsManager_1["default"].show(DevtoolsManager_1.InfoType.event, Util_1["default"].anyToRawString({
-          type: 'remove',
-          name: name
-        }), "\u79FB\u9664\u6CE8\u518C\u4E8B\u4EF6\uFF1A" + name);
-      } catch (_e5) {
-        __reportError__(_e5, "", "/thresh-lib/src/manager/EventManager.ts");
-
-        throw _e5;
-      }
-    };
-
-    return EventManager;
-  } catch (_e6) {
-    __reportError__(_e6, "", "/thresh-lib/src/manager/EventManager.ts");
-
-    throw _e6;
-  }
-}();
-
-exports["default"] = EventManager;
-
-function methodChannel_fire_js_event(name) {
-  try {
-    var args = [];
-
-    for (var _i = 1; _i < arguments.length; _i++) {
-      args[_i - 1] = arguments[_i];
-    }
-
-    EventManager.fire.apply(EventManager, __spreadArrays([name], args));
-  } catch (_e7) {
-    __reportError__(_e7, "methodChannel_fire_js_event", "/thresh-lib/src/manager/EventManager.ts");
-
-    throw _e7;
-  }
-}
-
-exports.methodChannel_fire_js_event = methodChannel_fire_js_event;
-
-function methodChannel_register_js_event(name, callback) {
-  try {
-    EventManager.register(name, callback);
-  } catch (_e8) {
-    __reportError__(_e8, "", "/thresh-lib/src/manager/EventManager.ts");
-
-    throw _e8;
-  }
-}
-
-exports.methodChannel_register_js_event = methodChannel_register_js_event;
-
-/***/ }),
-/* 237 */
-/***/ (function(module, exports, __webpack_require__) {
-
-
-/**
- * MIT License
- *
- * Copyright (c) 2020 ManBang Group
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- *
- */
-
-var _interopRequireDefault = __webpack_require__(1);
-
-var _map = _interopRequireDefault(__webpack_require__(238));
-
-var _defineProperty = _interopRequireDefault(__webpack_require__(89));
-
-var _iterator = _interopRequireDefault(__webpack_require__(99));
-
-var _symbol = _interopRequireDefault(__webpack_require__(107));
-
-var _promise = _interopRequireDefault(__webpack_require__(130));
-
-var _assign = _interopRequireDefault(__webpack_require__(170));
-
-var _create = _interopRequireDefault(__webpack_require__(243));
-
-var _setPrototypeOf = _interopRequireDefault(__webpack_require__(247));
+var _map = _interopRequireDefault(__webpack_require__(227));
 
 var __extends = void 0 && (void 0).__extends || function () {
   try {
@@ -11901,17 +12758,17 @@ var __generator = void 0 && (void 0).__generator || function (thisArg, body) {
 (0, _defineProperty["default"])(exports, "__esModule", {
   value: true
 });
-exports.Input = exports.Checkbox = exports.Radio = exports.Button = exports.NoticeBar = exports.Refresh = exports.Spin = exports.Text = exports.Image = exports.Icon = exports.NativeView = exports.SwiperView = exports.SwipeActionsView = exports.NestScrollView = exports.ListView = exports.ScrollView = exports.Container = exports.AppBar = exports.Page = void 0;
+exports.Picker = exports.Input = exports.Checkbox = exports.Switch = exports.Radio = exports.Button = exports.NoticeBar = exports.Refresh = exports.Spin = exports.Text = exports.QrImage = exports.Image = exports.Icon = exports.NativeView = exports.SwiperView = exports.SwipeActionsView = exports.DragableScrollView = exports.DrawerScrollView = exports.NestScrollView = exports.ListView = exports.ScrollView = exports.Container = exports.AppBar = exports.Page = void 0;
 
-var Widget_1 = __webpack_require__(251);
+var Widget_1 = __webpack_require__(256);
 
-var AppContainer_1 = __webpack_require__(225);
+var AppContainer_1 = __webpack_require__(210);
 
-var ChildrenRule_1 = __webpack_require__(266);
+var ChildrenRule_1 = __webpack_require__(271);
 
-var MethodChannel_1 = __webpack_require__(153);
+var MethodChannel_1 = __webpack_require__(157);
 
-var Util_1 = __webpack_require__(165);
+var Util_1 = __webpack_require__(173);
 /**
  * 页面布局
  */
@@ -11941,10 +12798,10 @@ function (_super) {
           try {
             switch (_a.label) {
               case 0:
-                pageNode = Page.getLastInShowPage();
+                pageNode = Page.getPageWithContextId(AppContainer_1["default"].contextId);
                 if (!pageNode) return [2
                 /*return*/
-                ];
+                , true];
                 if (!pageNode.props.beforePop) return [2
                 /*return*/
                 , true];
@@ -11980,13 +12837,11 @@ function (_super) {
       });
     };
 
-    Page.invokePageOnShow = function (fromPageName) {
+    Page.invokePageOnShow = function (contextId) {
       try {
-        var pageNode = Page.getLastInShowPage();
+        var pageNode = Page.getPageWithContextId(contextId);
         if (!pageNode) return;
-        pageNode.props.onShow && pageNode.props.onShow({
-          fromPageName: typeof fromPageName === 'string' ? fromPageName.split('#')[0] : ''
-        });
+        pageNode.props.onShow && pageNode.props.onShow();
       } catch (_e22) {
         __reportError__(_e22, "", "/thresh-lib/src/core/basicWidget.ts");
 
@@ -11994,9 +12849,9 @@ function (_super) {
       }
     };
 
-    Page.invokePageOnHide = function () {
+    Page.invokePageOnHide = function (contextId) {
       try {
-        var pageNode = this.getLastInShowPage();
+        var pageNode = this.getPageWithContextId(contextId);
         if (!pageNode) return;
         pageNode.props.onHide && pageNode.props.onHide();
       } catch (_e23) {
@@ -12006,12 +12861,12 @@ function (_super) {
       }
     };
 
-    Page.getLastInShowPage = function () {
+    Page.getPageWithContextId = function (contextId) {
       try {
         if (AppContainer_1["default"].isEmpty) return;
-        var willShowPageNode = AppContainer_1["default"].currentPageData;
-        if (!willShowPageNode) return;
-        return willShowPageNode.pageNode;
+        var targetPageNode = AppContainer_1["default"].getPageDataWithContextId(contextId);
+        if (!targetPageNode) return;
+        return targetPageNode.pageNode;
       } catch (_e24) {
         __reportError__(_e24, "", "/thresh-lib/src/core/basicWidget.ts");
 
@@ -12051,7 +12906,7 @@ function (_super) {
         if (lastTitle === title) return;
         this.__lastTitle = title;
 
-        __setNavProps(this, 'updateTitle', {
+        __setNavProps(this, MethodChannel_1.FlutterMethodChannelType.updateTitle, {
           title: title
         });
       } catch (_e27) {
@@ -12115,7 +12970,7 @@ function (_super) {
 
     ScrollView.prototype.scrollTo = function (offset, duration) {
       try {
-        __setNavProps(this, 'scrollTo', {
+        __setNavProps(this, MethodChannel_1.FlutterMethodChannelType.scrollTo, {
           offset: offset,
           duration: duration
         });
@@ -12154,7 +13009,7 @@ function (_super) {
 
     ListView.prototype.scrollTo = function (offset, duration) {
       try {
-        __setNavProps(this, 'scrollTo', {
+        __setNavProps(this, MethodChannel_1.FlutterMethodChannelType.scrollTo, {
           offset: offset,
           duration: duration
         });
@@ -12167,7 +13022,7 @@ function (_super) {
 
     ListView.prototype.stopAsyncOperate = function (type) {
       try {
-        __setNavProps(this, 'stopAsyncOperate', {
+        __setNavProps(this, MethodChannel_1.FlutterMethodChannelType.stopAsyncOperate, {
           type: type
         });
       } catch (_e36) {
@@ -12201,17 +13056,123 @@ function (_super) {
 
         throw _e38;
       }
-    }
+    } // scrollTo (offset: number, duration?: number) {
+    //   __setNavProps(this, FlutterMethodChannelType.scrollTo, { offset, duration })
+    // }
+    // 打开ScrollView（上滑）
+
+
+    NestScrollView.prototype.open = function () {
+      try {
+        __setNavProps(this, MethodChannel_1.FlutterMethodChannelType.setNestScrollViewStatus, {
+          isOpened: true
+        });
+      } catch (_e39) {
+        __reportError__(_e39, "", "/thresh-lib/src/core/basicWidget.ts");
+
+        throw _e39;
+      }
+    }; // 关闭ScrollView（下滑）
+
+
+    NestScrollView.prototype.close = function () {
+      try {
+        __setNavProps(this, MethodChannel_1.FlutterMethodChannelType.setNestScrollViewStatus, {
+          isOpened: false
+        });
+      } catch (_e40) {
+        __reportError__(_e40, "", "/thresh-lib/src/core/basicWidget.ts");
+
+        throw _e40;
+      }
+    };
 
     return NestScrollView;
-  } catch (_e39) {
-    __reportError__(_e39, "", "/thresh-lib/src/core/basicWidget.ts");
+  } catch (_e41) {
+    __reportError__(_e41, "", "/thresh-lib/src/core/basicWidget.ts");
 
-    throw _e39;
+    throw _e41;
   }
 }(Widget_1.BasicWidget);
 
 exports.NestScrollView = NestScrollView;
+
+var DrawerScrollView =
+/** @class */
+function (_super) {
+  try {
+    __extends(DrawerScrollView, _super);
+
+    function DrawerScrollView() {
+      try {
+        return _super !== null && _super.apply(this, arguments) || this;
+      } catch (_e42) {
+        __reportError__(_e42, "", "/thresh-lib/src/core/basicWidget.ts");
+
+        throw _e42;
+      }
+    }
+
+    return DrawerScrollView;
+  } catch (_e43) {
+    __reportError__(_e43, "", "/thresh-lib/src/core/basicWidget.ts");
+
+    throw _e43;
+  }
+}(Widget_1.BasicWidget);
+
+exports.DrawerScrollView = DrawerScrollView;
+
+var DragableScrollView =
+/** @class */
+function (_super) {
+  try {
+    __extends(DragableScrollView, _super);
+
+    function DragableScrollView() {
+      try {
+        return _super !== null && _super.apply(this, arguments) || this;
+      } catch (_e44) {
+        __reportError__(_e44, "", "/thresh-lib/src/core/basicWidget.ts");
+
+        throw _e44;
+      }
+    }
+
+    DragableScrollView.prototype.scrollTo = function (offset, duration) {
+      try {
+        __setNavProps(this, MethodChannel_1.FlutterMethodChannelType.scrollTo, {
+          offset: offset,
+          duration: duration
+        });
+      } catch (_e45) {
+        __reportError__(_e45, "", "/thresh-lib/src/core/basicWidget.ts");
+
+        throw _e45;
+      }
+    };
+
+    DragableScrollView.prototype.dragPositionAnimateTo = function (positionType) {
+      try {
+        __setNavProps(this, MethodChannel_1.FlutterMethodChannelType.dragPositionAnimateTo, {
+          positionType: positionType
+        });
+      } catch (_e46) {
+        __reportError__(_e46, "", "/thresh-lib/src/core/basicWidget.ts");
+
+        throw _e46;
+      }
+    };
+
+    return DragableScrollView;
+  } catch (_e47) {
+    __reportError__(_e47, "", "/thresh-lib/src/core/basicWidget.ts");
+
+    throw _e47;
+  }
+}(Widget_1.BasicWidget);
+
+exports.DragableScrollView = DragableScrollView;
 
 var SwipeActionsView =
 /** @class */
@@ -12222,38 +13183,38 @@ function (_super) {
     function SwipeActionsView() {
       try {
         return _super !== null && _super.apply(this, arguments) || this;
-      } catch (_e40) {
-        __reportError__(_e40, "", "/thresh-lib/src/core/basicWidget.ts");
+      } catch (_e48) {
+        __reportError__(_e48, "", "/thresh-lib/src/core/basicWidget.ts");
 
-        throw _e40;
+        throw _e48;
       }
     }
 
     SwipeActionsView.prototype.openActions = function () {
       try {
-        __setNavProps(this, 'openActions', {});
-      } catch (_e41) {
-        __reportError__(_e41, "", "/thresh-lib/src/core/basicWidget.ts");
+        __setNavProps(this, MethodChannel_1.FlutterMethodChannelType.openActions, {});
+      } catch (_e49) {
+        __reportError__(_e49, "", "/thresh-lib/src/core/basicWidget.ts");
 
-        throw _e41;
+        throw _e49;
       }
     };
 
     SwipeActionsView.prototype.closeActions = function () {
       try {
-        __setNavProps(this, 'closeActions', {});
-      } catch (_e42) {
-        __reportError__(_e42, "", "/thresh-lib/src/core/basicWidget.ts");
+        __setNavProps(this, MethodChannel_1.FlutterMethodChannelType.closeActions, {});
+      } catch (_e50) {
+        __reportError__(_e50, "", "/thresh-lib/src/core/basicWidget.ts");
 
-        throw _e42;
+        throw _e50;
       }
     };
 
     return SwipeActionsView;
-  } catch (_e43) {
-    __reportError__(_e43, "", "/thresh-lib/src/core/basicWidget.ts");
+  } catch (_e51) {
+    __reportError__(_e51, "", "/thresh-lib/src/core/basicWidget.ts");
 
-    throw _e43;
+    throw _e51;
   }
 }(Widget_1.BasicWidget);
 
@@ -12272,31 +13233,31 @@ function (_super) {
     function SwiperView() {
       try {
         return _super !== null && _super.apply(this, arguments) || this;
-      } catch (_e44) {
-        __reportError__(_e44, "", "/thresh-lib/src/core/basicWidget.ts");
+      } catch (_e52) {
+        __reportError__(_e52, "", "/thresh-lib/src/core/basicWidget.ts");
 
-        throw _e44;
+        throw _e52;
       }
     }
 
     SwiperView.prototype.swipeTo = function (index, duration) {
       try {
-        __setNavProps(this, 'swipeTo', {
+        __setNavProps(this, MethodChannel_1.FlutterMethodChannelType.swipeTo, {
           index: index,
           duration: duration
         });
-      } catch (_e45) {
-        __reportError__(_e45, "", "/thresh-lib/src/core/basicWidget.ts");
+      } catch (_e53) {
+        __reportError__(_e53, "", "/thresh-lib/src/core/basicWidget.ts");
 
-        throw _e45;
+        throw _e53;
       }
     };
 
     return SwiperView;
-  } catch (_e46) {
-    __reportError__(_e46, "", "/thresh-lib/src/core/basicWidget.ts");
+  } catch (_e54) {
+    __reportError__(_e54, "", "/thresh-lib/src/core/basicWidget.ts");
 
-    throw _e46;
+    throw _e54;
   }
 }(Widget_1.BasicWidget);
 
@@ -12311,10 +13272,10 @@ function (_super) {
     function NativeView() {
       try {
         return _super !== null && _super.apply(this, arguments) || this;
-      } catch (_e47) {
-        __reportError__(_e47, "", "/thresh-lib/src/core/basicWidget.ts");
+      } catch (_e55) {
+        __reportError__(_e55, "", "/thresh-lib/src/core/basicWidget.ts");
 
-        throw _e47;
+        throw _e55;
       }
     }
 
@@ -12325,10 +13286,10 @@ function (_super) {
         }
 
         this.invokeCustomMethod('refresh', params);
-      } catch (_e48) {
-        __reportError__(_e48, "", "/thresh-lib/src/core/basicWidget.ts");
+      } catch (_e56) {
+        __reportError__(_e56, "", "/thresh-lib/src/core/basicWidget.ts");
 
-        throw _e48;
+        throw _e56;
       }
     };
 
@@ -12339,10 +13300,10 @@ function (_super) {
         }
 
         this.invokeCustomMethod('destroy', params);
-      } catch (_e49) {
-        __reportError__(_e49, "", "/thresh-lib/src/core/basicWidget.ts");
+      } catch (_e57) {
+        __reportError__(_e57, "", "/thresh-lib/src/core/basicWidget.ts");
 
-        throw _e49;
+        throw _e57;
       }
     };
 
@@ -12358,18 +13319,18 @@ function (_super) {
           viewType: this.props.type,
           viewParams: this.props.params || {}
         });
-      } catch (_e50) {
-        __reportError__(_e50, "", "/thresh-lib/src/core/basicWidget.ts");
+      } catch (_e58) {
+        __reportError__(_e58, "", "/thresh-lib/src/core/basicWidget.ts");
 
-        throw _e50;
+        throw _e58;
       }
     };
 
     return NativeView;
-  } catch (_e51) {
-    __reportError__(_e51, "", "/thresh-lib/src/core/basicWidget.ts");
+  } catch (_e59) {
+    __reportError__(_e59, "", "/thresh-lib/src/core/basicWidget.ts");
 
-    throw _e51;
+    throw _e59;
   }
 }(Widget_1.BasicWidget);
 
@@ -12388,18 +13349,18 @@ function (_super) {
     function Icon() {
       try {
         return _super !== null && _super.apply(this, arguments) || this;
-      } catch (_e52) {
-        __reportError__(_e52, "", "/thresh-lib/src/core/basicWidget.ts");
+      } catch (_e60) {
+        __reportError__(_e60, "", "/thresh-lib/src/core/basicWidget.ts");
 
-        throw _e52;
+        throw _e60;
       }
     }
 
     return Icon;
-  } catch (_e53) {
-    __reportError__(_e53, "", "/thresh-lib/src/core/basicWidget.ts");
+  } catch (_e61) {
+    __reportError__(_e61, "", "/thresh-lib/src/core/basicWidget.ts");
 
-    throw _e53;
+    throw _e61;
   }
 }(Widget_1.BasicWidget);
 
@@ -12418,18 +13379,18 @@ function (_super) {
     function Image() {
       try {
         return _super !== null && _super.apply(this, arguments) || this;
-      } catch (_e54) {
-        __reportError__(_e54, "", "/thresh-lib/src/core/basicWidget.ts");
+      } catch (_e62) {
+        __reportError__(_e62, "", "/thresh-lib/src/core/basicWidget.ts");
 
-        throw _e54;
+        throw _e62;
       }
     }
 
     return Image;
-  } catch (_e55) {
-    __reportError__(_e55, "", "/thresh-lib/src/core/basicWidget.ts");
+  } catch (_e63) {
+    __reportError__(_e63, "", "/thresh-lib/src/core/basicWidget.ts");
 
-    throw _e55;
+    throw _e63;
   }
 }(Widget_1.BasicWidget);
 
@@ -12437,6 +13398,36 @@ exports.Image = Image;
 Image.childrenRule = new ChildrenRule_1["default"]({
   length: 0,
   widgetName: 'Image'
+}); // 图片组件
+
+var QrImage =
+/** @class */
+function (_super) {
+  try {
+    __extends(QrImage, _super);
+
+    function QrImage() {
+      try {
+        return _super !== null && _super.apply(this, arguments) || this;
+      } catch (_e64) {
+        __reportError__(_e64, "", "/thresh-lib/src/core/basicWidget.ts");
+
+        throw _e64;
+      }
+    }
+
+    return QrImage;
+  } catch (_e65) {
+    __reportError__(_e65, "", "/thresh-lib/src/core/basicWidget.ts");
+
+    throw _e65;
+  }
+}(Widget_1.BasicWidget);
+
+exports.QrImage = QrImage;
+QrImage.childrenRule = new ChildrenRule_1["default"]({
+  length: 0,
+  widgetName: 'QrImage'
 }); // 文本组件
 
 var Text =
@@ -12448,18 +13439,18 @@ function (_super) {
     function Text() {
       try {
         return _super !== null && _super.apply(this, arguments) || this;
-      } catch (_e56) {
-        __reportError__(_e56, "", "/thresh-lib/src/core/basicWidget.ts");
+      } catch (_e66) {
+        __reportError__(_e66, "", "/thresh-lib/src/core/basicWidget.ts");
 
-        throw _e56;
+        throw _e66;
       }
     }
 
     return Text;
-  } catch (_e57) {
-    __reportError__(_e57, "", "/thresh-lib/src/core/basicWidget.ts");
+  } catch (_e67) {
+    __reportError__(_e67, "", "/thresh-lib/src/core/basicWidget.ts");
 
-    throw _e57;
+    throw _e67;
   }
 }(Widget_1.BasicWidget);
 
@@ -12472,16 +13463,16 @@ Text.childrenRule = new ChildrenRule_1["default"]({
       return (0, _map["default"])(children).call(children, function (child) {
         try {
           return child != undefined ? child.toString() : '';
-        } catch (_e58) {
-          __reportError__(_e58, "", "/thresh-lib/src/core/basicWidget.ts");
+        } catch (_e68) {
+          __reportError__(_e68, "", "/thresh-lib/src/core/basicWidget.ts");
 
-          throw _e58;
+          throw _e68;
         }
       }).join('');
-    } catch (_e59) {
-      __reportError__(_e59, "", "/thresh-lib/src/core/basicWidget.ts");
+    } catch (_e69) {
+      __reportError__(_e69, "", "/thresh-lib/src/core/basicWidget.ts");
 
-      throw _e59;
+      throw _e69;
     }
   }
 }); // 无限旋转组件
@@ -12495,18 +13486,18 @@ function (_super) {
     function Spin() {
       try {
         return _super !== null && _super.apply(this, arguments) || this;
-      } catch (_e60) {
-        __reportError__(_e60, "", "/thresh-lib/src/core/basicWidget.ts");
+      } catch (_e70) {
+        __reportError__(_e70, "", "/thresh-lib/src/core/basicWidget.ts");
 
-        throw _e60;
+        throw _e70;
       }
     }
 
     return Spin;
-  } catch (_e61) {
-    __reportError__(_e61, "", "/thresh-lib/src/core/basicWidget.ts");
+  } catch (_e71) {
+    __reportError__(_e71, "", "/thresh-lib/src/core/basicWidget.ts");
 
-    throw _e61;
+    throw _e71;
   }
 }(Widget_1.BasicWidget);
 
@@ -12525,18 +13516,18 @@ function (_super) {
     function Refresh() {
       try {
         return _super !== null && _super.apply(this, arguments) || this;
-      } catch (_e62) {
-        __reportError__(_e62, "", "/thresh-lib/src/core/basicWidget.ts");
+      } catch (_e72) {
+        __reportError__(_e72, "", "/thresh-lib/src/core/basicWidget.ts");
 
-        throw _e62;
+        throw _e72;
       }
     }
 
     return Refresh;
-  } catch (_e63) {
-    __reportError__(_e63, "", "/thresh-lib/src/core/basicWidget.ts");
+  } catch (_e73) {
+    __reportError__(_e73, "", "/thresh-lib/src/core/basicWidget.ts");
 
-    throw _e63;
+    throw _e73;
   }
 }(Widget_1.BasicWidget);
 
@@ -12555,18 +13546,18 @@ function (_super) {
     function NoticeBar() {
       try {
         return _super !== null && _super.apply(this, arguments) || this;
-      } catch (_e64) {
-        __reportError__(_e64, "", "/thresh-lib/src/core/basicWidget.ts");
+      } catch (_e74) {
+        __reportError__(_e74, "", "/thresh-lib/src/core/basicWidget.ts");
 
-        throw _e64;
+        throw _e74;
       }
     }
 
     return NoticeBar;
-  } catch (_e65) {
-    __reportError__(_e65, "", "/thresh-lib/src/core/basicWidget.ts");
+  } catch (_e75) {
+    __reportError__(_e75, "", "/thresh-lib/src/core/basicWidget.ts");
 
-    throw _e65;
+    throw _e75;
   }
 }(Widget_1.BasicWidget);
 
@@ -12588,18 +13579,18 @@ function (_super) {
     function Button() {
       try {
         return _super !== null && _super.apply(this, arguments) || this;
-      } catch (_e66) {
-        __reportError__(_e66, "", "/thresh-lib/src/core/basicWidget.ts");
+      } catch (_e76) {
+        __reportError__(_e76, "", "/thresh-lib/src/core/basicWidget.ts");
 
-        throw _e66;
+        throw _e76;
       }
     }
 
     return Button;
-  } catch (_e67) {
-    __reportError__(_e67, "", "/thresh-lib/src/core/basicWidget.ts");
+  } catch (_e77) {
+    __reportError__(_e77, "", "/thresh-lib/src/core/basicWidget.ts");
 
-    throw _e67;
+    throw _e77;
   }
 }(Widget_1.BasicWidget);
 
@@ -12619,18 +13610,18 @@ function (_super) {
     function Radio() {
       try {
         return _super !== null && _super.apply(this, arguments) || this;
-      } catch (_e68) {
-        __reportError__(_e68, "", "/thresh-lib/src/core/basicWidget.ts");
+      } catch (_e78) {
+        __reportError__(_e78, "", "/thresh-lib/src/core/basicWidget.ts");
 
-        throw _e68;
+        throw _e78;
       }
     }
 
     return Radio;
-  } catch (_e69) {
-    __reportError__(_e69, "", "/thresh-lib/src/core/basicWidget.ts");
+  } catch (_e79) {
+    __reportError__(_e79, "", "/thresh-lib/src/core/basicWidget.ts");
 
-    throw _e69;
+    throw _e79;
   }
 }(Widget_1.BasicWidget);
 
@@ -12639,6 +13630,36 @@ Radio.childrenRule = new ChildrenRule_1["default"]({
   length: 1,
   name: 'title',
   widgetName: 'Radio'
+}); // 开关组件
+
+var Switch =
+/** @class */
+function (_super) {
+  try {
+    __extends(Switch, _super);
+
+    function Switch() {
+      try {
+        return _super !== null && _super.apply(this, arguments) || this;
+      } catch (_e80) {
+        __reportError__(_e80, "", "/thresh-lib/src/core/basicWidget.ts");
+
+        throw _e80;
+      }
+    }
+
+    return Switch;
+  } catch (_e81) {
+    __reportError__(_e81, "", "/thresh-lib/src/core/basicWidget.ts");
+
+    throw _e81;
+  }
+}(Widget_1.BasicWidget);
+
+exports.Switch = Switch;
+Switch.childrenRule = new ChildrenRule_1["default"]({
+  length: 0,
+  widgetName: 'Switch'
 }); // 复选框组件
 
 var Checkbox =
@@ -12650,18 +13671,18 @@ function (_super) {
     function Checkbox() {
       try {
         return _super !== null && _super.apply(this, arguments) || this;
-      } catch (_e70) {
-        __reportError__(_e70, "", "/thresh-lib/src/core/basicWidget.ts");
+      } catch (_e82) {
+        __reportError__(_e82, "", "/thresh-lib/src/core/basicWidget.ts");
 
-        throw _e70;
+        throw _e82;
       }
     }
 
     return Checkbox;
-  } catch (_e71) {
-    __reportError__(_e71, "", "/thresh-lib/src/core/basicWidget.ts");
+  } catch (_e83) {
+    __reportError__(_e83, "", "/thresh-lib/src/core/basicWidget.ts");
 
-    throw _e71;
+    throw _e83;
   }
 }(Widget_1.BasicWidget);
 
@@ -12681,30 +13702,30 @@ function (_super) {
     function Input() {
       try {
         return _super !== null && _super.apply(this, arguments) || this;
-      } catch (_e72) {
-        __reportError__(_e72, "", "/thresh-lib/src/core/basicWidget.ts");
+      } catch (_e84) {
+        __reportError__(_e84, "", "/thresh-lib/src/core/basicWidget.ts");
 
-        throw _e72;
+        throw _e84;
       }
     }
 
     Input.prototype.setValue = function (value) {
       try {
-        __setNavProps(this, 'setValue', {
+        __setNavProps(this, MethodChannel_1.FlutterMethodChannelType.setValue, {
           value: value
         });
-      } catch (_e73) {
-        __reportError__(_e73, "", "/thresh-lib/src/core/basicWidget.ts");
+      } catch (_e85) {
+        __reportError__(_e85, "", "/thresh-lib/src/core/basicWidget.ts");
 
-        throw _e73;
+        throw _e85;
       }
     };
 
     return Input;
-  } catch (_e74) {
-    __reportError__(_e74, "", "/thresh-lib/src/core/basicWidget.ts");
+  } catch (_e86) {
+    __reportError__(_e86, "", "/thresh-lib/src/core/basicWidget.ts");
 
-    throw _e74;
+    throw _e86;
   }
 }(Widget_1.BasicWidget);
 
@@ -12722,17 +13743,76 @@ function __setNavProps(widget, method, params) {
 
     var vNode = widget.__vNode__;
     if (!vNode.isMount) return;
-    MethodChannel_1["default"].call(method, __assign({
-      pageName: vNode.pageName,
-      widgetId: vNode.nodeId
-    }, params));
-  } catch (_e75) {
-    __reportError__(_e75, "__setNavProps", "/thresh-lib/src/core/basicWidget.ts");
+    MethodChannel_1["default"].call({
+      method: method,
+      params: __assign({
+        pageName: vNode.pageName,
+        widgetId: vNode.nodeId
+      }, params)
+    });
+  } catch (_e87) {
+    __reportError__(_e87, "__setNavProps", "/thresh-lib/src/core/basicWidget.ts");
 
-    throw _e75;
+    throw _e87;
   }
-}
+} // 选择组件
 
+
+var Picker =
+/** @class */
+function (_super) {
+  try {
+    __extends(Picker, _super);
+
+    function Picker() {
+      try {
+        return _super !== null && _super.apply(this, arguments) || this;
+      } catch (_e88) {
+        __reportError__(_e88, "", "/thresh-lib/src/core/basicWidget.ts");
+
+        throw _e88;
+      }
+    } // 跳转到指定位置
+
+
+    Picker.prototype.jumpTo = function (index) {
+      try {
+        __setNavProps(this, MethodChannel_1.FlutterMethodChannelType.jumpTo, {
+          index: index
+        });
+      } catch (_e89) {
+        __reportError__(_e89, "", "/thresh-lib/src/core/basicWidget.ts");
+
+        throw _e89;
+      }
+    }; // 滚动到指定位置
+
+
+    Picker.prototype.animateTo = function (index, duration) {
+      try {
+        __setNavProps(this, MethodChannel_1.FlutterMethodChannelType.animateTo, {
+          index: index,
+          duration: duration
+        });
+      } catch (_e90) {
+        __reportError__(_e90, "", "/thresh-lib/src/core/basicWidget.ts");
+
+        throw _e90;
+      }
+    };
+
+    return Picker;
+  } catch (_e91) {
+    __reportError__(_e91, "", "/thresh-lib/src/core/basicWidget.ts");
+
+    throw _e91;
+  }
+}(Widget_1.BasicWidget);
+
+exports.Picker = Picker;
+Picker.childrenRule = new ChildrenRule_1["default"]({
+  widgetName: 'Picker'
+});
 exports["default"] = {
   Page: Page,
   AppBar: AppBar,
@@ -12740,11 +13820,14 @@ exports["default"] = {
   ScrollView: ScrollView,
   ListView: ListView,
   NestScrollView: NestScrollView,
+  DrawerScrollView: DrawerScrollView,
+  DragableScrollView: DragableScrollView,
   SwipeActionsView: SwipeActionsView,
   SwiperView: SwiperView,
   NativeView: NativeView,
   Icon: Icon,
   Image: Image,
+  QrImage: QrImage,
   Text: Text,
   Spin: Spin,
   Refresh: Refresh,
@@ -12752,94 +13835,71 @@ exports["default"] = {
   Button: Button,
   Radio: Radio,
   Checkbox: Checkbox,
-  Input: Input
+  Input: Input,
+  Switch: Switch,
+  Picker: Picker
 };
 
 /***/ }),
-/* 238 */
+/* 248 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(239);
+module.exports = __webpack_require__(249);
 
 /***/ }),
-/* 239 */
+/* 249 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var parent = __webpack_require__(240);
+var parent = __webpack_require__(250);
 
 module.exports = parent;
 
 
 /***/ }),
-/* 240 */
+/* 250 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var map = __webpack_require__(241);
+__webpack_require__(251);
+var path = __webpack_require__(24);
 
-var ArrayPrototype = Array.prototype;
-
-module.exports = function (it) {
-  var own = it.map;
-  return it === ArrayPrototype || (it instanceof Array && own === ArrayPrototype.map) ? map : own;
-};
+module.exports = path.Object.setPrototypeOf;
 
 
 /***/ }),
-/* 241 */
+/* 251 */
 /***/ (function(module, exports, __webpack_require__) {
 
-__webpack_require__(242);
-var entryVirtual = __webpack_require__(49);
+var $ = __webpack_require__(6);
+var setPrototypeOf = __webpack_require__(73);
 
-module.exports = entryVirtual('Array').map;
-
-
-/***/ }),
-/* 242 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-var $ = __webpack_require__(7);
-var $map = __webpack_require__(86).map;
-var arrayMethodHasSpeciesSupport = __webpack_require__(45);
-var arrayMethodUsesToLength = __webpack_require__(88);
-
-var HAS_SPECIES_SUPPORT = arrayMethodHasSpeciesSupport('map');
-// FF49- issue
-var USES_TO_LENGTH = arrayMethodUsesToLength('map');
-
-// `Array.prototype.map` method
-// https://tc39.github.io/ecma262/#sec-array.prototype.map
-// with adding support of @@species
-$({ target: 'Array', proto: true, forced: !HAS_SPECIES_SUPPORT || !USES_TO_LENGTH }, {
-  map: function map(callbackfn /* , thisArg */) {
-    return $map(this, callbackfn, arguments.length > 1 ? arguments[1] : undefined);
-  }
+// `Object.setPrototypeOf` method
+// https://tc39.es/ecma262/#sec-object.setprototypeof
+$({ target: 'Object', stat: true }, {
+  setPrototypeOf: setPrototypeOf
 });
 
 
 /***/ }),
-/* 243 */
+/* 252 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(244);
+module.exports = __webpack_require__(253);
 
 /***/ }),
-/* 244 */
+/* 253 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var parent = __webpack_require__(245);
+var parent = __webpack_require__(254);
 
 module.exports = parent;
 
 
 /***/ }),
-/* 245 */
+/* 254 */
 /***/ (function(module, exports, __webpack_require__) {
 
-__webpack_require__(246);
-var path = __webpack_require__(25);
+__webpack_require__(255);
+var path = __webpack_require__(24);
 
 var Object = path.Object;
 
@@ -12849,61 +13909,22 @@ module.exports = function create(P, D) {
 
 
 /***/ }),
-/* 246 */
+/* 255 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var $ = __webpack_require__(7);
-var DESCRIPTORS = __webpack_require__(11);
-var create = __webpack_require__(66);
+var $ = __webpack_require__(6);
+var DESCRIPTORS = __webpack_require__(10);
+var create = __webpack_require__(59);
 
 // `Object.create` method
-// https://tc39.github.io/ecma262/#sec-object.create
+// https://tc39.es/ecma262/#sec-object.create
 $({ target: 'Object', stat: true, sham: !DESCRIPTORS }, {
   create: create
 });
 
 
 /***/ }),
-/* 247 */
-/***/ (function(module, exports, __webpack_require__) {
-
-module.exports = __webpack_require__(248);
-
-/***/ }),
-/* 248 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var parent = __webpack_require__(249);
-
-module.exports = parent;
-
-
-/***/ }),
-/* 249 */
-/***/ (function(module, exports, __webpack_require__) {
-
-__webpack_require__(250);
-var path = __webpack_require__(25);
-
-module.exports = path.Object.setPrototypeOf;
-
-
-/***/ }),
-/* 250 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var $ = __webpack_require__(7);
-var setPrototypeOf = __webpack_require__(78);
-
-// `Object.setPrototypeOf` method
-// https://tc39.github.io/ecma262/#sec-object.setprototypeof
-$({ target: 'Object', stat: true }, {
-  setPrototypeOf: setPrototypeOf
-});
-
-
-/***/ }),
-/* 251 */
+/* 256 */
 /***/ (function(module, exports, __webpack_require__) {
 
 
@@ -12933,13 +13954,13 @@ $({ target: 'Object', stat: true }, {
 
 var _interopRequireDefault = __webpack_require__(1);
 
-var _assign = _interopRequireDefault(__webpack_require__(170));
+var _setPrototypeOf = _interopRequireDefault(__webpack_require__(248));
 
-var _defineProperty = _interopRequireDefault(__webpack_require__(89));
+var _create = _interopRequireDefault(__webpack_require__(252));
 
-var _create = _interopRequireDefault(__webpack_require__(243));
+var _defineProperty = _interopRequireDefault(__webpack_require__(2));
 
-var _setPrototypeOf = _interopRequireDefault(__webpack_require__(247));
+var _assign = _interopRequireDefault(__webpack_require__(199));
 
 var __extends = void 0 && (void 0).__extends || function () {
   try {
@@ -13010,9 +14031,9 @@ exports.BasicWidget = void 0;
 
 var __1 = __webpack_require__(93);
 
-var scheduleUpdate_1 = __webpack_require__(252);
+var scheduleUpdate_1 = __webpack_require__(257);
 
-var Util_1 = __webpack_require__(165);
+var Util_1 = __webpack_require__(173);
 /**
  * 校验object是否合法
  * @param {any} object
@@ -13053,6 +14074,11 @@ function checkObjectValid(object, noFunc) {
 /**
  * Widget
  */
+// interface WidgetProps {
+//   key?: any,
+//   ref?: RefCallback,
+//   children?: ThreshWidget[],
+// }
 
 
 var Widget =
@@ -13168,7 +14194,7 @@ function (_super) {
 exports.BasicWidget = BasicWidget;
 
 /***/ }),
-/* 252 */
+/* 257 */
 /***/ (function(module, exports, __webpack_require__) {
 
 
@@ -13198,23 +14224,25 @@ exports.BasicWidget = BasicWidget;
 
 var _interopRequireDefault = __webpack_require__(1);
 
-var _splice = _interopRequireDefault(__webpack_require__(195));
+var _defineProperty = _interopRequireDefault(__webpack_require__(2));
 
-var _isArray = _interopRequireDefault(__webpack_require__(181));
+var _includes = _interopRequireDefault(__webpack_require__(163));
 
-var _set = _interopRequireDefault(__webpack_require__(253));
+var _filter = _interopRequireDefault(__webpack_require__(258));
 
-var _from = _interopRequireDefault(__webpack_require__(213));
+var _now = _interopRequireDefault(__webpack_require__(153));
 
-var _keys = _interopRequireDefault(__webpack_require__(257));
+var _forEach = _interopRequireDefault(__webpack_require__(30));
 
-var _forEach = _interopRequireDefault(__webpack_require__(50));
+var _keys = _interopRequireDefault(__webpack_require__(263));
 
-var _filter = _interopRequireDefault(__webpack_require__(261));
+var _from = _interopRequireDefault(__webpack_require__(235));
 
-var _includes = _interopRequireDefault(__webpack_require__(154));
+var _set = _interopRequireDefault(__webpack_require__(267));
 
-var _defineProperty = _interopRequireDefault(__webpack_require__(89));
+var _isArray = _interopRequireDefault(__webpack_require__(189));
+
+var _splice = _interopRequireDefault(__webpack_require__(184));
 
 var __spreadArrays = void 0 && (void 0).__spreadArrays || function () {
   try {
@@ -13240,11 +14268,13 @@ var __spreadArrays = void 0 && (void 0).__spreadArrays || function () {
   value: true
 });
 
-var UtilManager_1 = __webpack_require__(202);
+var VNode_1 = __webpack_require__(204);
 
-var RenderManager_1 = __webpack_require__(203);
+var RenderManager_1 = __webpack_require__(234);
 
-var Util_1 = __webpack_require__(165); // 更新队列
+var Util_1 = __webpack_require__(173);
+
+var TimerManager_1 = __webpack_require__(232); // 更新队列
 
 
 var UpdateQueue =
@@ -13309,10 +14339,11 @@ function () {
 
         var uniqued = (0, _filter["default"])(_context2 = this.queue).call(_context2, function (node, index, source) {
           try {
+            if (!node.isMount) return false;
             var parent = node.parent;
 
             while (parent) {
-              if ((0, _includes["default"])(source).call(source, parent)) return false;
+              if ((0, _includes["default"])(source).call(source, parent) || !parent.isMount) return false;
               parent = parent.parent;
             }
 
@@ -13332,6 +14363,8 @@ function () {
       }
     };
 
+    UpdateQueue.lastPrecommitTime = (0, _now["default"])();
+    UpdateQueue.commitPendingTime = 16;
     return UpdateQueue;
   } catch (_e8) {
     __reportError__(_e8, "", "/thresh-lib/src/core/scheduleUpdate.ts");
@@ -13348,8 +14381,11 @@ var shouldUpdateQueue = new UpdateQueue(); // 计划更新
 
 function scheduleUpdate(vNode) {
   try {
-    if (pendingUpdateQueue.isEmpty) {
-      UtilManager_1["default"].setTimeout(function () {
+    var now = (0, _now["default"])();
+
+    if (pendingUpdateQueue.isEmpty || now - UpdateQueue.lastPrecommitTime >= UpdateQueue.commitPendingTime) {
+      UpdateQueue.lastPrecommitTime = now;
+      TimerManager_1["default"].setTimeout(function () {
         try {
           prepareCommit(pendingUpdateQueue.unique());
         } catch (_e9) {
@@ -13357,7 +14393,7 @@ function scheduleUpdate(vNode) {
 
           throw _e9;
         }
-      }, 16);
+      }, UpdateQueue.commitPendingTime);
     }
 
     pendingUpdateQueue.add(vNode);
@@ -13432,6 +14468,7 @@ function commitUpdate() {
 function compareAndMergeNode(newNode, oldNode) {
   try {
     if (!newNode || !oldNode) return;
+    if (!(newNode instanceof VNode_1["default"]) || !(oldNode instanceof VNode_1["default"])) return;
     if (newNode === oldNode) return;
     if (!newNode.isSameAs(oldNode)) return;
     newNode.doMerge(oldNode);
@@ -13449,6 +14486,7 @@ function compareAndMergeNode(newNode, oldNode) {
 
     if (newNodeIsBasic && oldNodeIsBasic) {
       // 对 children 进行比较
+      compareNodeInProps(newNode.basicWidgetPropChildren, oldNode.basicWidgetPropChildren);
       compareNodeArray(newNode.children, oldNode.children); // 对 props 中的节点进行比较
 
       var newKeys = (0, _keys["default"])(newNode.basicWidgetPropChildren);
@@ -13484,8 +14522,8 @@ function compareAndMergeNode(newNode, oldNode) {
 
 function compareNodeArray(newNodeArray, oldNodeArray) {
   try {
-    var newLength = newNodeArray.length;
-    var oldLength = oldNodeArray.length;
+    var newLength = (newNodeArray || []).length;
+    var oldLength = (oldNodeArray || []).length;
     if (!newLength || !oldLength) return;
     var indexInNew = 0;
 
@@ -13516,117 +14554,47 @@ function compareNodeArray(newNodeArray, oldNodeArray) {
 
     throw _e16;
   }
+} // 比较属性上的节点
+
+
+function compareNodeInProps(newPropNodes, oldPropsNodes) {
+  try {
+    for (var key in newPropNodes) {
+      if (newPropNodes[key]) {
+        compareAndMergeNode(newPropNodes[key], oldPropsNodes[key]);
+      }
+
+      if (newPropNodes[key] instanceof Array) {
+        compareNodeArray(newPropNodes[key], oldPropsNodes[key]);
+      }
+    }
+  } catch (_e17) {
+    __reportError__(_e17, "", "/thresh-lib/src/core/scheduleUpdate.ts");
+
+    throw _e17;
+  }
 }
-
-/***/ }),
-/* 253 */
-/***/ (function(module, exports, __webpack_require__) {
-
-module.exports = __webpack_require__(254);
-
-/***/ }),
-/* 254 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var parent = __webpack_require__(255);
-
-module.exports = parent;
-
-
-/***/ }),
-/* 255 */
-/***/ (function(module, exports, __webpack_require__) {
-
-__webpack_require__(256);
-__webpack_require__(110);
-__webpack_require__(105);
-__webpack_require__(52);
-var path = __webpack_require__(25);
-
-module.exports = path.Set;
-
-
-/***/ }),
-/* 256 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-var collection = __webpack_require__(230);
-var collectionStrong = __webpack_require__(233);
-
-// `Set` constructor
-// https://tc39.github.io/ecma262/#sec-set-objects
-module.exports = collection('Set', function (init) {
-  return function Set() { return init(this, arguments.length ? arguments[0] : undefined); };
-}, collectionStrong);
-
-
-/***/ }),
-/* 257 */
-/***/ (function(module, exports, __webpack_require__) {
-
-module.exports = __webpack_require__(258);
 
 /***/ }),
 /* 258 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var parent = __webpack_require__(259);
-
-module.exports = parent;
-
+module.exports = __webpack_require__(259);
 
 /***/ }),
 /* 259 */
 /***/ (function(module, exports, __webpack_require__) {
 
-__webpack_require__(260);
-var path = __webpack_require__(25);
+var parent = __webpack_require__(260);
 
-module.exports = path.Object.keys;
+module.exports = parent;
 
 
 /***/ }),
 /* 260 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var $ = __webpack_require__(7);
-var toObject = __webpack_require__(32);
-var nativeKeys = __webpack_require__(68);
-var fails = __webpack_require__(12);
-
-var FAILS_ON_PRIMITIVES = fails(function () { nativeKeys(1); });
-
-// `Object.keys` method
-// https://tc39.github.io/ecma262/#sec-object.keys
-$({ target: 'Object', stat: true, forced: FAILS_ON_PRIMITIVES }, {
-  keys: function keys(it) {
-    return nativeKeys(toObject(it));
-  }
-});
-
-
-/***/ }),
-/* 261 */
-/***/ (function(module, exports, __webpack_require__) {
-
-module.exports = __webpack_require__(262);
-
-/***/ }),
-/* 262 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var parent = __webpack_require__(263);
-
-module.exports = parent;
-
-
-/***/ }),
-/* 263 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var filter = __webpack_require__(264);
+var filter = __webpack_require__(261);
 
 var ArrayPrototype = Array.prototype;
 
@@ -13637,34 +14605,31 @@ module.exports = function (it) {
 
 
 /***/ }),
-/* 264 */
+/* 261 */
 /***/ (function(module, exports, __webpack_require__) {
 
-__webpack_require__(265);
-var entryVirtual = __webpack_require__(49);
+__webpack_require__(262);
+var entryVirtual = __webpack_require__(85);
 
 module.exports = entryVirtual('Array').filter;
 
 
 /***/ }),
-/* 265 */
+/* 262 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
-var $ = __webpack_require__(7);
-var $filter = __webpack_require__(86).filter;
-var arrayMethodHasSpeciesSupport = __webpack_require__(45);
-var arrayMethodUsesToLength = __webpack_require__(88);
+var $ = __webpack_require__(6);
+var $filter = __webpack_require__(81).filter;
+var arrayMethodHasSpeciesSupport = __webpack_require__(92);
 
 var HAS_SPECIES_SUPPORT = arrayMethodHasSpeciesSupport('filter');
-// Edge 14- issue
-var USES_TO_LENGTH = arrayMethodUsesToLength('filter');
 
 // `Array.prototype.filter` method
-// https://tc39.github.io/ecma262/#sec-array.prototype.filter
+// https://tc39.es/ecma262/#sec-array.prototype.filter
 // with adding support of @@species
-$({ target: 'Array', proto: true, forced: !HAS_SPECIES_SUPPORT || !USES_TO_LENGTH }, {
+$({ target: 'Array', proto: true, forced: !HAS_SPECIES_SUPPORT }, {
   filter: function filter(callbackfn /* , thisArg */) {
     return $filter(this, callbackfn, arguments.length > 1 ? arguments[1] : undefined);
   }
@@ -13672,7 +14637,96 @@ $({ target: 'Array', proto: true, forced: !HAS_SPECIES_SUPPORT || !USES_TO_LENGT
 
 
 /***/ }),
+/* 263 */
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports = __webpack_require__(264);
+
+/***/ }),
+/* 264 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var parent = __webpack_require__(265);
+
+module.exports = parent;
+
+
+/***/ }),
+/* 265 */
+/***/ (function(module, exports, __webpack_require__) {
+
+__webpack_require__(266);
+var path = __webpack_require__(24);
+
+module.exports = path.Object.keys;
+
+
+/***/ }),
 /* 266 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var $ = __webpack_require__(6);
+var toObject = __webpack_require__(50);
+var nativeKeys = __webpack_require__(61);
+var fails = __webpack_require__(11);
+
+var FAILS_ON_PRIMITIVES = fails(function () { nativeKeys(1); });
+
+// `Object.keys` method
+// https://tc39.es/ecma262/#sec-object.keys
+$({ target: 'Object', stat: true, forced: FAILS_ON_PRIMITIVES }, {
+  keys: function keys(it) {
+    return nativeKeys(toObject(it));
+  }
+});
+
+
+/***/ }),
+/* 267 */
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports = __webpack_require__(268);
+
+/***/ }),
+/* 268 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var parent = __webpack_require__(269);
+
+module.exports = parent;
+
+
+/***/ }),
+/* 269 */
+/***/ (function(module, exports, __webpack_require__) {
+
+__webpack_require__(270);
+__webpack_require__(103);
+__webpack_require__(122);
+__webpack_require__(32);
+var path = __webpack_require__(24);
+
+module.exports = path.Set;
+
+
+/***/ }),
+/* 270 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var collection = __webpack_require__(215);
+var collectionStrong = __webpack_require__(218);
+
+// `Set` constructor
+// https://tc39.es/ecma262/#sec-set-objects
+module.exports = collection('Set', function (init) {
+  return function Set() { return init(this, arguments.length ? arguments[0] : undefined); };
+}, collectionStrong);
+
+
+/***/ }),
+/* 271 */
 /***/ (function(module, exports, __webpack_require__) {
 
 
@@ -13702,15 +14756,15 @@ $({ target: 'Array', proto: true, forced: !HAS_SPECIES_SUPPORT || !USES_TO_LENGT
 
 var _interopRequireDefault = __webpack_require__(1);
 
-var _isArray = _interopRequireDefault(__webpack_require__(181));
+var _defineProperty = _interopRequireDefault(__webpack_require__(2));
 
-var _defineProperty = _interopRequireDefault(__webpack_require__(89));
+var _isArray = _interopRequireDefault(__webpack_require__(189));
 
 (0, _defineProperty["default"])(exports, "__esModule", {
   value: true
 });
 
-var UtilManager_1 = __webpack_require__(202);
+var UtilManager_1 = __webpack_require__(233);
 /**
  * 组件子元素规则类
  */
@@ -13794,7 +14848,7 @@ function () {
 exports["default"] = ChildrenRule;
 
 /***/ }),
-/* 267 */
+/* 272 */
 /***/ (function(module, exports, __webpack_require__) {
 
 
@@ -13824,17 +14878,17 @@ exports["default"] = ChildrenRule;
 
 var _interopRequireDefault = __webpack_require__(1);
 
-var _filter = _interopRequireDefault(__webpack_require__(261));
+var _defineProperty = _interopRequireDefault(__webpack_require__(2));
 
-var _defineProperty = _interopRequireDefault(__webpack_require__(89));
+var _filter = _interopRequireDefault(__webpack_require__(258));
 
 (0, _defineProperty["default"])(exports, "__esModule", {
   value: true
 });
 
-var Util_1 = __webpack_require__(165);
+var Util_1 = __webpack_require__(173);
 
-var VNode_1 = __webpack_require__(219);
+var VNode_1 = __webpack_require__(204);
 /**
  * 组件构造器
  */
@@ -13915,59 +14969,689 @@ function getWidgetName(widgetBuilder) {
 }
 
 /***/ }),
-/* 268 */
+/* 273 */
+/***/ (function(module, exports, __webpack_require__) {
+
+
+/**
+ * MIT License
+ *
+ * Copyright (c) 2020 ManBang Group
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ *
+ */
+
+var _interopRequireDefault = __webpack_require__(1);
+
+var _typeof2 = _interopRequireDefault(__webpack_require__(174));
+
+var _defineProperty = _interopRequireDefault(__webpack_require__(2));
+
+var _indexOf = _interopRequireDefault(__webpack_require__(205));
+
+(0, _defineProperty["default"])(exports, "__esModule", {
+  value: true
+});
+exports.ThreshAppContext = void 0;
+
+var MethodChannel_1 = __webpack_require__(157);
+
+var dispatchMethod_1 = __webpack_require__(245);
+
+var TimerManager_1 = __webpack_require__(232);
+
+var EventManager_1 = __webpack_require__(274);
+
+var Util_1 = __webpack_require__(173);
+
+var AppContainer_1 = __webpack_require__(210);
+
+var ThreshAppContext =
+/** @class */
+function () {
+  try {
+    function ThreshAppContext() {}
+
+    ThreshAppContext.initGlobal = function (threshApp) {
+      try {
+        ThreshAppContext._global = function () {
+          try {
+            return this;
+          } catch (_e) {
+            __reportError__(_e, "", "/thresh-lib/src/core/ThreshAppContext.ts");
+
+            throw _e;
+          }
+        }();
+
+        try {
+          ThreshAppContext._global = ThreshAppContext._global || new Function("return this")();
+        } catch (e) {
+          if ((typeof window === "undefined" ? "undefined" : (0, _typeof2["default"])(window)) === "object") ThreshAppContext._global = window;
+        }
+
+        ThreshAppContext._initGlobalMethods(threshApp);
+      } catch (_e2) {
+        __reportError__(_e2, "", "/thresh-lib/src/core/ThreshAppContext.ts");
+
+        throw _e2;
+      }
+    };
+    /**
+     * 向全局添加属性
+     * 单 context 环境中，防止重复添加
+     * @param prop 属性名
+     * @param valueGetter 获取属性值的方法
+     */
+
+
+    ThreshAppContext.addUniquePropToGlobal = function (prop, valueGetter) {
+      try {
+        var currentValue = ThreshAppContext.getGlobalProp(prop);
+        var newValue = valueGetter(currentValue);
+        ThreshAppContext.setGlobalProp(prop, newValue);
+      } catch (_e3) {
+        __reportError__(_e3, "", "/thresh-lib/src/core/ThreshAppContext.ts");
+
+        throw _e3;
+      }
+    };
+
+    ThreshAppContext.getGlobalProp = function (prop) {
+      try {
+        return ThreshAppContext._global[prop];
+      } catch (_e4) {
+        __reportError__(_e4, "", "/thresh-lib/src/core/ThreshAppContext.ts");
+
+        throw _e4;
+      }
+    };
+
+    ThreshAppContext.setGlobalProp = function (prop, value) {
+      try {
+        ThreshAppContext._global[prop] = value;
+      } catch (_e5) {
+        __reportError__(_e5, "", "/thresh-lib/src/core/ThreshAppContext.ts");
+
+        throw _e5;
+      }
+    };
+
+    ThreshAppContext._initGlobalMethods = function (threshApp) {
+      try {
+        // 全局添加通信方法
+        ThreshAppContext.addUniquePropToGlobal('methodChannel_flutter_call_js', function () {
+          try {
+            return dispatchMethod_1.flutterCallJs;
+          } catch (_e6) {
+            __reportError__(_e6, "", "/thresh-lib/src/core/ThreshAppContext.ts");
+
+            throw _e6;
+          }
+        });
+        ThreshAppContext.addUniquePropToGlobal('methodChannel_native_call_js', function () {
+          try {
+            return dispatchMethod_1.nativeCallJs;
+          } catch (_e7) {
+            __reportError__(_e7, "", "/thresh-lib/src/core/ThreshAppContext.ts");
+
+            throw _e7;
+          }
+        });
+        ThreshAppContext.addUniquePropToGlobal('methodChannel_fire_js_event', function () {
+          try {
+            return EventManager_1.methodChannel_fire_js_event;
+          } catch (_e8) {
+            __reportError__(_e8, "", "/thresh-lib/src/core/ThreshAppContext.ts");
+
+            throw _e8;
+          }
+        });
+        ThreshAppContext.addUniquePropToGlobal('methodChannel_register_js_event', function () {
+          try {
+            return EventManager_1.methodChannel_register_js_event;
+          } catch (_e9) {
+            __reportError__(_e9, "", "/thresh-lib/src/core/ThreshAppContext.ts");
+
+            throw _e9;
+          }
+        });
+        ThreshAppContext.addUniquePropToGlobal('methodChannel_timer_fire', function () {
+          try {
+            return TimerManager_1.methodChannel_timer_fire;
+          } catch (_e10) {
+            __reportError__(_e10, "", "/thresh-lib/src/core/ThreshAppContext.ts");
+
+            throw _e10;
+          }
+        }); // 全局添加定时器方法
+
+        ThreshAppContext.addUniquePropToGlobal('setTimeout', function () {
+          try {
+            return TimerManager_1["default"].setTimeout;
+          } catch (_e11) {
+            __reportError__(_e11, "", "/thresh-lib/src/core/ThreshAppContext.ts");
+
+            throw _e11;
+          }
+        });
+        ThreshAppContext.addUniquePropToGlobal('setInterval', function () {
+          try {
+            return TimerManager_1["default"].setInterval;
+          } catch (_e12) {
+            __reportError__(_e12, "", "/thresh-lib/src/core/ThreshAppContext.ts");
+
+            throw _e12;
+          }
+        });
+        ThreshAppContext.addUniquePropToGlobal('clearTimeout', function () {
+          try {
+            return TimerManager_1["default"].clearTimer;
+          } catch (_e13) {
+            __reportError__(_e13, "", "/thresh-lib/src/core/ThreshAppContext.ts");
+
+            throw _e13;
+          }
+        });
+        ThreshAppContext.addUniquePropToGlobal('clearInterval', function () {
+          try {
+            return TimerManager_1["default"].clearTimer;
+          } catch (_e14) {
+            __reportError__(_e14, "", "/thresh-lib/src/core/ThreshAppContext.ts");
+
+            throw _e14;
+          }
+        }); // 全局异常处理方法
+
+        ThreshAppContext.addUniquePropToGlobal('__reportError__', function () {
+          try {
+            return function (error, functionName, fileName) {
+              try {
+                var _context, _context2;
+
+                if (Util_1["default"].isNil(error)) return; // 上报时需要排除非 Error 类型
+                // 尽量保证上报准确
+
+                if (!error.message) return; // 以下两个类型的 error 为 async 函数中主要 error 伴随产生的 error
+
+                if ((0, _indexOf["default"])(_context = error.message).call(_context, 'result.done') > -1 || (0, _indexOf["default"])(_context2 = error.message).call(_context2, 'op[0]') > -1) return;
+                if (console && console.error) console.error(error);
+                var messages = [error.message ? error.message : error.toString()];
+                if (functionName) messages.push("In function: " + functionName);
+                if (fileName) messages.push("In file: " + fileName); // 如果上一个异常与当前异常相同则忽略
+
+                if (ThreshAppContext._lastErrorMessage === messages[0]) return;
+                ThreshAppContext._lastErrorMessage = messages[0];
+                var message = messages.join('\n'); // 开发模式下向 flutter 发送异常，将会显示在调试面板上
+
+                if (threshApp.debugMode) {
+                  MethodChannel_1["default"].call({
+                    method: MethodChannel_1.FlutterMethodChannelType.onError,
+                    params: {
+                      message: message,
+                      stack: error.stack || '',
+                      pageName: threshApp.pageName || 'unknown',
+                      referPageName: threshApp.referPageName || 'unknown'
+                    }
+                  });
+                }
+
+                threshApp.onError({
+                  message: message,
+                  stack: error.stack || ''
+                });
+              } catch (_e15) {
+                __reportError__(_e15, "", "/thresh-lib/src/core/ThreshAppContext.ts");
+
+                throw _e15;
+              }
+            };
+          } catch (_e16) {
+            __reportError__(_e16, "", "/thresh-lib/src/core/ThreshAppContext.ts");
+
+            throw _e16;
+          }
+        });
+        ThreshAppContext.addUniquePropToGlobal('debug_get_appContainer', function () {
+          try {
+            return AppContainer_1["default"];
+          } catch (_e17) {
+            __reportError__(_e17, "", "/thresh-lib/src/core/ThreshAppContext.ts");
+
+            throw _e17;
+          }
+        });
+      } catch (_e18) {
+        __reportError__(_e18, "", "/thresh-lib/src/core/ThreshAppContext.ts");
+
+        throw _e18;
+      }
+    };
+
+    return ThreshAppContext;
+  } catch (_e19) {
+    __reportError__(_e19, "", "/thresh-lib/src/core/ThreshAppContext.ts");
+
+    throw _e19;
+  }
+}();
+
+exports.ThreshAppContext = ThreshAppContext;
+exports["default"] = ThreshAppContext;
+
+/***/ }),
+/* 274 */
+/***/ (function(module, exports, __webpack_require__) {
+
+
+/**
+ * MIT License
+ *
+ * Copyright (c) 2020 ManBang Group
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ *
+ */
+
+var _interopRequireDefault = __webpack_require__(1);
+
+var _defineProperty = _interopRequireDefault(__webpack_require__(2));
+
+var _isArray = _interopRequireDefault(__webpack_require__(189));
+
+var __spreadArrays = void 0 && (void 0).__spreadArrays || function () {
+  try {
+    for (var s = 0, i = 0, il = arguments.length; i < il; i++) {
+      s += arguments[i].length;
+    }
+
+    for (var r = Array(s), k = 0, i = 0; i < il; i++) {
+      for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++) {
+        r[k] = a[j];
+      }
+    }
+
+    return r;
+  } catch (_e) {
+    __reportError__(_e, "", "/thresh-lib/src/manager/EventManager.ts");
+
+    throw _e;
+  }
+};
+
+(0, _defineProperty["default"])(exports, "__esModule", {
+  value: true
+});
+exports.methodChannel_register_js_event = exports.methodChannel_fire_js_event = exports.BuiltInEventType = void 0;
+
+var bus_1 = __webpack_require__(226);
+
+var Util_1 = __webpack_require__(173);
+
+var DevtoolsManager_1 = __webpack_require__(225);
+
+var basicWidget_1 = __webpack_require__(247); // thresh 内建事件
+
+
+var BuiltInEventType;
+
+(function (BuiltInEventType) {
+  try {
+    BuiltInEventType["pageOnShow"] = "pageOnShow";
+    BuiltInEventType["pageOnHide"] = "pageOnHide";
+  } catch (_e2) {
+    __reportError__(_e2, "", "/thresh-lib/src/manager/EventManager.ts");
+
+    throw _e2;
+  }
+})(BuiltInEventType = exports.BuiltInEventType || (exports.BuiltInEventType = {}));
+/**
+ * 事件管理器
+ * 暴露给外部使用，可以与 native 之间进行事件通信
+ * TODO - 支持单事件多次注册，使用三方库
+ */
+
+
+var EventManager =
+/** @class */
+function () {
+  try {
+    function EventManager() {
+      try {
+        this._hasRegisterBuiltInEvents = false;
+      } catch (_e3) {
+        __reportError__(_e3, "", "/thresh-lib/src/manager/EventManager.ts");
+
+        throw _e3;
+      }
+    }
+    /**
+     * 注册内建事件
+     * 内建事件回调的第一个参数是 contextId
+     * contextId 来自 native 触发
+     * 如果是内部调用则不存在该参数
+     */
+
+
+    EventManager.prototype.registerBuiltInEvents = function () {
+      try {
+        if (this._hasRegisterBuiltInEvents) return; // 注册事件 - 页面显示
+
+        this.register(BuiltInEventType.pageOnShow, function (contextId) {
+          try {
+            basicWidget_1.Page.invokePageOnShow(contextId);
+          } catch (_e4) {
+            __reportError__(_e4, "", "/thresh-lib/src/manager/EventManager.ts");
+
+            throw _e4;
+          }
+        }); // 注册事件 - 页面隐藏
+
+        this.register(BuiltInEventType.pageOnHide, function (contextId) {
+          try {
+            basicWidget_1.Page.invokePageOnHide(contextId);
+          } catch (_e5) {
+            __reportError__(_e5, "", "/thresh-lib/src/manager/EventManager.ts");
+
+            throw _e5;
+          }
+        });
+        this._hasRegisterBuiltInEvents = true;
+      } catch (_e6) {
+        __reportError__(_e6, "", "/thresh-lib/src/manager/EventManager.ts");
+
+        throw _e6;
+      }
+    };
+
+    EventManager.prototype.resetAndRegisterBuiltInEvents = function () {
+      try {
+        this._hasRegisterBuiltInEvents = false;
+        this.registerBuiltInEvents();
+      } catch (_e7) {
+        __reportError__(_e7, "", "/thresh-lib/src/manager/EventManager.ts");
+
+        throw _e7;
+      }
+    };
+    /**
+     * 注册事件
+     * native 可以通过 methodChannel_register_js_event 注册一个 js 事件
+     */
+
+
+    EventManager.prototype.register = function (name, callback) {
+      try {
+        if (!Util_1["default"].isFunc(callback)) return;
+        bus_1["default"].register(callback, name);
+        DevtoolsManager_1["default"].show(DevtoolsManager_1.InfoType.event, Util_1["default"].anyToRawString({
+          type: 'register',
+          name: name
+        }), "\u6CE8\u518C\u4E8B\u4EF6\uFF1A" + name);
+      } catch (_e8) {
+        __reportError__(_e8, "", "/thresh-lib/src/manager/EventManager.ts");
+
+        throw _e8;
+      }
+    };
+    /**
+     * 执行事件
+     * js 可以通过 EventManager.fire 执行一个事件
+     * native 则使用 methodChannel_fire_js_event
+     * 1. 执行事件是会先查询是否已注册
+     * 2. 当未在 js 中查询到注册的事件时，会向 native 发送执行事件的通知
+     */
+
+
+    EventManager.prototype.fire = function (name) {
+      try {
+        var args = [];
+
+        for (var _i = 1; _i < arguments.length; _i++) {
+          args[_i - 1] = arguments[_i];
+        }
+
+        this.fireWithContextId.apply(this, __spreadArrays([name, undefined], args));
+      } catch (_e9) {
+        __reportError__(_e9, "", "/thresh-lib/src/manager/EventManager.ts");
+
+        throw _e9;
+      }
+    };
+
+    EventManager.prototype.fireWithContextId = function (name, contextId) {
+      try {
+        var args = [];
+
+        for (var _i = 2; _i < arguments.length; _i++) {
+          args[_i - 2] = arguments[_i];
+        }
+
+        if (typeof name !== 'string') {
+          if (!(0, _isArray["default"])(name)) return;
+          if (!name.length) return;
+          var temp = name.shift();
+          args = __spreadArrays(name, args);
+          name = temp;
+        }
+
+        if (typeof name !== 'string') return;
+
+        if (bus_1["default"].has(name)) {
+          DevtoolsManager_1["default"].show(DevtoolsManager_1.InfoType.event, Util_1["default"].anyToRawString({
+            type: 'fire',
+            contextId: contextId,
+            name: name,
+            args: args
+          }), "\u89E6\u53D1JS\u6CE8\u518C\u4E8B\u4EF6\uFF1A" + name, contextId);
+          return contextId ? bus_1["default"].fire.apply(bus_1["default"], __spreadArrays([name, contextId], args)) : bus_1["default"].fire.apply(bus_1["default"], __spreadArrays([name], args));
+        } else {// TODO - call native method
+          // devtools.show(InfoType.event, Util.anyToRawString({
+          //   type: 'fire',
+          //   name,
+          //   args
+          // }), `触发Native注册事件：${name}`)
+        }
+      } catch (_e10) {
+        __reportError__(_e10, "", "/thresh-lib/src/manager/EventManager.ts");
+
+        throw _e10;
+      }
+    };
+    /**
+     * 查询某个事件是否已注册在 js 中
+     * 无法查询是否在 native 中注册
+     */
+
+
+    EventManager.prototype.has = function (name, callback) {
+      try {
+        return bus_1["default"].has(name, callback);
+      } catch (_e11) {
+        __reportError__(_e11, "", "/thresh-lib/src/manager/EventManager.ts");
+
+        throw _e11;
+      }
+    };
+    /**
+     * 从已注册在 js 的事件中移除某个事件
+     * 无法移除 native 中注册的事件
+     * @param name
+     */
+
+
+    EventManager.prototype.remove = function (name, callback) {
+      try {
+        bus_1["default"].remove(name, callback);
+        DevtoolsManager_1["default"].show(DevtoolsManager_1.InfoType.event, Util_1["default"].anyToRawString({
+          type: 'remove',
+          name: name
+        }), "\u79FB\u9664\u6CE8\u518C\u4E8B\u4EF6\uFF1A" + name);
+      } catch (_e12) {
+        __reportError__(_e12, "", "/thresh-lib/src/manager/EventManager.ts");
+
+        throw _e12;
+      }
+    };
+    /**
+     * 判断是否内置事件
+     */
+
+
+    EventManager.prototype.isBuiltInEvent = function (name) {
+      try {
+        return BuiltInEventType[name] !== undefined;
+      } catch (_e13) {
+        __reportError__(_e13, "", "/thresh-lib/src/manager/EventManager.ts");
+
+        throw _e13;
+      }
+    };
+
+    return EventManager;
+  } catch (_e14) {
+    __reportError__(_e14, "", "/thresh-lib/src/manager/EventManager.ts");
+
+    throw _e14;
+  }
+}();
+
+var eventManager = new EventManager();
+exports["default"] = eventManager;
+
+function methodChannel_fire_js_event(name, contextId) {
+  try {
+    var args = [];
+
+    for (var _i = 2; _i < arguments.length; _i++) {
+      args[_i - 2] = arguments[_i];
+    }
+
+    DevtoolsManager_1["default"].show(DevtoolsManager_1.InfoType.event, Util_1["default"].anyToRawString({
+      type: 'fire event from native',
+      contextId: contextId,
+      name: name,
+      args: args
+    }), "\u6765\u81EANative\u7684\u4E8B\u4EF6\u89E6\u53D1\uFF1A" + name, contextId);
+    if (!eventManager.isBuiltInEvent(name)) return eventManager.fire.apply(eventManager, __spreadArrays([name], args));else return eventManager.fireWithContextId.apply(eventManager, __spreadArrays([name, contextId], args));
+  } catch (_e15) {
+    __reportError__(_e15, "methodChannel_fire_js_event", "/thresh-lib/src/manager/EventManager.ts");
+
+    throw _e15;
+  }
+}
+
+exports.methodChannel_fire_js_event = methodChannel_fire_js_event;
+
+function methodChannel_register_js_event(name, contextId, callback) {
+  try {
+    eventManager.register(name, callback);
+  } catch (_e16) {
+    __reportError__(_e16, "", "/thresh-lib/src/manager/EventManager.ts");
+
+    throw _e16;
+  }
+}
+
+exports.methodChannel_register_js_event = methodChannel_register_js_event;
+
+/***/ }),
+/* 275 */
 /***/ (function(module, exports, __webpack_require__) {
 
 
 
 var _interopRequireDefault = __webpack_require__(1);
 
-var _defineProperty = _interopRequireDefault(__webpack_require__(89));
+var _defineProperty = _interopRequireDefault(__webpack_require__(2));
 
 (0, _defineProperty["default"])(exports, "__esModule", {
   value: true
 });
 exports.extraPages = exports.apiList = exports.widgetList = exports.Colors = void 0;
 
-var PageAppBar_1 = __webpack_require__(269);
+var PageAppBar_1 = __webpack_require__(276);
 
-var ContainerDemo_1 = __webpack_require__(281);
+var ContainerDemo_1 = __webpack_require__(288);
 
-var TextDemo_1 = __webpack_require__(283);
+var TextDemo_1 = __webpack_require__(290);
 
-var ImageDemo_1 = __webpack_require__(284);
+var ImageDemo_1 = __webpack_require__(291);
 
-var IconDemo_1 = __webpack_require__(286);
+var QrImageDemo_1 = __webpack_require__(293);
 
-var ScrollViewDemo_1 = __webpack_require__(287);
+var IconDemo_1 = __webpack_require__(294);
 
-var ListViewDemo_1 = __webpack_require__(294);
+var ScrollViewDemo_1 = __webpack_require__(295);
 
-var SwipeActionsViewDemo_1 = __webpack_require__(303);
+var ListViewDemo_1 = __webpack_require__(302);
 
-var SwiperViewDemo_1 = __webpack_require__(304);
+var SwipeActionsViewDemo_1 = __webpack_require__(311);
 
-var NativeViewDemo_1 = __webpack_require__(305);
+var SwiperViewDemo_1 = __webpack_require__(312);
 
-var ButtonDemo_1 = __webpack_require__(306);
+var NativeViewDemo_1 = __webpack_require__(313);
 
-var RadioDemo_1 = __webpack_require__(307);
+var ButtonDemo_1 = __webpack_require__(314);
 
-var CheckboxDemo_1 = __webpack_require__(308);
+var RadioDemo_1 = __webpack_require__(315);
 
-var InputDemo_1 = __webpack_require__(309);
+var CheckboxDemo_1 = __webpack_require__(316);
 
-var PageActions_1 = __webpack_require__(310);
+var InputDemo_1 = __webpack_require__(317);
 
-var ModalActions_1 = __webpack_require__(311);
+var PageActions_1 = __webpack_require__(318);
 
-var ToastActions_1 = __webpack_require__(312);
+var ModalActions_1 = __webpack_require__(319);
 
-var RefreshDemo_1 = __webpack_require__(313);
+var ToastActions_1 = __webpack_require__(322);
 
-var NestScrollViewDemo_1 = __webpack_require__(314);
+var RefreshDemo_1 = __webpack_require__(323);
 
-var NoticeBarDemo_1 = __webpack_require__(315);
+var NestScrollViewDemo_1 = __webpack_require__(324);
+
+var NoticeBarDemo_1 = __webpack_require__(325);
+
+var ThemeProviderActions_1 = __webpack_require__(326);
+
+var SwitchDemo_1 = __webpack_require__(327);
+
+var PickerDemo_1 = __webpack_require__(328);
+
+var timer_1 = __webpack_require__(329);
+
+var DragableScrollViewDemo_1 = __webpack_require__(330);
 
 exports.Colors = {
   Black: 0xff000000,
@@ -14031,16 +15715,29 @@ exports.widgetList = [{
     }
   }
 }, {
+  title: 'QrImage',
+  desc: '二维码组件',
+  pageName: 'widget-qrimage',
+  pageBuilder: function pageBuilder() {
+    try {
+      return QrImageDemo_1["default"];
+    } catch (_e5) {
+      __reportError__(_e5, "", "/config.ts");
+
+      throw _e5;
+    }
+  }
+}, {
   title: 'Icon',
   desc: '图标组件',
   pageName: 'widget-icon',
   pageBuilder: function pageBuilder() {
     try {
       return IconDemo_1["default"];
-    } catch (_e5) {
-      __reportError__(_e5, "", "/config.ts");
+    } catch (_e6) {
+      __reportError__(_e6, "", "/config.ts");
 
-      throw _e5;
+      throw _e6;
     }
   }
 }, {
@@ -14050,10 +15747,10 @@ exports.widgetList = [{
   pageBuilder: function pageBuilder() {
     try {
       return RefreshDemo_1["default"];
-    } catch (_e6) {
-      __reportError__(_e6, "", "/config.ts");
+    } catch (_e7) {
+      __reportError__(_e7, "", "/config.ts");
 
-      throw _e6;
+      throw _e7;
     }
   }
 }, {
@@ -14063,10 +15760,10 @@ exports.widgetList = [{
   pageBuilder: function pageBuilder() {
     try {
       return NoticeBarDemo_1["default"];
-    } catch (_e7) {
-      __reportError__(_e7, "", "/config.ts");
+    } catch (_e8) {
+      __reportError__(_e8, "", "/config.ts");
 
-      throw _e7;
+      throw _e8;
     }
   }
 }, {
@@ -14076,10 +15773,10 @@ exports.widgetList = [{
   pageBuilder: function pageBuilder() {
     try {
       return ScrollViewDemo_1["default"];
-    } catch (_e8) {
-      __reportError__(_e8, "", "/config.ts");
+    } catch (_e9) {
+      __reportError__(_e9, "", "/config.ts");
 
-      throw _e8;
+      throw _e9;
     }
   }
 }, {
@@ -14089,10 +15786,10 @@ exports.widgetList = [{
   pageBuilder: function pageBuilder() {
     try {
       return ListViewDemo_1["default"];
-    } catch (_e9) {
-      __reportError__(_e9, "", "/config.ts");
+    } catch (_e10) {
+      __reportError__(_e10, "", "/config.ts");
 
-      throw _e9;
+      throw _e10;
     }
   }
 }, {
@@ -14102,10 +15799,24 @@ exports.widgetList = [{
   pageBuilder: function pageBuilder() {
     try {
       return NestScrollViewDemo_1["default"];
-    } catch (_e10) {
-      __reportError__(_e10, "", "/config.ts");
+    } catch (_e11) {
+      __reportError__(_e11, "", "/config.ts");
 
-      throw _e10;
+      throw _e11;
+    }
+  }
+}, {
+  title: 'DragableScrollView',
+  desc: '底部拖拽滚动视图组件',
+  // useInject: true,
+  pageName: 'widget-dragableScrollview',
+  pageBuilder: function pageBuilder() {
+    try {
+      return DragableScrollViewDemo_1["default"];
+    } catch (_e12) {
+      __reportError__(_e12, "", "/config.ts");
+
+      throw _e12;
     }
   }
 }, {
@@ -14115,10 +15826,10 @@ exports.widgetList = [{
   pageBuilder: function pageBuilder() {
     try {
       return SwipeActionsViewDemo_1["default"];
-    } catch (_e11) {
-      __reportError__(_e11, "", "/config.ts");
+    } catch (_e13) {
+      __reportError__(_e13, "", "/config.ts");
 
-      throw _e11;
+      throw _e13;
     }
   }
 }, {
@@ -14128,10 +15839,10 @@ exports.widgetList = [{
   pageBuilder: function pageBuilder() {
     try {
       return SwiperViewDemo_1["default"];
-    } catch (_e12) {
-      __reportError__(_e12, "", "/config.ts");
+    } catch (_e14) {
+      __reportError__(_e14, "", "/config.ts");
 
-      throw _e12;
+      throw _e14;
     }
   }
 }, {
@@ -14141,10 +15852,24 @@ exports.widgetList = [{
   pageBuilder: function pageBuilder() {
     try {
       return NativeViewDemo_1["default"];
-    } catch (_e13) {
-      __reportError__(_e13, "", "/config.ts");
+    } catch (_e15) {
+      __reportError__(_e15, "", "/config.ts");
 
-      throw _e13;
+      throw _e15;
+    }
+  }
+}, {
+  title: 'Input',
+  desc: '输入框组件',
+  // useInject: true,
+  pageName: 'widget-input',
+  pageBuilder: function pageBuilder() {
+    try {
+      return InputDemo_1["default"];
+    } catch (_e16) {
+      __reportError__(_e16, "", "/config.ts");
+
+      throw _e16;
     }
   }
 }, {
@@ -14154,10 +15879,10 @@ exports.widgetList = [{
   pageBuilder: function pageBuilder() {
     try {
       return ButtonDemo_1["default"];
-    } catch (_e14) {
-      __reportError__(_e14, "", "/config.ts");
+    } catch (_e17) {
+      __reportError__(_e17, "", "/config.ts");
 
-      throw _e14;
+      throw _e17;
     }
   }
 }, {
@@ -14167,10 +15892,10 @@ exports.widgetList = [{
   pageBuilder: function pageBuilder() {
     try {
       return RadioDemo_1["default"];
-    } catch (_e15) {
-      __reportError__(_e15, "", "/config.ts");
+    } catch (_e18) {
+      __reportError__(_e18, "", "/config.ts");
 
-      throw _e15;
+      throw _e18;
     }
   }
 }, {
@@ -14180,23 +15905,36 @@ exports.widgetList = [{
   pageBuilder: function pageBuilder() {
     try {
       return CheckboxDemo_1["default"];
-    } catch (_e16) {
-      __reportError__(_e16, "", "/config.ts");
+    } catch (_e19) {
+      __reportError__(_e19, "", "/config.ts");
 
-      throw _e16;
+      throw _e19;
     }
   }
 }, {
-  title: 'Input',
-  desc: '输入框组件',
-  pageName: 'widget-input',
+  title: 'Switch',
+  desc: '开关组件',
+  pageName: 'widget-switch',
   pageBuilder: function pageBuilder() {
     try {
-      return InputDemo_1["default"];
-    } catch (_e17) {
-      __reportError__(_e17, "", "/config.ts");
+      return SwitchDemo_1["default"];
+    } catch (_e20) {
+      __reportError__(_e20, "", "/config.ts");
 
-      throw _e17;
+      throw _e20;
+    }
+  }
+}, {
+  title: 'Picker',
+  desc: '选择组件',
+  pageName: 'widget-picker',
+  pageBuilder: function pageBuilder() {
+    try {
+      return PickerDemo_1["default"];
+    } catch (_e21) {
+      __reportError__(_e21, "", "/config.ts");
+
+      throw _e21;
     }
   }
 }];
@@ -14207,23 +15945,24 @@ exports.apiList = [{
   pageBuilder: function pageBuilder() {
     try {
       return PageActions_1["default"];
-    } catch (_e18) {
-      __reportError__(_e18, "", "/config.ts");
+    } catch (_e22) {
+      __reportError__(_e22, "", "/config.ts");
 
-      throw _e18;
+      throw _e22;
     }
   }
 }, {
   title: 'Modal Actions',
   desc: '模态页面操作',
+  useInject: false,
   pageName: 'api-modal-actions',
   pageBuilder: function pageBuilder() {
     try {
       return ModalActions_1["default"];
-    } catch (_e19) {
-      __reportError__(_e19, "", "/config.ts");
+    } catch (_e23) {
+      __reportError__(_e23, "", "/config.ts");
 
-      throw _e19;
+      throw _e23;
     }
   }
 }, {
@@ -14233,10 +15972,36 @@ exports.apiList = [{
   pageBuilder: function pageBuilder() {
     try {
       return ToastActions_1["default"];
-    } catch (_e20) {
-      __reportError__(_e20, "", "/config.ts");
+    } catch (_e24) {
+      __reportError__(_e24, "", "/config.ts");
 
-      throw _e20;
+      throw _e24;
+    }
+  }
+}, {
+  title: 'Theme Provider',
+  desc: '主题换肤',
+  pageName: 'api-theme-provider',
+  pageBuilder: function pageBuilder() {
+    try {
+      return ThemeProviderActions_1["default"];
+    } catch (_e25) {
+      __reportError__(_e25, "", "/config.ts");
+
+      throw _e25;
+    }
+  }
+}, {
+  title: 'Timer Apis',
+  desc: '定时器操作',
+  pageName: 'api-timers',
+  pageBuilder: function pageBuilder() {
+    try {
+      return timer_1["default"];
+    } catch (_e26) {
+      __reportError__(_e26, "", "/config.ts");
+
+      throw _e26;
     }
   }
 }];
@@ -14245,10 +16010,10 @@ exports.extraPages = [{
   pageBuilder: function pageBuilder() {
     try {
       return PageActions_1.NextPage;
-    } catch (_e21) {
-      __reportError__(_e21, "", "/config.ts");
+    } catch (_e27) {
+      __reportError__(_e27, "", "/config.ts");
 
-      throw _e21;
+      throw _e27;
     }
   }
 }, {
@@ -14256,27 +16021,27 @@ exports.extraPages = [{
   pageBuilder: function pageBuilder() {
     try {
       return PageActions_1.ReplacePage;
-    } catch (_e22) {
-      __reportError__(_e22, "", "/config.ts");
+    } catch (_e28) {
+      __reportError__(_e28, "", "/config.ts");
 
-      throw _e22;
+      throw _e28;
     }
   }
 }];
 
 /***/ }),
-/* 269 */
+/* 276 */
 /***/ (function(module, exports, __webpack_require__) {
 
 
 
 var _interopRequireDefault = __webpack_require__(1);
 
-var _defineProperty = _interopRequireDefault(__webpack_require__(89));
+var _setPrototypeOf = _interopRequireDefault(__webpack_require__(248));
 
-var _create = _interopRequireDefault(__webpack_require__(243));
+var _create = _interopRequireDefault(__webpack_require__(252));
 
-var _setPrototypeOf = _interopRequireDefault(__webpack_require__(247));
+var _defineProperty = _interopRequireDefault(__webpack_require__(2));
 
 var __extends = void 0 && (void 0).__extends || function () {
   try {
@@ -14346,11 +16111,11 @@ var __extends = void 0 && (void 0).__extends || function () {
 
 var thresh_lib_1 = __webpack_require__(93);
 
-var config_1 = __webpack_require__(268);
+var config_1 = __webpack_require__(275);
 
-var Box_1 = __webpack_require__(270);
+var Box_1 = __webpack_require__(277);
 
-var Center_1 = __webpack_require__(277);
+var Center_1 = __webpack_require__(284);
 
 var Page = thresh_lib_1.basicWidgets.Page,
     AppBar = thresh_lib_1.basicWidgets.AppBar,
@@ -14374,6 +16139,16 @@ function (_super) {
       }
     }
 
+    PageAppBar.prototype.widgetDidMount = function () {
+      try {
+        thresh_lib_1["default"].pageDidShow();
+      } catch (_e8) {
+        __reportError__(_e8, "", "/pages/basic/PageAppBar.tsx");
+
+        throw _e8;
+      }
+    };
+
     PageAppBar.prototype.render = function () {
       try {
         return thresh_lib_1["default"].createElement(Page, {
@@ -14391,14 +16166,14 @@ function (_super) {
               onTap: function onTap() {
                 try {
                   thresh_lib_1["default"].popPage();
-                } catch (_e8) {
-                  __reportError__(_e8, "", "/pages/basic/PageAppBar.tsx");
+                } catch (_e9) {
+                  __reportError__(_e9, "", "/pages/basic/PageAppBar.tsx");
 
-                  throw _e8;
+                  throw _e9;
                 }
               }
             }, thresh_lib_1["default"].createElement(Icon, {
-              type: "arrow_back_ios",
+              type: "arrow_back",
               color: config_1.Colors.Primary
             }))),
             buttons: [thresh_lib_1["default"].createElement(Text, {
@@ -14407,10 +16182,10 @@ function (_super) {
               onTap: function onTap() {
                 try {
                   thresh_lib_1["default"].popPage();
-                } catch (_e9) {
-                  __reportError__(_e9, "", "/pages/basic/PageAppBar.tsx");
+                } catch (_e10) {
+                  __reportError__(_e10, "", "/pages/basic/PageAppBar.tsx");
 
-                  throw _e9;
+                  throw _e10;
                 }
               }
             }, "\u8FD4\u56DE"), thresh_lib_1["default"].createElement(Center_1["default"], {
@@ -14424,10 +16199,10 @@ function (_super) {
               onTap: function onTap() {
                 try {
                   thresh_lib_1["default"].popPage();
-                } catch (_e10) {
-                  __reportError__(_e10, "", "/pages/basic/PageAppBar.tsx");
+                } catch (_e11) {
+                  __reportError__(_e11, "", "/pages/basic/PageAppBar.tsx");
 
-                  throw _e10;
+                  throw _e11;
                 }
               }
             }, thresh_lib_1["default"].createElement(Icon, {
@@ -14441,38 +16216,38 @@ function (_super) {
         }, "\u672C\u9875\u9762\u7684\u6839\u5BB9\u5668\u4E3A Page \u7EC4\u4EF6\u3002")), thresh_lib_1["default"].createElement(Box_1["default"], null, thresh_lib_1["default"].createElement(Text, {
           color: config_1.Colors.Darkgray
         }, "\u901A\u8FC7\u81EA\u5B9A\u4E49 AppBar \u7EC4\u4EF6\u7684\u6807\u9898\u3001\u8FD4\u56DE\u6309\u94AE\u548C\u53F3\u4FA7\u6309\u94AE\u5217\u8868\uFF0C\u5B9E\u73B0\u4E86\u70B9\u51FB\u8FD4\u56DE\u6309\u94AE\u548C\u53F3\u4FA7\u6309\u94AE\u90FD\u53EF\u4EE5\u8FD4\u56DE\u5230\u4E0A\u7EA7\u9875\u9762\u7684\u529F\u80FD\u3002")));
-      } catch (_e11) {
-        __reportError__(_e11, "", "/pages/basic/PageAppBar.tsx");
+      } catch (_e12) {
+        __reportError__(_e12, "", "/pages/basic/PageAppBar.tsx");
 
-        throw _e11;
+        throw _e12;
       }
     };
 
     return PageAppBar;
-  } catch (_e12) {
-    __reportError__(_e12, "", "/pages/basic/PageAppBar.tsx");
+  } catch (_e13) {
+    __reportError__(_e13, "", "/pages/basic/PageAppBar.tsx");
 
-    throw _e12;
+    throw _e13;
   }
 }(thresh_lib_1["default"].Widget);
 
 exports["default"] = PageAppBar;
 
 /***/ }),
-/* 270 */
+/* 277 */
 /***/ (function(module, exports, __webpack_require__) {
 
 
 
 var _interopRequireDefault = __webpack_require__(1);
 
-var _bind = _interopRequireDefault(__webpack_require__(271));
+var _setPrototypeOf = _interopRequireDefault(__webpack_require__(248));
 
-var _defineProperty = _interopRequireDefault(__webpack_require__(89));
+var _create = _interopRequireDefault(__webpack_require__(252));
 
-var _create = _interopRequireDefault(__webpack_require__(243));
+var _defineProperty = _interopRequireDefault(__webpack_require__(2));
 
-var _setPrototypeOf = _interopRequireDefault(__webpack_require__(247));
+var _bind = _interopRequireDefault(__webpack_require__(278));
 
 var __extends = void 0 && (void 0).__extends || function () {
   try {
@@ -14542,7 +16317,7 @@ var __extends = void 0 && (void 0).__extends || function () {
 
 var thresh_lib_1 = __webpack_require__(93);
 
-var config_1 = __webpack_require__(268);
+var config_1 = __webpack_require__(275);
 
 var MARGIN = 10;
 var Container = thresh_lib_1.basicWidgets.Container;
@@ -14620,25 +16395,25 @@ function (_super) {
 exports["default"] = Box;
 
 /***/ }),
-/* 271 */
+/* 278 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(272);
+module.exports = __webpack_require__(279);
 
 /***/ }),
-/* 272 */
+/* 279 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var parent = __webpack_require__(273);
+var parent = __webpack_require__(280);
 
 module.exports = parent;
 
 
 /***/ }),
-/* 273 */
+/* 280 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var bind = __webpack_require__(274);
+var bind = __webpack_require__(281);
 
 var FunctionPrototype = Function.prototype;
 
@@ -14649,37 +16424,37 @@ module.exports = function (it) {
 
 
 /***/ }),
-/* 274 */
+/* 281 */
 /***/ (function(module, exports, __webpack_require__) {
 
-__webpack_require__(275);
-var entryVirtual = __webpack_require__(49);
+__webpack_require__(282);
+var entryVirtual = __webpack_require__(85);
 
 module.exports = entryVirtual('Function').bind;
 
 
 /***/ }),
-/* 275 */
+/* 282 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var $ = __webpack_require__(7);
-var bind = __webpack_require__(276);
+var $ = __webpack_require__(6);
+var bind = __webpack_require__(283);
 
 // `Function.prototype.bind` method
-// https://tc39.github.io/ecma262/#sec-function.prototype.bind
+// https://tc39.es/ecma262/#sec-function.prototype.bind
 $({ target: 'Function', proto: true }, {
   bind: bind
 });
 
 
 /***/ }),
-/* 276 */
+/* 283 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
-var aFunction = __webpack_require__(27);
-var isObject = __webpack_require__(20);
+var aFunction = __webpack_require__(26);
+var isObject = __webpack_require__(19);
 
 var slice = [].slice;
 var factories = {};
@@ -14687,13 +16462,13 @@ var factories = {};
 var construct = function (C, argsLength, args) {
   if (!(argsLength in factories)) {
     for (var list = [], i = 0; i < argsLength; i++) list[i] = 'a[' + i + ']';
-    // eslint-disable-next-line no-new-func
+    // eslint-disable-next-line no-new-func -- we have no proper alternatives, IE8- only
     factories[argsLength] = Function('C,a', 'return new C(' + list.join(',') + ')');
   } return factories[argsLength](C, args);
 };
 
 // `Function.prototype.bind` method implementation
-// https://tc39.github.io/ecma262/#sec-function.prototype.bind
+// https://tc39.es/ecma262/#sec-function.prototype.bind
 module.exports = Function.bind || function bind(that /* , ...args */) {
   var fn = aFunction(this);
   var partArgs = slice.call(arguments, 1);
@@ -14707,24 +16482,24 @@ module.exports = Function.bind || function bind(that /* , ...args */) {
 
 
 /***/ }),
-/* 277 */
+/* 284 */
 /***/ (function(module, exports, __webpack_require__) {
 
 
 
 var _interopRequireDefault = __webpack_require__(1);
 
-var _defineProperty = _interopRequireDefault(__webpack_require__(89));
+var _setPrototypeOf = _interopRequireDefault(__webpack_require__(248));
 
-var _getOwnPropertySymbols = _interopRequireDefault(__webpack_require__(278));
+var _create = _interopRequireDefault(__webpack_require__(252));
 
-var _indexOf = _interopRequireDefault(__webpack_require__(220));
+var _assign = _interopRequireDefault(__webpack_require__(199));
 
-var _assign = _interopRequireDefault(__webpack_require__(170));
+var _indexOf = _interopRequireDefault(__webpack_require__(205));
 
-var _create = _interopRequireDefault(__webpack_require__(243));
+var _getOwnPropertySymbols = _interopRequireDefault(__webpack_require__(285));
 
-var _setPrototypeOf = _interopRequireDefault(__webpack_require__(247));
+var _defineProperty = _interopRequireDefault(__webpack_require__(2));
 
 var __extends = void 0 && (void 0).__extends || function () {
   try {
@@ -14887,43 +16662,43 @@ function (_super) {
 exports["default"] = Center;
 
 /***/ }),
-/* 278 */
+/* 285 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(279);
+module.exports = __webpack_require__(286);
 
 /***/ }),
-/* 279 */
+/* 286 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var parent = __webpack_require__(280);
+var parent = __webpack_require__(287);
 
 module.exports = parent;
 
 
 /***/ }),
-/* 280 */
+/* 287 */
 /***/ (function(module, exports, __webpack_require__) {
 
-__webpack_require__(111);
-var path = __webpack_require__(25);
+__webpack_require__(127);
+var path = __webpack_require__(24);
 
 module.exports = path.Object.getOwnPropertySymbols;
 
 
 /***/ }),
-/* 281 */
+/* 288 */
 /***/ (function(module, exports, __webpack_require__) {
 
 
 
 var _interopRequireDefault = __webpack_require__(1);
 
-var _defineProperty = _interopRequireDefault(__webpack_require__(89));
+var _setPrototypeOf = _interopRequireDefault(__webpack_require__(248));
 
-var _create = _interopRequireDefault(__webpack_require__(243));
+var _create = _interopRequireDefault(__webpack_require__(252));
 
-var _setPrototypeOf = _interopRequireDefault(__webpack_require__(247));
+var _defineProperty = _interopRequireDefault(__webpack_require__(2));
 
 var __extends = void 0 && (void 0).__extends || function () {
   try {
@@ -14993,11 +16768,11 @@ var __extends = void 0 && (void 0).__extends || function () {
 
 var thresh_lib_1 = __webpack_require__(93);
 
-var config_1 = __webpack_require__(268);
+var config_1 = __webpack_require__(275);
 
-var Title_1 = __webpack_require__(282);
+var Title_1 = __webpack_require__(289);
 
-var Box_1 = __webpack_require__(270);
+var Box_1 = __webpack_require__(277);
 
 var Page = thresh_lib_1.basicWidgets.Page,
     AppBar = thresh_lib_1.basicWidgets.AppBar,
@@ -15020,6 +16795,16 @@ function (_super) {
       }
     }
 
+    ContainerDemo.prototype.widgetDidMount = function () {
+      try {
+        thresh_lib_1["default"].pageDidShow();
+      } catch (_e8) {
+        __reportError__(_e8, "", "/pages/basic/ContainerDemo.tsx");
+
+        throw _e8;
+      }
+    };
+
     ContainerDemo.prototype.render = function () {
       try {
         return thresh_lib_1["default"].createElement(Page, {
@@ -15037,7 +16822,7 @@ function (_super) {
           margin: 5,
           flex: 1,
           height: 50,
-          backgroundColor: config_1.Colors.Primary,
+          backgroundColor: config_1.Colors.Red,
           borderRadius: 5
         }), thresh_lib_1["default"].createElement(Container, {
           margin: 5,
@@ -15103,36 +16888,36 @@ function (_super) {
           backgroundColor: config_1.Colors.Primary,
           borderRadius: 5
         })))));
-      } catch (_e8) {
-        __reportError__(_e8, "", "/pages/basic/ContainerDemo.tsx");
+      } catch (_e9) {
+        __reportError__(_e9, "", "/pages/basic/ContainerDemo.tsx");
 
-        throw _e8;
+        throw _e9;
       }
     };
 
     return ContainerDemo;
-  } catch (_e9) {
-    __reportError__(_e9, "", "/pages/basic/ContainerDemo.tsx");
+  } catch (_e10) {
+    __reportError__(_e10, "", "/pages/basic/ContainerDemo.tsx");
 
-    throw _e9;
+    throw _e10;
   }
 }(thresh_lib_1["default"].Widget);
 
 exports["default"] = ContainerDemo;
 
 /***/ }),
-/* 282 */
+/* 289 */
 /***/ (function(module, exports, __webpack_require__) {
 
 
 
 var _interopRequireDefault = __webpack_require__(1);
 
-var _defineProperty = _interopRequireDefault(__webpack_require__(89));
+var _setPrototypeOf = _interopRequireDefault(__webpack_require__(248));
 
-var _create = _interopRequireDefault(__webpack_require__(243));
+var _create = _interopRequireDefault(__webpack_require__(252));
 
-var _setPrototypeOf = _interopRequireDefault(__webpack_require__(247));
+var _defineProperty = _interopRequireDefault(__webpack_require__(2));
 
 var __extends = void 0 && (void 0).__extends || function () {
   try {
@@ -15202,7 +16987,7 @@ var __extends = void 0 && (void 0).__extends || function () {
 
 var thresh_lib_1 = __webpack_require__(93);
 
-var config_1 = __webpack_require__(268);
+var config_1 = __webpack_require__(275);
 
 var Text = thresh_lib_1.basicWidgets.Text;
 
@@ -15258,18 +17043,18 @@ function (_super) {
 exports["default"] = Title;
 
 /***/ }),
-/* 283 */
+/* 290 */
 /***/ (function(module, exports, __webpack_require__) {
 
 
 
 var _interopRequireDefault = __webpack_require__(1);
 
-var _defineProperty = _interopRequireDefault(__webpack_require__(89));
+var _setPrototypeOf = _interopRequireDefault(__webpack_require__(248));
 
-var _create = _interopRequireDefault(__webpack_require__(243));
+var _create = _interopRequireDefault(__webpack_require__(252));
 
-var _setPrototypeOf = _interopRequireDefault(__webpack_require__(247));
+var _defineProperty = _interopRequireDefault(__webpack_require__(2));
 
 var __extends = void 0 && (void 0).__extends || function () {
   try {
@@ -15339,11 +17124,13 @@ var __extends = void 0 && (void 0).__extends || function () {
 
 var thresh_lib_1 = __webpack_require__(93);
 
-var config_1 = __webpack_require__(268);
+var config_1 = __webpack_require__(275);
 
-var Title_1 = __webpack_require__(282);
+var Title_1 = __webpack_require__(289);
 
-var Box_1 = __webpack_require__(270);
+var Box_1 = __webpack_require__(277);
+
+var basicWidget_1 = __webpack_require__(247);
 
 var Page = thresh_lib_1.basicWidgets.Page,
     AppBar = thresh_lib_1.basicWidgets.AppBar,
@@ -15365,6 +17152,16 @@ function (_super) {
         throw _e7;
       }
     }
+
+    TextDemo.prototype.widgetDidMount = function () {
+      try {
+        thresh_lib_1["default"].pageDidShow();
+      } catch (_e8) {
+        __reportError__(_e8, "", "/pages/basic/TextDemo.tsx");
+
+        throw _e8;
+      }
+    };
 
     TextDemo.prototype.render = function () {
       try {
@@ -15395,37 +17192,48 @@ function (_super) {
             weight: 'bolder',
             size: 20
           }]
-        }, "\u8FD9\u662F\u4E00\u6BB5\u5BCC\u6587\u672C\uFF0C"))));
-      } catch (_e8) {
-        __reportError__(_e8, "", "/pages/basic/TextDemo.tsx");
+        }, "\u8FD9\u662F\u4E00\u6BB5\u5BCC\u6587\u672C\uFF0C")), thresh_lib_1["default"].createElement(Box_1["default"], null, thresh_lib_1["default"].createElement(basicWidget_1.Container, {
+          height: 50,
+          border: {
+            color: config_1.Colors.Primary
+          },
+          justifyContent: "center",
+          alignItems: "center"
+        }, thresh_lib_1["default"].createElement(Text, {
+          border: {
+            color: config_1.Colors.Red
+          }
+        }, "HFJKHDSJFHJSDHFJKD")))));
+      } catch (_e9) {
+        __reportError__(_e9, "", "/pages/basic/TextDemo.tsx");
 
-        throw _e8;
+        throw _e9;
       }
     };
 
     return TextDemo;
-  } catch (_e9) {
-    __reportError__(_e9, "", "/pages/basic/TextDemo.tsx");
+  } catch (_e10) {
+    __reportError__(_e10, "", "/pages/basic/TextDemo.tsx");
 
-    throw _e9;
+    throw _e10;
   }
 }(thresh_lib_1["default"].Widget);
 
 exports["default"] = TextDemo;
 
 /***/ }),
-/* 284 */
+/* 291 */
 /***/ (function(module, exports, __webpack_require__) {
 
 
 
 var _interopRequireDefault = __webpack_require__(1);
 
-var _defineProperty = _interopRequireDefault(__webpack_require__(89));
+var _setPrototypeOf = _interopRequireDefault(__webpack_require__(248));
 
-var _create = _interopRequireDefault(__webpack_require__(243));
+var _create = _interopRequireDefault(__webpack_require__(252));
 
-var _setPrototypeOf = _interopRequireDefault(__webpack_require__(247));
+var _defineProperty = _interopRequireDefault(__webpack_require__(2));
 
 var __extends = void 0 && (void 0).__extends || function () {
   try {
@@ -15495,13 +17303,13 @@ var __extends = void 0 && (void 0).__extends || function () {
 
 var thresh_lib_1 = __webpack_require__(93);
 
-var config_1 = __webpack_require__(268);
+var config_1 = __webpack_require__(275);
 
-var Title_1 = __webpack_require__(282);
+var Title_1 = __webpack_require__(289);
 
-var Box_1 = __webpack_require__(270);
+var Box_1 = __webpack_require__(277);
 
-var test_image_png_1 = __webpack_require__(285);
+var test_image_png_1 = __webpack_require__(292);
 
 var Page = thresh_lib_1.basicWidgets.Page,
     AppBar = thresh_lib_1.basicWidgets.AppBar,
@@ -15564,7 +17372,7 @@ function (_super) {
 exports["default"] = ImageDemo;
 
 /***/ }),
-/* 285 */
+/* 292 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -15572,20 +17380,159 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony default export */ __webpack_exports__["default"] = ('/assets/test_image.png');
 
 /***/ }),
-/* 286 */
+/* 293 */
 /***/ (function(module, exports, __webpack_require__) {
 
 
 
 var _interopRequireDefault = __webpack_require__(1);
 
-var _map = _interopRequireDefault(__webpack_require__(238));
+var _setPrototypeOf = _interopRequireDefault(__webpack_require__(248));
 
-var _defineProperty = _interopRequireDefault(__webpack_require__(89));
+var _create = _interopRequireDefault(__webpack_require__(252));
 
-var _create = _interopRequireDefault(__webpack_require__(243));
+var _defineProperty = _interopRequireDefault(__webpack_require__(2));
 
-var _setPrototypeOf = _interopRequireDefault(__webpack_require__(247));
+var __extends = void 0 && (void 0).__extends || function () {
+  try {
+    var _extendStatics = function extendStatics(d, b) {
+      try {
+        _extendStatics = _setPrototypeOf["default"] || {
+          __proto__: []
+        } instanceof Array && function (d, b) {
+          try {
+            d.__proto__ = b;
+          } catch (_e) {
+            __reportError__(_e, "", "/pages/basic/QrImageDemo.tsx");
+
+            throw _e;
+          }
+        } || function (d, b) {
+          try {
+            for (var p in b) {
+              if (b.hasOwnProperty(p)) d[p] = b[p];
+            }
+          } catch (_e2) {
+            __reportError__(_e2, "", "/pages/basic/QrImageDemo.tsx");
+
+            throw _e2;
+          }
+        };
+
+        return _extendStatics(d, b);
+      } catch (_e3) {
+        __reportError__(_e3, "extendStatics", "/pages/basic/QrImageDemo.tsx");
+
+        throw _e3;
+      }
+    };
+
+    return function (d, b) {
+      try {
+        _extendStatics(d, b);
+
+        function __() {
+          try {
+            this.constructor = d;
+          } catch (_e4) {
+            __reportError__(_e4, "", "/pages/basic/QrImageDemo.tsx");
+
+            throw _e4;
+          }
+        }
+
+        d.prototype = b === null ? (0, _create["default"])(b) : (__.prototype = b.prototype, new __());
+      } catch (_e5) {
+        __reportError__(_e5, "", "/pages/basic/QrImageDemo.tsx");
+
+        throw _e5;
+      }
+    };
+  } catch (_e6) {
+    __reportError__(_e6, "", "/pages/basic/QrImageDemo.tsx");
+
+    throw _e6;
+  }
+}();
+
+(0, _defineProperty["default"])(exports, "__esModule", {
+  value: true
+});
+
+var thresh_lib_1 = __webpack_require__(93);
+
+var config_1 = __webpack_require__(275);
+
+var Title_1 = __webpack_require__(289);
+
+var Box_1 = __webpack_require__(277);
+
+var Page = thresh_lib_1.basicWidgets.Page,
+    AppBar = thresh_lib_1.basicWidgets.AppBar,
+    QrImage = thresh_lib_1.basicWidgets.QrImage;
+
+var QrImageDemo =
+/** @class */
+function (_super) {
+  try {
+    __extends(QrImageDemo, _super);
+
+    function QrImageDemo() {
+      try {
+        return _super !== null && _super.apply(this, arguments) || this;
+      } catch (_e7) {
+        __reportError__(_e7, "", "/pages/basic/QrImageDemo.tsx");
+
+        throw _e7;
+      }
+    }
+
+    QrImageDemo.prototype.render = function () {
+      try {
+        return thresh_lib_1["default"].createElement(Page, {
+          backgroundColor: config_1.Colors.Pagebg,
+          appBar: thresh_lib_1["default"].createElement(AppBar, {
+            title: "QrImage \u4E8C\u7EF4\u7801\u7EC4\u4EF6"
+          })
+        }, thresh_lib_1["default"].createElement(Title_1["default"], {
+          title: "\u4E8C\u7EF4\u7801"
+        }), thresh_lib_1["default"].createElement(Box_1["default"], null, thresh_lib_1["default"].createElement(QrImage, {
+          text: "http://dmimg.5054399.com/allimg/pkm/pk/22.jpg",
+          backgroundColor: 0xffFFFBF9,
+          foregroundColor: 0xffFF5B00
+        })));
+      } catch (_e8) {
+        __reportError__(_e8, "", "/pages/basic/QrImageDemo.tsx");
+
+        throw _e8;
+      }
+    };
+
+    return QrImageDemo;
+  } catch (_e9) {
+    __reportError__(_e9, "", "/pages/basic/QrImageDemo.tsx");
+
+    throw _e9;
+  }
+}(thresh_lib_1["default"].Widget);
+
+exports["default"] = QrImageDemo;
+
+/***/ }),
+/* 294 */
+/***/ (function(module, exports, __webpack_require__) {
+
+
+
+var _interopRequireDefault = __webpack_require__(1);
+
+var _setPrototypeOf = _interopRequireDefault(__webpack_require__(248));
+
+var _create = _interopRequireDefault(__webpack_require__(252));
+
+var _defineProperty = _interopRequireDefault(__webpack_require__(2));
+
+var _map = _interopRequireDefault(__webpack_require__(227));
 
 var __extends = void 0 && (void 0).__extends || function () {
   try {
@@ -15655,9 +17602,9 @@ var __extends = void 0 && (void 0).__extends || function () {
 
 var thresh_lib_1 = __webpack_require__(93);
 
-var Center_1 = __webpack_require__(277);
+var Center_1 = __webpack_require__(284);
 
-var Title_1 = __webpack_require__(282);
+var Title_1 = __webpack_require__(289);
 
 var Page = thresh_lib_1.basicWidgets.Page,
     AppBar = thresh_lib_1.basicWidgets.AppBar,
@@ -15739,22 +17686,22 @@ function (_super) {
 exports["default"] = IconDemo;
 
 /***/ }),
-/* 287 */
+/* 295 */
 /***/ (function(module, exports, __webpack_require__) {
 
 
 
 var _interopRequireDefault = __webpack_require__(1);
 
-var _fill = _interopRequireDefault(__webpack_require__(288));
+var _setPrototypeOf = _interopRequireDefault(__webpack_require__(248));
 
-var _map = _interopRequireDefault(__webpack_require__(238));
+var _create = _interopRequireDefault(__webpack_require__(252));
 
-var _defineProperty = _interopRequireDefault(__webpack_require__(89));
+var _defineProperty = _interopRequireDefault(__webpack_require__(2));
 
-var _create = _interopRequireDefault(__webpack_require__(243));
+var _map = _interopRequireDefault(__webpack_require__(227));
 
-var _setPrototypeOf = _interopRequireDefault(__webpack_require__(247));
+var _fill = _interopRequireDefault(__webpack_require__(296));
 
 var __extends = void 0 && (void 0).__extends || function () {
   try {
@@ -15824,11 +17771,11 @@ var __extends = void 0 && (void 0).__extends || function () {
 
 var thresh_lib_1 = __webpack_require__(93);
 
-var Box_1 = __webpack_require__(270);
+var Box_1 = __webpack_require__(277);
 
-var Title_1 = __webpack_require__(282);
+var Title_1 = __webpack_require__(289);
 
-var config_1 = __webpack_require__(268);
+var config_1 = __webpack_require__(275);
 
 var Page = thresh_lib_1.basicWidgets.Page,
     AppBar = thresh_lib_1.basicWidgets.AppBar,
@@ -15920,25 +17867,25 @@ function (_super) {
 exports["default"] = ScrollViewDemo;
 
 /***/ }),
-/* 288 */
+/* 296 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(289);
+module.exports = __webpack_require__(297);
 
 /***/ }),
-/* 289 */
+/* 297 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var parent = __webpack_require__(290);
+var parent = __webpack_require__(298);
 
 module.exports = parent;
 
 
 /***/ }),
-/* 290 */
+/* 298 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var fill = __webpack_require__(291);
+var fill = __webpack_require__(299);
 
 var ArrayPrototype = Array.prototype;
 
@@ -15949,45 +17896,45 @@ module.exports = function (it) {
 
 
 /***/ }),
-/* 291 */
+/* 299 */
 /***/ (function(module, exports, __webpack_require__) {
 
-__webpack_require__(292);
-var entryVirtual = __webpack_require__(49);
+__webpack_require__(300);
+var entryVirtual = __webpack_require__(85);
 
 module.exports = entryVirtual('Array').fill;
 
 
 /***/ }),
-/* 292 */
+/* 300 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var $ = __webpack_require__(7);
-var fill = __webpack_require__(293);
-var addToUnscopables = __webpack_require__(54);
+var $ = __webpack_require__(6);
+var fill = __webpack_require__(301);
+var addToUnscopables = __webpack_require__(34);
 
 // `Array.prototype.fill` method
-// https://tc39.github.io/ecma262/#sec-array.prototype.fill
+// https://tc39.es/ecma262/#sec-array.prototype.fill
 $({ target: 'Array', proto: true }, {
   fill: fill
 });
 
-// https://tc39.github.io/ecma262/#sec-array.prototype-@@unscopables
+// https://tc39.es/ecma262/#sec-array.prototype-@@unscopables
 addToUnscopables('fill');
 
 
 /***/ }),
-/* 293 */
+/* 301 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
-var toObject = __webpack_require__(32);
-var toAbsoluteIndex = __webpack_require__(71);
-var toLength = __webpack_require__(33);
+var toObject = __webpack_require__(50);
+var toAbsoluteIndex = __webpack_require__(66);
+var toLength = __webpack_require__(64);
 
 // `Array.prototype.fill` method implementation
-// https://tc39.github.io/ecma262/#sec-array.prototype.fill
+// https://tc39.es/ecma262/#sec-array.prototype.fill
 module.exports = function fill(value /* , start = 0, end = @length */) {
   var O = toObject(this);
   var length = toLength(O.length);
@@ -16001,30 +17948,30 @@ module.exports = function fill(value /* , start = 0, end = @length */) {
 
 
 /***/ }),
-/* 294 */
+/* 302 */
 /***/ (function(module, exports, __webpack_require__) {
 
 
 
 var _interopRequireDefault = __webpack_require__(1);
 
-var _setTimeout2 = _interopRequireDefault(__webpack_require__(295));
+var _setPrototypeOf = _interopRequireDefault(__webpack_require__(248));
 
-var _promise = _interopRequireDefault(__webpack_require__(130));
+var _create = _interopRequireDefault(__webpack_require__(252));
 
-var _reverse = _interopRequireDefault(__webpack_require__(298));
+var _assign = _interopRequireDefault(__webpack_require__(199));
 
-var _splice = _interopRequireDefault(__webpack_require__(195));
+var _defineProperty = _interopRequireDefault(__webpack_require__(2));
 
-var _map = _interopRequireDefault(__webpack_require__(238));
+var _map = _interopRequireDefault(__webpack_require__(227));
 
-var _defineProperty = _interopRequireDefault(__webpack_require__(89));
+var _splice = _interopRequireDefault(__webpack_require__(184));
 
-var _assign = _interopRequireDefault(__webpack_require__(170));
+var _reverse = _interopRequireDefault(__webpack_require__(303));
 
-var _create = _interopRequireDefault(__webpack_require__(243));
+var _promise = _interopRequireDefault(__webpack_require__(95));
 
-var _setPrototypeOf = _interopRequireDefault(__webpack_require__(247));
+var _setTimeout2 = _interopRequireDefault(__webpack_require__(308));
 
 var __extends = void 0 && (void 0).__extends || function () {
   try {
@@ -16142,7 +18089,7 @@ var __spreadArrays = void 0 && (void 0).__spreadArrays || function () {
 
 var thresh_lib_1 = __webpack_require__(93);
 
-var config_1 = __webpack_require__(268);
+var config_1 = __webpack_require__(275);
 
 var Page = thresh_lib_1.basicWidgets.Page,
     AppBar = thresh_lib_1.basicWidgets.AppBar,
@@ -16341,8 +18288,7 @@ function (_super) {
           },
           onLoadMore: function onLoadMore() {
             try {
-              var page = _this.state.page;
-              if (page >= 5) return _promise["default"].resolve();
+              var page = _this.state.page; // if (page >= 5) return Promise.resolve()
 
               _this.setState({
                 loading: true
@@ -16384,7 +18330,8 @@ function (_super) {
           alignItems: "center"
         }, this.state.loading ? thresh_lib_1["default"].createElement(Icon, {
           type: "loading"
-        }) : thresh_lib_1["default"].createElement(Text, null, this.state.page >= 5 ? '没有更多了' : '上拉加载更多'))));
+        }) // : <Text>{this.state.page >= 5 ? '没有更多了' : '上拉加载更多'}</Text>
+        : thresh_lib_1["default"].createElement(Text, null, "\u4E0A\u62C9\u52A0\u8F7D\u66F4\u591A"))));
       } catch (_e24) {
         __reportError__(_e24, "", "/pages/basic/ListViewDemo.tsx");
 
@@ -16553,28 +18500,92 @@ function (_super) {
 }(thresh_lib_1["default"].Widget);
 
 /***/ }),
-/* 295 */
+/* 303 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(296);
+module.exports = __webpack_require__(304);
 
 /***/ }),
-/* 296 */
+/* 304 */
 /***/ (function(module, exports, __webpack_require__) {
 
-__webpack_require__(297);
-var path = __webpack_require__(25);
+var parent = __webpack_require__(305);
+
+module.exports = parent;
+
+
+/***/ }),
+/* 305 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var reverse = __webpack_require__(306);
+
+var ArrayPrototype = Array.prototype;
+
+module.exports = function (it) {
+  var own = it.reverse;
+  return it === ArrayPrototype || (it instanceof Array && own === ArrayPrototype.reverse) ? reverse : own;
+};
+
+
+/***/ }),
+/* 306 */
+/***/ (function(module, exports, __webpack_require__) {
+
+__webpack_require__(307);
+var entryVirtual = __webpack_require__(85);
+
+module.exports = entryVirtual('Array').reverse;
+
+
+/***/ }),
+/* 307 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var $ = __webpack_require__(6);
+var isArray = __webpack_require__(83);
+
+var nativeReverse = [].reverse;
+var test = [1, 2];
+
+// `Array.prototype.reverse` method
+// https://tc39.es/ecma262/#sec-array.prototype.reverse
+// fix for Safari 12.0 bug
+// https://bugs.webkit.org/show_bug.cgi?id=188794
+$({ target: 'Array', proto: true, forced: String(test) === String(test.reverse()) }, {
+  reverse: function reverse() {
+    // eslint-disable-next-line no-self-assign -- dirty hack
+    if (isArray(this)) this.length = this.length;
+    return nativeReverse.call(this);
+  }
+});
+
+
+/***/ }),
+/* 308 */
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports = __webpack_require__(309);
+
+/***/ }),
+/* 309 */
+/***/ (function(module, exports, __webpack_require__) {
+
+__webpack_require__(310);
+var path = __webpack_require__(24);
 
 module.exports = path.setTimeout;
 
 
 /***/ }),
-/* 297 */
+/* 310 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var $ = __webpack_require__(7);
-var global = __webpack_require__(8);
-var userAgent = __webpack_require__(47);
+var $ = __webpack_require__(6);
+var global = __webpack_require__(7);
+var userAgent = __webpack_require__(56);
 
 var slice = [].slice;
 var MSIE = /MSIE .\./.test(userAgent); // <- dirty ie9- check
@@ -16584,7 +18595,7 @@ var wrap = function (scheduler) {
     var boundArgs = arguments.length > 2;
     var args = boundArgs ? slice.call(arguments, 2) : undefined;
     return scheduler(boundArgs ? function () {
-      // eslint-disable-next-line no-new-func
+      // eslint-disable-next-line no-new-func -- spec requirement
       (typeof handler == 'function' ? handler : Function(handler)).apply(this, args);
     } : handler, timeout);
   };
@@ -16603,82 +18614,18 @@ $({ global: true, bind: true, forced: MSIE }, {
 
 
 /***/ }),
-/* 298 */
-/***/ (function(module, exports, __webpack_require__) {
-
-module.exports = __webpack_require__(299);
-
-/***/ }),
-/* 299 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var parent = __webpack_require__(300);
-
-module.exports = parent;
-
-
-/***/ }),
-/* 300 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var reverse = __webpack_require__(301);
-
-var ArrayPrototype = Array.prototype;
-
-module.exports = function (it) {
-  var own = it.reverse;
-  return it === ArrayPrototype || (it instanceof Array && own === ArrayPrototype.reverse) ? reverse : own;
-};
-
-
-/***/ }),
-/* 301 */
-/***/ (function(module, exports, __webpack_require__) {
-
-__webpack_require__(302);
-var entryVirtual = __webpack_require__(49);
-
-module.exports = entryVirtual('Array').reverse;
-
-
-/***/ }),
-/* 302 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-var $ = __webpack_require__(7);
-var isArray = __webpack_require__(31);
-
-var nativeReverse = [].reverse;
-var test = [1, 2];
-
-// `Array.prototype.reverse` method
-// https://tc39.github.io/ecma262/#sec-array.prototype.reverse
-// fix for Safari 12.0 bug
-// https://bugs.webkit.org/show_bug.cgi?id=188794
-$({ target: 'Array', proto: true, forced: String(test) === String(test.reverse()) }, {
-  reverse: function reverse() {
-    // eslint-disable-next-line no-self-assign
-    if (isArray(this)) this.length = this.length;
-    return nativeReverse.call(this);
-  }
-});
-
-
-/***/ }),
-/* 303 */
+/* 311 */
 /***/ (function(module, exports, __webpack_require__) {
 
 
 
 var _interopRequireDefault = __webpack_require__(1);
 
-var _defineProperty = _interopRequireDefault(__webpack_require__(89));
+var _setPrototypeOf = _interopRequireDefault(__webpack_require__(248));
 
-var _create = _interopRequireDefault(__webpack_require__(243));
+var _create = _interopRequireDefault(__webpack_require__(252));
 
-var _setPrototypeOf = _interopRequireDefault(__webpack_require__(247));
+var _defineProperty = _interopRequireDefault(__webpack_require__(2));
 
 var __extends = void 0 && (void 0).__extends || function () {
   try {
@@ -16748,13 +18695,13 @@ var __extends = void 0 && (void 0).__extends || function () {
 
 var thresh_lib_1 = __webpack_require__(93);
 
-var Box_1 = __webpack_require__(270);
+var Box_1 = __webpack_require__(277);
 
-var Title_1 = __webpack_require__(282);
+var Title_1 = __webpack_require__(289);
 
-var config_1 = __webpack_require__(268);
+var config_1 = __webpack_require__(275);
 
-var Center_1 = __webpack_require__(277);
+var Center_1 = __webpack_require__(284);
 
 var Page = thresh_lib_1.basicWidgets.Page,
     AppBar = thresh_lib_1.basicWidgets.AppBar,
@@ -16904,22 +18851,22 @@ function (_super) {
 exports["default"] = SwipeActionsViewDemo;
 
 /***/ }),
-/* 304 */
+/* 312 */
 /***/ (function(module, exports, __webpack_require__) {
 
 
 
 var _interopRequireDefault = __webpack_require__(1);
 
-var _fill = _interopRequireDefault(__webpack_require__(288));
+var _setPrototypeOf = _interopRequireDefault(__webpack_require__(248));
 
-var _map = _interopRequireDefault(__webpack_require__(238));
+var _create = _interopRequireDefault(__webpack_require__(252));
 
-var _defineProperty = _interopRequireDefault(__webpack_require__(89));
+var _defineProperty = _interopRequireDefault(__webpack_require__(2));
 
-var _create = _interopRequireDefault(__webpack_require__(243));
+var _map = _interopRequireDefault(__webpack_require__(227));
 
-var _setPrototypeOf = _interopRequireDefault(__webpack_require__(247));
+var _fill = _interopRequireDefault(__webpack_require__(296));
 
 var __extends = void 0 && (void 0).__extends || function () {
   try {
@@ -16989,13 +18936,13 @@ var __extends = void 0 && (void 0).__extends || function () {
 
 var thresh_lib_1 = __webpack_require__(93);
 
-var Box_1 = __webpack_require__(270);
+var Box_1 = __webpack_require__(277);
 
-var Title_1 = __webpack_require__(282);
+var Title_1 = __webpack_require__(289);
 
-var config_1 = __webpack_require__(268);
+var config_1 = __webpack_require__(275);
 
-var Center_1 = __webpack_require__(277);
+var Center_1 = __webpack_require__(284);
 
 var Page = thresh_lib_1.basicWidgets.Page,
     AppBar = thresh_lib_1.basicWidgets.AppBar,
@@ -17055,7 +19002,8 @@ function (_super) {
           title: "\u6A2A\u5411\u6ED1\u52A8"
         }), thresh_lib_1["default"].createElement(Box_1["default"], null, thresh_lib_1["default"].createElement(SwiperView, {
           width: Box_1["default"].width,
-          height: thresh_lib_1.ui.screenHeight / 4
+          height: thresh_lib_1.ui.screenHeight / 4,
+          viewportFraction: 0.9
         }, this.renderContent())), thresh_lib_1["default"].createElement(Title_1["default"], {
           title: "\u7AD6\u5411\u6ED1\u52A8"
         }), thresh_lib_1["default"].createElement(Box_1["default"], null, thresh_lib_1["default"].createElement(SwiperView, {
@@ -17081,18 +19029,18 @@ function (_super) {
 exports["default"] = SwiperViewDemo;
 
 /***/ }),
-/* 305 */
+/* 313 */
 /***/ (function(module, exports, __webpack_require__) {
 
 
 
 var _interopRequireDefault = __webpack_require__(1);
 
-var _defineProperty = _interopRequireDefault(__webpack_require__(89));
+var _setPrototypeOf = _interopRequireDefault(__webpack_require__(248));
 
-var _create = _interopRequireDefault(__webpack_require__(243));
+var _create = _interopRequireDefault(__webpack_require__(252));
 
-var _setPrototypeOf = _interopRequireDefault(__webpack_require__(247));
+var _defineProperty = _interopRequireDefault(__webpack_require__(2));
 
 var __extends = void 0 && (void 0).__extends || function () {
   try {
@@ -17162,11 +19110,11 @@ var __extends = void 0 && (void 0).__extends || function () {
 
 var thresh_lib_1 = __webpack_require__(93);
 
-var Box_1 = __webpack_require__(270);
+var Box_1 = __webpack_require__(277);
 
-var config_1 = __webpack_require__(268);
+var config_1 = __webpack_require__(275);
 
-var basicWidget_1 = __webpack_require__(237);
+var basicWidget_1 = __webpack_require__(247);
 
 var Page = thresh_lib_1.basicWidgets.Page,
     AppBar = thresh_lib_1.basicWidgets.AppBar,
@@ -17224,20 +19172,20 @@ function (_super) {
 exports["default"] = NativeViewDemo;
 
 /***/ }),
-/* 306 */
+/* 314 */
 /***/ (function(module, exports, __webpack_require__) {
 
 
 
 var _interopRequireDefault = __webpack_require__(1);
 
-var _defineProperty = _interopRequireDefault(__webpack_require__(89));
+var _setPrototypeOf = _interopRequireDefault(__webpack_require__(248));
 
-var _assign = _interopRequireDefault(__webpack_require__(170));
+var _create = _interopRequireDefault(__webpack_require__(252));
 
-var _create = _interopRequireDefault(__webpack_require__(243));
+var _assign = _interopRequireDefault(__webpack_require__(199));
 
-var _setPrototypeOf = _interopRequireDefault(__webpack_require__(247));
+var _defineProperty = _interopRequireDefault(__webpack_require__(2));
 
 var __extends = void 0 && (void 0).__extends || function () {
   try {
@@ -17335,11 +19283,11 @@ var __assign = void 0 && (void 0).__assign || function () {
 
 var thresh_lib_1 = __webpack_require__(93);
 
-var config_1 = __webpack_require__(268);
+var config_1 = __webpack_require__(275);
 
-var Title_1 = __webpack_require__(282);
+var Title_1 = __webpack_require__(289);
 
-var Box_1 = __webpack_require__(270);
+var Box_1 = __webpack_require__(277);
 
 var Page = thresh_lib_1.basicWidgets.Page,
     AppBar = thresh_lib_1.basicWidgets.AppBar,
@@ -17436,20 +19384,20 @@ function (_super) {
 exports["default"] = ButtonDemo;
 
 /***/ }),
-/* 307 */
+/* 315 */
 /***/ (function(module, exports, __webpack_require__) {
 
 
 
 var _interopRequireDefault = __webpack_require__(1);
 
-var _map = _interopRequireDefault(__webpack_require__(238));
+var _setPrototypeOf = _interopRequireDefault(__webpack_require__(248));
 
-var _defineProperty = _interopRequireDefault(__webpack_require__(89));
+var _create = _interopRequireDefault(__webpack_require__(252));
 
-var _create = _interopRequireDefault(__webpack_require__(243));
+var _defineProperty = _interopRequireDefault(__webpack_require__(2));
 
-var _setPrototypeOf = _interopRequireDefault(__webpack_require__(247));
+var _map = _interopRequireDefault(__webpack_require__(227));
 
 var __extends = void 0 && (void 0).__extends || function () {
   try {
@@ -17519,11 +19467,11 @@ var __extends = void 0 && (void 0).__extends || function () {
 
 var thresh_lib_1 = __webpack_require__(93);
 
-var config_1 = __webpack_require__(268);
+var config_1 = __webpack_require__(275);
 
-var Title_1 = __webpack_require__(282);
+var Title_1 = __webpack_require__(289);
 
-var Box_1 = __webpack_require__(270);
+var Box_1 = __webpack_require__(277);
 
 var Page = thresh_lib_1.basicWidgets.Page,
     AppBar = thresh_lib_1.basicWidgets.AppBar,
@@ -17610,26 +19558,26 @@ function (_super) {
 exports["default"] = RadioDemo;
 
 /***/ }),
-/* 308 */
+/* 316 */
 /***/ (function(module, exports, __webpack_require__) {
 
 
 
 var _interopRequireDefault = __webpack_require__(1);
 
-var _bind = _interopRequireDefault(__webpack_require__(271));
+var _setPrototypeOf = _interopRequireDefault(__webpack_require__(248));
 
-var _map = _interopRequireDefault(__webpack_require__(238));
+var _create = _interopRequireDefault(__webpack_require__(252));
 
-var _indexOf = _interopRequireDefault(__webpack_require__(220));
+var _defineProperty = _interopRequireDefault(__webpack_require__(2));
 
-var _splice = _interopRequireDefault(__webpack_require__(195));
+var _splice = _interopRequireDefault(__webpack_require__(184));
 
-var _defineProperty = _interopRequireDefault(__webpack_require__(89));
+var _indexOf = _interopRequireDefault(__webpack_require__(205));
 
-var _create = _interopRequireDefault(__webpack_require__(243));
+var _map = _interopRequireDefault(__webpack_require__(227));
 
-var _setPrototypeOf = _interopRequireDefault(__webpack_require__(247));
+var _bind = _interopRequireDefault(__webpack_require__(278));
 
 var __extends = void 0 && (void 0).__extends || function () {
   try {
@@ -17699,11 +19647,11 @@ var __extends = void 0 && (void 0).__extends || function () {
 
 var thresh_lib_1 = __webpack_require__(93);
 
-var config_1 = __webpack_require__(268);
+var config_1 = __webpack_require__(275);
 
-var Title_1 = __webpack_require__(282);
+var Title_1 = __webpack_require__(289);
 
-var Box_1 = __webpack_require__(270);
+var Box_1 = __webpack_require__(277);
 
 var Page = thresh_lib_1.basicWidgets.Page,
     AppBar = thresh_lib_1.basicWidgets.AppBar,
@@ -17792,18 +19740,18 @@ function (_super) {
 exports["default"] = CheckboxDemo;
 
 /***/ }),
-/* 309 */
+/* 317 */
 /***/ (function(module, exports, __webpack_require__) {
 
 
 
 var _interopRequireDefault = __webpack_require__(1);
 
-var _defineProperty = _interopRequireDefault(__webpack_require__(89));
+var _setPrototypeOf = _interopRequireDefault(__webpack_require__(248));
 
-var _create = _interopRequireDefault(__webpack_require__(243));
+var _create = _interopRequireDefault(__webpack_require__(252));
 
-var _setPrototypeOf = _interopRequireDefault(__webpack_require__(247));
+var _defineProperty = _interopRequireDefault(__webpack_require__(2));
 
 var __extends = void 0 && (void 0).__extends || function () {
   try {
@@ -17873,14 +19821,15 @@ var __extends = void 0 && (void 0).__extends || function () {
 
 var thresh_lib_1 = __webpack_require__(93);
 
-var config_1 = __webpack_require__(268);
+var config_1 = __webpack_require__(275);
 
-var Title_1 = __webpack_require__(282);
+var Title_1 = __webpack_require__(289);
 
-var Box_1 = __webpack_require__(270);
+var Box_1 = __webpack_require__(277);
 
 var Page = thresh_lib_1.basicWidgets.Page,
     AppBar = thresh_lib_1.basicWidgets.AppBar,
+    Container = thresh_lib_1.basicWidgets.Container,
     Input = thresh_lib_1.basicWidgets.Input;
 
 var InputDemo =
@@ -17891,14 +19840,9 @@ function (_super) {
 
     function InputDemo() {
       try {
-        var _this = _super !== null && _super.apply(this, arguments) || this;
-
-        _this.state = {
-          value: ''
-        };
-        return _this;
+        return _super !== null && _super.apply(this, arguments) || this;
       } catch (_e7) {
-        __reportError__(_e7, "InputDemo", "/pages/basic/InputDemo.tsx");
+        __reportError__(_e7, "", "/pages/basic/InputDemo.tsx");
 
         throw _e7;
       }
@@ -17906,65 +19850,137 @@ function (_super) {
 
     InputDemo.prototype.render = function () {
       try {
-        var _this = this;
-
         return thresh_lib_1["default"].createElement(Page, {
           backgroundColor: config_1.Colors.Pagebg,
           appBar: thresh_lib_1["default"].createElement(AppBar, {
             title: "Input \u8F93\u5165\u6846\u7EC4\u4EF6"
           })
-        }, thresh_lib_1["default"].createElement(Title_1["default"], {
-          title: this.state.value ? '当前输入内容: ' + this.state.value : '当前未输入内容'
-        }), thresh_lib_1["default"].createElement(Box_1["default"], null, thresh_lib_1["default"].createElement(Input, {
-          value: this.state.value,
-          maxLines: 5,
-          placeholder: "\u8BF7\u8F93\u5165\u5185\u5BB9",
-          onChange: function onChange(_a) {
-            try {
-              var value = _a.value;
+        }, thresh_lib_1["default"].createElement(InputDemoBody, null));
+      } catch (_e8) {
+        __reportError__(_e8, "", "/pages/basic/InputDemo.tsx");
 
-              _this.setState({
-                value: value
-              });
-            } catch (_e8) {
-              __reportError__(_e8, "onChange", "/pages/basic/InputDemo.tsx");
-
-              throw _e8;
-            }
-          }
-        })));
-      } catch (_e9) {
-        __reportError__(_e9, "", "/pages/basic/InputDemo.tsx");
-
-        throw _e9;
+        throw _e8;
       }
     };
 
     return InputDemo;
-  } catch (_e10) {
-    __reportError__(_e10, "", "/pages/basic/InputDemo.tsx");
+  } catch (_e9) {
+    __reportError__(_e9, "", "/pages/basic/InputDemo.tsx");
 
-    throw _e10;
+    throw _e9;
   }
 }(thresh_lib_1["default"].Widget);
 
 exports["default"] = InputDemo;
 
+var InputDemoBody =
+/** @class */
+function (_super) {
+  try {
+    __extends(InputDemoBody, _super);
+
+    function InputDemoBody() {
+      try {
+        var _this = _super !== null && _super.apply(this, arguments) || this;
+
+        _this.state = {
+          value: ''
+        };
+        return _this;
+      } catch (_e10) {
+        __reportError__(_e10, "InputDemoBody", "/pages/basic/InputDemo.tsx");
+
+        throw _e10;
+      }
+    }
+
+    InputDemoBody.prototype.render = function () {
+      try {
+        var _this = this;
+
+        return thresh_lib_1["default"].createElement(Container, null, thresh_lib_1["default"].createElement(Title_1["default"], {
+          title: this.state.value ? "\u5F53\u524D\u8F93\u5165\u5185\u5BB9" + this.state.value.length + ": " + this.state.value : '当前未输入内容'
+        }), thresh_lib_1["default"].createElement(Box_1["default"], null, thresh_lib_1["default"].createElement(Input, {
+          padding: 10,
+          backgroundColor: config_1.Colors.Pagebg,
+          value: this.state.value,
+          placeholder: "\u8BF7\u8F93\u5165\u5185\u5BB9",
+          maxLength: 10,
+          onSubmitted: function onSubmitted(_a) {
+            try {
+              var value = _a.value;
+              thresh_lib_1.Util.log('onSubmitted', value);
+            } catch (_e11) {
+              __reportError__(_e11, "onSubmitted", "/pages/basic/InputDemo.tsx");
+
+              throw _e11;
+            }
+          },
+          onFocus: function onFocus(_a) {
+            try {
+              var value = _a.value;
+              thresh_lib_1.Util.log('onFocus', value);
+            } catch (_e12) {
+              __reportError__(_e12, "onFocus", "/pages/basic/InputDemo.tsx");
+
+              throw _e12;
+            }
+          },
+          onBlur: function onBlur(_a) {
+            try {
+              var value = _a.value;
+              thresh_lib_1.Util.log('onBlur', value);
+            } catch (_e13) {
+              __reportError__(_e13, "onBlur", "/pages/basic/InputDemo.tsx");
+
+              throw _e13;
+            }
+          },
+          onChange: function onChange(_a) {
+            try {
+              var value = _a.value;
+              thresh_lib_1.Util.log('onChange', value);
+
+              _this.setState({
+                value: value
+              });
+            } catch (_e14) {
+              __reportError__(_e14, "onChange", "/pages/basic/InputDemo.tsx");
+
+              throw _e14;
+            }
+          }
+        })));
+      } catch (_e15) {
+        __reportError__(_e15, "", "/pages/basic/InputDemo.tsx");
+
+        throw _e15;
+      }
+    };
+
+    return InputDemoBody;
+  } catch (_e16) {
+    __reportError__(_e16, "", "/pages/basic/InputDemo.tsx");
+
+    throw _e16;
+  }
+}(thresh_lib_1["default"].Widget);
+
 /***/ }),
-/* 310 */
+/* 318 */
 /***/ (function(module, exports, __webpack_require__) {
 
 
 
 var _interopRequireDefault = __webpack_require__(1);
 
-var _defineProperty = _interopRequireDefault(__webpack_require__(89));
+var _setPrototypeOf = _interopRequireDefault(__webpack_require__(248));
 
-var _assign = _interopRequireDefault(__webpack_require__(170));
+var _create = _interopRequireDefault(__webpack_require__(252));
 
-var _create = _interopRequireDefault(__webpack_require__(243));
+var _assign = _interopRequireDefault(__webpack_require__(199));
 
-var _setPrototypeOf = _interopRequireDefault(__webpack_require__(247));
+var _defineProperty = _interopRequireDefault(__webpack_require__(2));
 
 var __extends = void 0 && (void 0).__extends || function () {
   try {
@@ -18063,11 +20079,11 @@ exports.ReplacePage = exports.NextPage = void 0;
 
 var thresh_lib_1 = __webpack_require__(93);
 
-var config_1 = __webpack_require__(268);
+var config_1 = __webpack_require__(275);
 
-var Title_1 = __webpack_require__(282);
+var Title_1 = __webpack_require__(289);
 
-var Box_1 = __webpack_require__(270);
+var Box_1 = __webpack_require__(277);
 
 var Page = thresh_lib_1.basicWidgets.Page,
     AppBar = thresh_lib_1.basicWidgets.AppBar,
@@ -18077,7 +20093,7 @@ var Page = thresh_lib_1.basicWidgets.Page,
 function buttonStyles() {
   try {
     return {
-      width: 100,
+      width: 120,
       padding: 10,
       borderRadius: 5,
       backgroundColor: config_1.Colors.Primary
@@ -18105,97 +20121,83 @@ function (_super) {
       }
     }
 
+    PageActions.prototype.widgetDidMount = function () {
+      try {
+        thresh_lib_1.Util.log('widgetDidMount');
+      } catch (_e11) {
+        __reportError__(_e11, "", "/pages/apis/PageActions.tsx");
+
+        throw _e11;
+      }
+    };
+
+    PageActions.prototype.widgetDidUnmount = function () {
+      try {
+        thresh_lib_1.Util.log('widgetDidUnmount');
+      } catch (_e12) {
+        __reportError__(_e12, "", "/pages/apis/PageActions.tsx");
+
+        throw _e12;
+      }
+    };
+
     PageActions.prototype.render = function () {
       try {
         return thresh_lib_1["default"].createElement(Page, {
           backgroundColor: config_1.Colors.Pagebg,
           appBar: thresh_lib_1["default"].createElement(AppBar, {
             title: "\u9875\u9762\u64CD\u4F5C - \u4E3B\u9875\u9762"
-          })
+          }),
+          onShow: function onShow() {
+            try {
+              thresh_lib_1.Util.log('pageOnShow');
+            } catch (_e13) {
+              __reportError__(_e13, "", "/pages/apis/PageActions.tsx");
+
+              throw _e13;
+            }
+          },
+          onHide: function onHide() {
+            try {
+              thresh_lib_1.Util.log('pageOnHide');
+            } catch (_e14) {
+              __reportError__(_e14, "", "/pages/apis/PageActions.tsx");
+
+              throw _e14;
+            }
+          }
         }, thresh_lib_1["default"].createElement(Title_1["default"], {
           title: "\u70B9\u51FB\u6309\u94AE\u663E\u793A\u4E0B\u7EA7\u9875\u9762"
         }), thresh_lib_1["default"].createElement(Box_1["default"], null, thresh_lib_1["default"].createElement(Button, __assign({}, buttonStyles(), {
           onTap: function onTap() {
             try {
               thresh_lib_1["default"].pushPage('api-page-actions-next');
-            } catch (_e11) {
-              __reportError__(_e11, "", "/pages/apis/PageActions.tsx");
+            } catch (_e15) {
+              __reportError__(_e15, "", "/pages/apis/PageActions.tsx");
 
-              throw _e11;
+              throw _e15;
             }
           }
         }), thresh_lib_1["default"].createElement(Text, {
           color: config_1.Colors.White
         }, "\u4E0B\u7EA7\u9875\u9762"))), thresh_lib_1["default"].createElement(Title_1["default"], {
-          title: "\u70B9\u51FB\u6309\u94AE\u66FF\u6362\u5F53\u524D\u9875\u9762"
+          title: "\u901A\u8FC7 openScheme \u6253\u5F00\u65B0\u9875\u9762"
         }), thresh_lib_1["default"].createElement(Box_1["default"], null, thresh_lib_1["default"].createElement(Button, __assign({}, buttonStyles(), {
           onTap: function onTap() {
             try {
-              thresh_lib_1["default"].replacePage('api-page-actions-replace');
-            } catch (_e12) {
-              __reportError__(_e12, "", "/pages/apis/PageActions.tsx");
+              thresh_lib_1.Bridge.invoke({
+                module: 'base',
+                method: 'openSchema'
+              });
+            } catch (_e16) {
+              __reportError__(_e16, "", "/pages/apis/PageActions.tsx");
 
-              throw _e12;
+              throw _e16;
             }
           }
         }), thresh_lib_1["default"].createElement(Text, {
           color: config_1.Colors.White
-        }, "\u66FF\u6362\u9875\u9762"))), thresh_lib_1["default"].createElement(Title_1["default"], {
-          title: "\u70B9\u51FB\u6309\u94AE\u8FD4\u56DE\u4E0A\u7EA7\u9875\u9762"
-        }), thresh_lib_1["default"].createElement(Box_1["default"], null, thresh_lib_1["default"].createElement(Button, __assign({}, buttonStyles(), {
-          onTap: function onTap() {
-            try {
-              thresh_lib_1["default"].popPage();
-            } catch (_e13) {
-              __reportError__(_e13, "", "/pages/apis/PageActions.tsx");
-
-              throw _e13;
-            }
-          }
-        }), thresh_lib_1["default"].createElement(Text, {
-          color: config_1.Colors.White
-        }, "\u8FD4\u56DE\u4E0A\u7EA7"))));
-      } catch (_e14) {
-        __reportError__(_e14, "", "/pages/apis/PageActions.tsx");
-
-        throw _e14;
-      }
-    };
-
-    return PageActions;
-  } catch (_e15) {
-    __reportError__(_e15, "", "/pages/apis/PageActions.tsx");
-
-    throw _e15;
-  }
-}(thresh_lib_1["default"].Widget);
-
-exports["default"] = PageActions;
-
-var NextPage =
-/** @class */
-function (_super) {
-  try {
-    __extends(NextPage, _super);
-
-    function NextPage() {
-      try {
-        return _super !== null && _super.apply(this, arguments) || this;
-      } catch (_e16) {
-        __reportError__(_e16, "", "/pages/apis/PageActions.tsx");
-
-        throw _e16;
-      }
-    }
-
-    NextPage.prototype.render = function () {
-      try {
-        return thresh_lib_1["default"].createElement(Page, {
-          backgroundColor: config_1.Colors.Pagebg,
-          appBar: thresh_lib_1["default"].createElement(AppBar, {
-            title: "\u9875\u9762\u64CD\u4F5C - \u6B21\u7EA7\u9875\u9762"
-          })
-        }, thresh_lib_1["default"].createElement(Title_1["default"], {
+        }, "openScheme"))), thresh_lib_1["default"].createElement(Title_1["default"], {
           title: "\u70B9\u51FB\u6309\u94AE\u8FD4\u56DE\u4E0A\u7EA7\u9875\u9762"
         }), thresh_lib_1["default"].createElement(Box_1["default"], null, thresh_lib_1["default"].createElement(Button, __assign({}, buttonStyles(), {
           onTap: function onTap() {
@@ -18217,11 +20219,66 @@ function (_super) {
       }
     };
 
-    return NextPage;
+    return PageActions;
   } catch (_e19) {
     __reportError__(_e19, "", "/pages/apis/PageActions.tsx");
 
     throw _e19;
+  }
+}(thresh_lib_1["default"].Widget);
+
+exports["default"] = PageActions;
+
+var NextPage =
+/** @class */
+function (_super) {
+  try {
+    __extends(NextPage, _super);
+
+    function NextPage() {
+      try {
+        return _super !== null && _super.apply(this, arguments) || this;
+      } catch (_e20) {
+        __reportError__(_e20, "", "/pages/apis/PageActions.tsx");
+
+        throw _e20;
+      }
+    }
+
+    NextPage.prototype.render = function () {
+      try {
+        return thresh_lib_1["default"].createElement(Page, {
+          backgroundColor: config_1.Colors.Pagebg,
+          appBar: thresh_lib_1["default"].createElement(AppBar, {
+            title: "\u9875\u9762\u64CD\u4F5C - \u6B21\u7EA7\u9875\u9762"
+          })
+        }, thresh_lib_1["default"].createElement(Title_1["default"], {
+          title: "\u70B9\u51FB\u6309\u94AE\u8FD4\u56DE\u4E0A\u7EA7\u9875\u9762"
+        }), thresh_lib_1["default"].createElement(Box_1["default"], null, thresh_lib_1["default"].createElement(Button, __assign({}, buttonStyles(), {
+          onTap: function onTap() {
+            try {
+              thresh_lib_1["default"].popPage();
+            } catch (_e21) {
+              __reportError__(_e21, "", "/pages/apis/PageActions.tsx");
+
+              throw _e21;
+            }
+          }
+        }), thresh_lib_1["default"].createElement(Text, {
+          color: config_1.Colors.White
+        }, "\u8FD4\u56DE\u4E0A\u7EA7"))));
+      } catch (_e22) {
+        __reportError__(_e22, "", "/pages/apis/PageActions.tsx");
+
+        throw _e22;
+      }
+    };
+
+    return NextPage;
+  } catch (_e23) {
+    __reportError__(_e23, "", "/pages/apis/PageActions.tsx");
+
+    throw _e23;
   }
 }(thresh_lib_1["default"].Widget);
 
@@ -18236,10 +20293,10 @@ function (_super) {
     function ReplacePage() {
       try {
         return _super !== null && _super.apply(this, arguments) || this;
-      } catch (_e20) {
-        __reportError__(_e20, "", "/pages/apis/PageActions.tsx");
+      } catch (_e24) {
+        __reportError__(_e24, "", "/pages/apis/PageActions.tsx");
 
-        throw _e20;
+        throw _e24;
       }
     }
 
@@ -18251,66 +20308,54 @@ function (_super) {
             title: "\u9875\u9762\u64CD\u4F5C - \u66FF\u6362\u9875\u9762"
           })
         }, thresh_lib_1["default"].createElement(Title_1["default"], {
-          title: "\u70B9\u51FB\u6309\u94AE\u66FF\u6362\u56DE\u9875\u9762\u64CD\u4F5C\u4E3B\u9875\u9762"
-        }), thresh_lib_1["default"].createElement(Box_1["default"], null, thresh_lib_1["default"].createElement(Button, __assign({}, buttonStyles(), {
-          onTap: function onTap() {
-            try {
-              thresh_lib_1["default"].replacePage('api-page-actions');
-            } catch (_e21) {
-              __reportError__(_e21, "", "/pages/apis/PageActions.tsx");
-
-              throw _e21;
-            }
-          }
-        }), thresh_lib_1["default"].createElement(Text, {
-          color: config_1.Colors.White
-        }, "\u56DE\u5230\u539F\u9875\u9762"))), thresh_lib_1["default"].createElement(Title_1["default"], {
           title: "\u70B9\u51FB\u6309\u94AE\u8FD4\u56DE\u4E0A\u7EA7\u9875\u9762 - \u9996\u9875"
         }), thresh_lib_1["default"].createElement(Box_1["default"], null, thresh_lib_1["default"].createElement(Button, __assign({}, buttonStyles(), {
           onTap: function onTap() {
             try {
               thresh_lib_1["default"].popPage();
-            } catch (_e22) {
-              __reportError__(_e22, "", "/pages/apis/PageActions.tsx");
+            } catch (_e25) {
+              __reportError__(_e25, "", "/pages/apis/PageActions.tsx");
 
-              throw _e22;
+              throw _e25;
             }
           }
         }), thresh_lib_1["default"].createElement(Text, {
           color: config_1.Colors.White
         }, "\u8FD4\u56DE\u4E0A\u7EA7"))));
-      } catch (_e23) {
-        __reportError__(_e23, "", "/pages/apis/PageActions.tsx");
+      } catch (_e26) {
+        __reportError__(_e26, "", "/pages/apis/PageActions.tsx");
 
-        throw _e23;
+        throw _e26;
       }
     };
 
     return ReplacePage;
-  } catch (_e24) {
-    __reportError__(_e24, "", "/pages/apis/PageActions.tsx");
+  } catch (_e27) {
+    __reportError__(_e27, "", "/pages/apis/PageActions.tsx");
 
-    throw _e24;
+    throw _e27;
   }
 }(thresh_lib_1["default"].Widget);
 
 exports.ReplacePage = ReplacePage;
 
 /***/ }),
-/* 311 */
+/* 319 */
 /***/ (function(module, exports, __webpack_require__) {
 
 
 
 var _interopRequireDefault = __webpack_require__(1);
 
-var _defineProperty = _interopRequireDefault(__webpack_require__(89));
+var _setPrototypeOf = _interopRequireDefault(__webpack_require__(248));
 
-var _assign = _interopRequireDefault(__webpack_require__(170));
+var _create = _interopRequireDefault(__webpack_require__(252));
 
-var _create = _interopRequireDefault(__webpack_require__(243));
+var _assign = _interopRequireDefault(__webpack_require__(199));
 
-var _setPrototypeOf = _interopRequireDefault(__webpack_require__(247));
+var _defineProperty = _interopRequireDefault(__webpack_require__(2));
+
+var _setInterval2 = _interopRequireDefault(__webpack_require__(320));
 
 var __extends = void 0 && (void 0).__extends || function () {
   try {
@@ -18408,11 +20453,11 @@ var __assign = void 0 && (void 0).__assign || function () {
 
 var thresh_lib_1 = __webpack_require__(93);
 
-var config_1 = __webpack_require__(268);
+var config_1 = __webpack_require__(275);
 
-var Title_1 = __webpack_require__(282);
+var Title_1 = __webpack_require__(289);
 
-var Box_1 = __webpack_require__(270);
+var Box_1 = __webpack_require__(277);
 
 var Page = thresh_lib_1.basicWidgets.Page,
     AppBar = thresh_lib_1.basicWidgets.AppBar,
@@ -18453,7 +20498,9 @@ function (_super) {
 
     ModalActions.prototype.showModalScrollView = function (popup) {
       try {
-        thresh_lib_1["default"].showModal(this.renderModal(popup), {
+        thresh_lib_1["default"].showModal(thresh_lib_1["default"].createElement(ModalExample, {
+          popup: popup
+        }), {
           popup: popup
         });
       } catch (_e11) {
@@ -18463,19 +20510,124 @@ function (_super) {
       }
     };
 
-    ModalActions.prototype.renderModal = function (popup) {
+    ModalActions.prototype.render = function () {
       try {
-        return thresh_lib_1["default"].createElement(Container, null, thresh_lib_1["default"].createElement(Container, {
-          height: thresh_lib_1.ui.screenHeight * 0.8,
-          width: thresh_lib_1.ui.screenWidth,
-          backgroundColor: popup ? 0x00000000 : 0x80000000,
+        var _this = this;
+
+        return thresh_lib_1["default"].createElement(Page, {
+          backgroundColor: 0x0000000,
+          appBar: thresh_lib_1["default"].createElement(AppBar, {
+            title: "\u6A21\u6001\u9875\u9762\u64CD\u4F5C"
+          })
+        }, thresh_lib_1["default"].createElement(Title_1["default"], {
+          title: "\u663E\u793A\u666E\u901A\u6A21\u6001\u9875\u9762"
+        }), thresh_lib_1["default"].createElement(Box_1["default"], null, thresh_lib_1["default"].createElement(Button, __assign({}, buttonStyles(), {
           onTap: function onTap() {
             try {
-              thresh_lib_1["default"].hideModal();
+              _this.showModalScrollView(false);
             } catch (_e12) {
               __reportError__(_e12, "", "/pages/apis/ModalActions.tsx");
 
               throw _e12;
+            }
+          }
+        }), thresh_lib_1["default"].createElement(Text, {
+          color: config_1.Colors.White
+        }, "\u663E\u793A\u666E\u901A\u6A21\u6001\u9875\u9762"))), thresh_lib_1["default"].createElement(Title_1["default"], {
+          title: "\u663E\u793A\u5E95\u90E8\u6ED1\u5165\u6A21\u6001\u9875\u9762"
+        }), thresh_lib_1["default"].createElement(Box_1["default"], null, thresh_lib_1["default"].createElement(Button, __assign({}, buttonStyles(), {
+          onTap: function onTap() {
+            try {
+              _this.showModalScrollView(true);
+            } catch (_e13) {
+              __reportError__(_e13, "", "/pages/apis/ModalActions.tsx");
+
+              throw _e13;
+            }
+          }
+        }), thresh_lib_1["default"].createElement(Text, {
+          color: config_1.Colors.White
+        }, "\u663E\u793A\u5E95\u90E8\u6ED1\u5165\u6A21\u6001\u9875\u9762"))), thresh_lib_1["default"].createElement(Title_1["default"], {
+          title: "\u66F4\u591A\u4F7F\u7528\u65B9\u5F0F"
+        }), thresh_lib_1["default"].createElement(Box_1["default"], null, thresh_lib_1["default"].createElement(Text, null, "\u4F60\u53EF\u4EE5\u901A\u8FC7\u81EA\u5B9A\u4E49 Modal \u9875\u9762\u7684\u7ED3\u6784\u4E0E\u6837\u5F0F\uFF0C\u5B9E\u73B0\u5BF9\u8BDD\u6846\u3001\u786E\u8BA4\u6846\u7B49\u5B58\u5728\u4EA4\u4E92\u7684\u590D\u6742\u6A21\u6001\u7EC4\u4EF6\u3002")));
+      } catch (_e14) {
+        __reportError__(_e14, "", "/pages/apis/ModalActions.tsx");
+
+        throw _e14;
+      }
+    };
+
+    return ModalActions;
+  } catch (_e15) {
+    __reportError__(_e15, "", "/pages/apis/ModalActions.tsx");
+
+    throw _e15;
+  }
+}(thresh_lib_1["default"].Widget);
+
+exports["default"] = ModalActions;
+
+var ModalExample =
+/** @class */
+function (_super) {
+  try {
+    __extends(ModalExample, _super);
+
+    function ModalExample() {
+      try {
+        var _this = _super !== null && _super.apply(this, arguments) || this;
+
+        _this.state = {
+          counter: 10
+        };
+        return _this;
+      } catch (_e16) {
+        __reportError__(_e16, "ModalExample", "/pages/apis/ModalActions.tsx");
+
+        throw _e16;
+      }
+    }
+
+    ModalExample.prototype.widgetDidMount = function () {
+      try {
+        var _this = this;
+
+        var t = (0, _setInterval2["default"])(function () {
+          try {
+            if (_this.state.counter === 0) {
+              clearInterval(t);
+              return;
+            }
+
+            _this.state.counter--;
+
+            _this.setState();
+          } catch (_e17) {
+            __reportError__(_e17, "", "/pages/apis/ModalActions.tsx");
+
+            throw _e17;
+          }
+        }, 1000);
+      } catch (_e18) {
+        __reportError__(_e18, "", "/pages/apis/ModalActions.tsx");
+
+        throw _e18;
+      }
+    };
+
+    ModalExample.prototype.render = function () {
+      try {
+        return thresh_lib_1["default"].createElement(Container, null, thresh_lib_1["default"].createElement(Container, {
+          height: thresh_lib_1.ui.screenHeight * 0.8,
+          width: thresh_lib_1.ui.screenWidth,
+          backgroundColor: this.props.popup ? 0x00000000 : 0x80000000,
+          onTap: function onTap() {
+            try {
+              thresh_lib_1["default"].hideModal();
+            } catch (_e19) {
+              __reportError__(_e19, "", "/pages/apis/ModalActions.tsx");
+
+              throw _e19;
             }
           }
         }), thresh_lib_1["default"].createElement(Container, {
@@ -18488,100 +20640,67 @@ function (_super) {
           onTap: function onTap() {
             try {
               thresh_lib_1["default"].hideModal();
-            } catch (_e13) {
-              __reportError__(_e13, "", "/pages/apis/ModalActions.tsx");
+            } catch (_e20) {
+              __reportError__(_e20, "", "/pages/apis/ModalActions.tsx");
 
-              throw _e13;
+              throw _e20;
             }
           }
         }), thresh_lib_1["default"].createElement(Text, {
           color: config_1.Colors.White
-        }, "\u5173\u95ED\u6A21\u6001\u9875\u9762")), thresh_lib_1["default"].createElement(Text, {
+        }, "\u5173\u95ED\u6A21\u6001\u9875\u9762 - ", this.state.counter)), thresh_lib_1["default"].createElement(Text, {
           size: thresh_lib_1.ui.rpx(24),
           color: config_1.Colors.Lightgray,
           margin: {
             top: 20
           }
         }, "\u70B9\u51FB\u900F\u660E\u80CC\u666F\u90E8\u5206\u4E5F\u53EF\u4EE5\u5173\u95ED\u6A21\u6001\u9875\u9762")));
-      } catch (_e14) {
-        __reportError__(_e14, "", "/pages/apis/ModalActions.tsx");
+      } catch (_e21) {
+        __reportError__(_e21, "", "/pages/apis/ModalActions.tsx");
 
-        throw _e14;
+        throw _e21;
       }
     };
 
-    ModalActions.prototype.render = function () {
-      try {
-        var _this = this;
+    return ModalExample;
+  } catch (_e22) {
+    __reportError__(_e22, "", "/pages/apis/ModalActions.tsx");
 
-        return thresh_lib_1["default"].createElement(Page, {
-          backgroundColor: config_1.Colors.Pagebg,
-          appBar: thresh_lib_1["default"].createElement(AppBar, {
-            title: "\u6A21\u6001\u9875\u9762\u64CD\u4F5C"
-          })
-        }, thresh_lib_1["default"].createElement(Title_1["default"], {
-          title: "\u663E\u793A\u666E\u901A\u6A21\u6001\u9875\u9762"
-        }), thresh_lib_1["default"].createElement(Box_1["default"], null, thresh_lib_1["default"].createElement(Button, __assign({}, buttonStyles(), {
-          onTap: function onTap() {
-            try {
-              _this.showModalScrollView(false);
-            } catch (_e15) {
-              __reportError__(_e15, "", "/pages/apis/ModalActions.tsx");
-
-              throw _e15;
-            }
-          }
-        }), thresh_lib_1["default"].createElement(Text, {
-          color: config_1.Colors.White
-        }, "\u663E\u793A\u666E\u901A\u6A21\u6001\u9875\u9762"))), thresh_lib_1["default"].createElement(Title_1["default"], {
-          title: "\u663E\u793A\u5E95\u90E8\u6ED1\u5165\u6A21\u6001\u9875\u9762"
-        }), thresh_lib_1["default"].createElement(Box_1["default"], null, thresh_lib_1["default"].createElement(Button, __assign({}, buttonStyles(), {
-          onTap: function onTap() {
-            try {
-              _this.showModalScrollView(true);
-            } catch (_e16) {
-              __reportError__(_e16, "", "/pages/apis/ModalActions.tsx");
-
-              throw _e16;
-            }
-          }
-        }), thresh_lib_1["default"].createElement(Text, {
-          color: config_1.Colors.White
-        }, "\u663E\u793A\u5E95\u90E8\u6ED1\u5165\u6A21\u6001\u9875\u9762"))), thresh_lib_1["default"].createElement(Title_1["default"], {
-          title: "\u66F4\u591A\u4F7F\u7528\u65B9\u5F0F"
-        }), thresh_lib_1["default"].createElement(Box_1["default"], null, thresh_lib_1["default"].createElement(Text, null, "\u4F60\u53EF\u4EE5\u901A\u8FC7\u81EA\u5B9A\u4E49 Modal \u9875\u9762\u7684\u7ED3\u6784\u4E0E\u6837\u5F0F\uFF0C\u5B9E\u73B0\u5BF9\u8BDD\u6846\u3001\u786E\u8BA4\u6846\u7B49\u5B58\u5728\u4EA4\u4E92\u7684\u590D\u6742\u6A21\u6001\u7EC4\u4EF6\u3002")));
-      } catch (_e17) {
-        __reportError__(_e17, "", "/pages/apis/ModalActions.tsx");
-
-        throw _e17;
-      }
-    };
-
-    return ModalActions;
-  } catch (_e18) {
-    __reportError__(_e18, "", "/pages/apis/ModalActions.tsx");
-
-    throw _e18;
+    throw _e22;
   }
 }(thresh_lib_1["default"].Widget);
 
-exports["default"] = ModalActions;
+/***/ }),
+/* 320 */
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports = __webpack_require__(321);
 
 /***/ }),
-/* 312 */
+/* 321 */
+/***/ (function(module, exports, __webpack_require__) {
+
+__webpack_require__(310);
+var path = __webpack_require__(24);
+
+module.exports = path.setInterval;
+
+
+/***/ }),
+/* 322 */
 /***/ (function(module, exports, __webpack_require__) {
 
 
 
 var _interopRequireDefault = __webpack_require__(1);
 
-var _defineProperty = _interopRequireDefault(__webpack_require__(89));
+var _setPrototypeOf = _interopRequireDefault(__webpack_require__(248));
 
-var _assign = _interopRequireDefault(__webpack_require__(170));
+var _create = _interopRequireDefault(__webpack_require__(252));
 
-var _create = _interopRequireDefault(__webpack_require__(243));
+var _assign = _interopRequireDefault(__webpack_require__(199));
 
-var _setPrototypeOf = _interopRequireDefault(__webpack_require__(247));
+var _defineProperty = _interopRequireDefault(__webpack_require__(2));
 
 var __extends = void 0 && (void 0).__extends || function () {
   try {
@@ -18679,11 +20798,11 @@ var __assign = void 0 && (void 0).__assign || function () {
 
 var thresh_lib_1 = __webpack_require__(93);
 
-var config_1 = __webpack_require__(268);
+var config_1 = __webpack_require__(275);
 
-var Title_1 = __webpack_require__(282);
+var Title_1 = __webpack_require__(289);
 
-var Box_1 = __webpack_require__(270);
+var Box_1 = __webpack_require__(277);
 
 var Page = thresh_lib_1.basicWidgets.Page,
     AppBar = thresh_lib_1.basicWidgets.AppBar,
@@ -18793,18 +20912,18 @@ function (_super) {
 exports["default"] = ToastActions;
 
 /***/ }),
-/* 313 */
+/* 323 */
 /***/ (function(module, exports, __webpack_require__) {
 
 
 
 var _interopRequireDefault = __webpack_require__(1);
 
-var _defineProperty = _interopRequireDefault(__webpack_require__(89));
+var _setPrototypeOf = _interopRequireDefault(__webpack_require__(248));
 
-var _create = _interopRequireDefault(__webpack_require__(243));
+var _create = _interopRequireDefault(__webpack_require__(252));
 
-var _setPrototypeOf = _interopRequireDefault(__webpack_require__(247));
+var _defineProperty = _interopRequireDefault(__webpack_require__(2));
 
 var __extends = void 0 && (void 0).__extends || function () {
   try {
@@ -18874,13 +20993,13 @@ var __extends = void 0 && (void 0).__extends || function () {
 
 var thresh_lib_1 = __webpack_require__(93);
 
-var config_1 = __webpack_require__(268);
+var config_1 = __webpack_require__(275);
 
-var Title_1 = __webpack_require__(282);
+var Title_1 = __webpack_require__(289);
 
-var Box_1 = __webpack_require__(270);
+var Box_1 = __webpack_require__(277);
 
-var Center_1 = __webpack_require__(277);
+var Center_1 = __webpack_require__(284);
 
 var Page = thresh_lib_1.basicWidgets.Page,
     AppBar = thresh_lib_1.basicWidgets.AppBar,
@@ -18957,22 +21076,28 @@ function (_super) {
 exports["default"] = RefreshDemo;
 
 /***/ }),
-/* 314 */
+/* 324 */
 /***/ (function(module, exports, __webpack_require__) {
 
 
 
 var _interopRequireDefault = __webpack_require__(1);
 
-var _fill = _interopRequireDefault(__webpack_require__(288));
+var _setPrototypeOf = _interopRequireDefault(__webpack_require__(248));
 
-var _map = _interopRequireDefault(__webpack_require__(238));
+var _create = _interopRequireDefault(__webpack_require__(252));
 
-var _defineProperty = _interopRequireDefault(__webpack_require__(89));
+var _assign = _interopRequireDefault(__webpack_require__(199));
 
-var _create = _interopRequireDefault(__webpack_require__(243));
+var _defineProperty = _interopRequireDefault(__webpack_require__(2));
 
-var _setPrototypeOf = _interopRequireDefault(__webpack_require__(247));
+var _setTimeout2 = _interopRequireDefault(__webpack_require__(308));
+
+var _map = _interopRequireDefault(__webpack_require__(227));
+
+var _fill = _interopRequireDefault(__webpack_require__(296));
+
+var _bind = _interopRequireDefault(__webpack_require__(278));
 
 var __extends = void 0 && (void 0).__extends || function () {
   try {
@@ -19036,23 +21161,54 @@ var __extends = void 0 && (void 0).__extends || function () {
   }
 }();
 
+var __assign = void 0 && (void 0).__assign || function () {
+  try {
+    __assign = _assign["default"] || function (t) {
+      try {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+          s = arguments[i];
+
+          for (var p in s) {
+            if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
+          }
+        }
+
+        return t;
+      } catch (_e7) {
+        __reportError__(_e7, "", "/pages/basic/NestScrollViewDemo.tsx");
+
+        throw _e7;
+      }
+    };
+
+    return __assign.apply(this, arguments);
+  } catch (_e8) {
+    __reportError__(_e8, "", "/pages/basic/NestScrollViewDemo.tsx");
+
+    throw _e8;
+  }
+};
+
 (0, _defineProperty["default"])(exports, "__esModule", {
   value: true
 });
 
 var thresh_lib_1 = __webpack_require__(93);
 
-var config_1 = __webpack_require__(268);
+var config_1 = __webpack_require__(275);
 
-var basicWidget_1 = __webpack_require__(237);
+var basicWidget_1 = __webpack_require__(247);
 
-var Center_1 = __webpack_require__(277);
+var Center_1 = __webpack_require__(284);
 
 var Page = thresh_lib_1.basicWidgets.Page,
     AppBar = thresh_lib_1.basicWidgets.AppBar,
     NestScrollView = thresh_lib_1.basicWidgets.NestScrollView,
+    ListView = thresh_lib_1.basicWidgets.ListView,
+    NativeView = thresh_lib_1.basicWidgets.NativeView,
     Container = thresh_lib_1.basicWidgets.Container,
-    Text = thresh_lib_1.basicWidgets.Text;
+    Text = thresh_lib_1.basicWidgets.Text,
+    Button = thresh_lib_1.basicWidgets.Button;
 
 var NestScrollViewDemo =
 /** @class */
@@ -19062,13 +21218,94 @@ function (_super) {
 
     function NestScrollViewDemo() {
       try {
-        return _super !== null && _super.apply(this, arguments) || this;
-      } catch (_e7) {
-        __reportError__(_e7, "", "/pages/basic/NestScrollViewDemo.tsx");
+        var _this = _super !== null && _super.apply(this, arguments) || this;
 
-        throw _e7;
+        _this.state = {
+          offset: thresh_lib_1.ui.screenHeight - 100,
+          type: 'thresh/native_text_view',
+          text: '123',
+          scrollable: false
+        };
+        _this.infos = [{
+          image: 'https://upload-images.jianshu.io/upload_images/4741933-c8d3183c55365626.jpeg',
+          text: '其实对于架上绘画十九世纪四十年代，西方就说已死亡了，但是现实是没有死亡反而大有复兴的趋势。同样作为书法中最传统的楷书，也正在受到大众的喜爱。比如这位女裁缝刘智莉，没有任何背景，靠写小楷上央视当劳模，老百姓就喜欢她的小楷。'
+        }, {
+          image: 'https://upload-images.jianshu.io/upload_images/4741933-8d192aa6a46409f1.jpeg',
+          text: '尤其让人感动的是，刘智莉把农村老家的房子改成了工会的“刘智莉劳模工作室”和文广局的“文化大院”，离乡不忘本，作为刘智莉给乡亲们解忧帮困的场所。“做好自己的事，只要有利他人和社会的事，就去做。”这是这些年来，刘智莉秉持的做人原则，也是师承恩师宁书纶“书法之道先做人”的教诲。'
+        }, {
+          image: 'https://upload-images.jianshu.io/upload_images/4741933-0e60846632d72d64.jpeg',
+          text: '刘智莉是天津市静海县杨成庄乡杨成庄村的一位农村女裁缝。三十六年前没考上大学，到一家乡办服装厂做缝纫工。因为喜欢写字，午休时间，她骑自行车到离厂里3里外的乡文化站拜师求教。花了7个月的工资参加书法培训。每到面授的日子，她凌晨4点起床，摸黑骑车往返70公里路，到南开大学上课。'
+        }, {
+          image: 'https://upload-images.jianshu.io/upload_images/4741933-2bfeb5575de9aa75.jpeg',
+          text: '刘智莉的苦学精神感动到了书法辅导老师、著名书法家宁书纶，并收她为徒。在老师的经心指导下，刘智莉从欧阳询的《九成宫醴泉铭》开始临习，再临《化度寺》《皇甫君碑》，再到王羲之的小楷《洛神赋十三行》以及赵孟、钟绍京等。每年练字的废纸就要堆出4米多高。三十六年来练字的废纸堆要达150米高了。她的小楷越写越好，网友称赞她的小楷堪比王羲之。'
+        }, {
+          image: 'https://upload-images.jianshu.io/upload_images/4741933-32f9cb85487712f0.jpeg',
+          text: '后来乡办企业不景气，刘智莉就回家自己做裁缝。成家后生活所迫，每年腊月廿至廿九到集市上去卖春联，卖了九年春联，因天津电视台、《天津日报》《今晚报》等媒体的报道，刘智莉成了当地有名的小人物了，不时有附近的乡亲找她帮忙。学书法先学做人，刘智莉时刻牢记老师的教导，她能帮尽力帮，不能帮的她找媒体。二零零二年，刘智莉为了帮助一位单身母亲遇到的困难，写信给央视《半边天》栏目，也就是这一次节目组来采访报道，被刘智莉热衷书法乐于助人，自强不息的精神感动了。节目主持人张越对她说：“你的善良和勤奋，一定会成就你。”'
+        }, {
+          image: 'https://upload-images.jianshu.io/upload_images/4741933-7c8a3f303e012c44.jpeg',
+          text: '过了一年，《半边天》专程为刘智莉做了一期专访。节目播出后，在全国引起了强烈反响。杭州一位姓梁的老先生很喜欢刘智莉的小楷，辗转找到了她，打电话给她说：“你这双手就应该写字，不应该再做裁缝了”。也从这一年开始，刘智莉给梁先生用小楷抄写东西，梁先生连续两年给她买下了多达几十万的书法作品。'
+        }, {
+          image: 'https://upload-images.jianshu.io/upload_images/4741933-aaff222a4d61b9cd.jpeg',
+          text: '到了二零零五年，刘智莉在第二届天津书坛新人作品展中获了奖。从此，开始有人来买她的字。随着举办了几场展览和几次获奖，刘智莉的名气越来越大，来买她的字人也多起来了。二零零六年，刘智莉因为乐于帮助乡亲，作为农民界别的优秀代表当选静海县政协委员，并当选了劳模。二零零八年，刘智莉当选天津市劳动模范，二零一二年当选天津市政协委员，因为她的书法成就，成为文艺界别的委员。'
+        }, {
+          image: 'https://upload-images.jianshu.io/upload_images/4741933-921dd03ae5716a9e.jpeg',
+          text: '就是这样一位从传统书法一步一个脚印，苦学苦练，扎扎实实走出来的女书法家，就因为她写的是楷书，也曾被专家认为没有什么艺术性。相反，很多网友却认为，这是专家对草根高手的羡慕嫉妒恨，以贬低别人来维护自己的那点自尊。不过，现实是最好的证明，如今刘智莉不仅靠写书法，在镇上了买了房子，两个孩子也培养成了大学生。她的书法还从国内走向国外，作品先后被新加坡、美国、加拿大的国际友人及国内朋友收藏。'
+        }, {
+          image: 'https://upload-images.jianshu.io/upload_images/4741933-e576a5161f13c2bf.jpeg',
+          text: '不知从什么时候起，我们发现走传统的路子，都会被一些专家看不起。比如中国写实画派的领军人物冷军，他的绘画水平绝对是天下无敌，因为走的是传统写实的这条路，所以对他的作品评价总是缺乏公正，说什么超写实就是停留在绘画的技艺上，内容没有现代前卫有创作性，是照片的复制没有多少艺术性。就连很多网友也觉得现在都什么年代了，有高清数码相机，还用得了这么费劲花个一年半载去画吗？'
+        }, {
+          image: 'https://upload-images.jianshu.io/upload_images/4741933-8841549061978867.jpeg',
+          text: '绘画界如此，书法圈也是，你写个狂草就不得了，写个行书也总有掌声，如果你还是在写楷书，哪怕你的小楷、蝇头小楷写得再好，专家们就会说一句，没有变化，没有艺术性，是“台阁体”“馆阁体”，反而那些搞怪的乱书、吼书、盲书、射书、网书、竹书等丑书却大有市场。'
+        }];
+        _this.buttonStyles = {
+          width: 120,
+          padding: 10,
+          borderRadius: 5,
+          backgroundColor: config_1.Colors.Primary
+        };
+        _this.backgroundGradient = {
+          colors: [config_1.Colors.Black, config_1.Colors.Red],
+          stops: [0.8, 1.0]
+        };
+        return _this;
+      } catch (_e9) {
+        __reportError__(_e9, "NestScrollViewDemo", "/pages/basic/NestScrollViewDemo.tsx");
+
+        throw _e9;
       }
     }
+
+    NestScrollViewDemo.prototype.bindNestScrollView = function (ref) {
+      try {
+        this.$nestScrollView = ref;
+      } catch (_e10) {
+        __reportError__(_e10, "", "/pages/basic/NestScrollViewDemo.tsx");
+
+        throw _e10;
+      }
+    };
+
+    NestScrollViewDemo.prototype.widgetDidMount = function () {
+      try {
+        var _this = this;
+
+        (0, _setTimeout2["default"])(function () {
+          try {
+            _this.setState({// offset: ui.screenHeight - 300,
+              // text: 'qaz', // {a: '我是NativeText'},
+            });
+          } catch (_e11) {
+            __reportError__(_e11, "", "/pages/basic/NestScrollViewDemo.tsx");
+
+            throw _e11;
+          }
+        }, 3000);
+      } catch (_e12) {
+        __reportError__(_e12, "", "/pages/basic/NestScrollViewDemo.tsx");
+
+        throw _e12;
+      }
+    };
 
     NestScrollViewDemo.prototype.renderContent = function () {
       try {
@@ -19083,37 +21320,88 @@ function (_super) {
               backgroundColor: config_1.Colors.Primary,
               margin: 5
             });
-          } catch (_e8) {
-            __reportError__(_e8, "", "/pages/basic/NestScrollViewDemo.tsx");
+          } catch (_e13) {
+            __reportError__(_e13, "", "/pages/basic/NestScrollViewDemo.tsx");
 
-            throw _e8;
+            throw _e13;
           }
         });
-      } catch (_e9) {
-        __reportError__(_e9, "", "/pages/basic/NestScrollViewDemo.tsx");
+      } catch (_e14) {
+        __reportError__(_e14, "", "/pages/basic/NestScrollViewDemo.tsx");
 
-        throw _e9;
+        throw _e14;
+      }
+    };
+
+    NestScrollViewDemo.prototype.renderList = function () {
+      try {
+        var _context3;
+
+        return (0, _map["default"])(_context3 = this.infos).call(_context3, function (item, index) {
+          try {
+            return thresh_lib_1["default"].createElement(ListItem, __assign({
+              key: index
+            }, item, {
+              index: index
+            }));
+          } catch (_e15) {
+            __reportError__(_e15, "", "/pages/basic/NestScrollViewDemo.tsx");
+
+            throw _e15;
+          }
+        });
+      } catch (_e16) {
+        __reportError__(_e16, "", "/pages/basic/NestScrollViewDemo.tsx");
+
+        throw _e16;
       }
     };
 
     NestScrollViewDemo.prototype.render = function () {
       try {
+        var _context4;
+
+        var _this = this;
+
         return thresh_lib_1["default"].createElement(Page, null, thresh_lib_1["default"].createElement(NestScrollView, {
+          ref: (0, _bind["default"])(_context4 = this.bindNestScrollView).call(_context4, this),
           appBar: thresh_lib_1["default"].createElement(AppBar, {
             title: "NestScrollView \u7EC4\u4EF6",
             titleColor: config_1.Colors.White,
             backgroundColor: config_1.Colors.Primary
           }),
-          offset: thresh_lib_1.ui.screenHeight - 100,
+          offset: this.state.offset,
           backgroundView: thresh_lib_1["default"].createElement(Center_1["default"], {
             width: thresh_lib_1.ui.screenWidth,
             height: thresh_lib_1.ui.screenHeight,
             backgroundColor: config_1.Colors.Primary
           }, thresh_lib_1["default"].createElement(Text, {
             color: config_1.Colors.White
-          }, "\u5411\u4E0A\u62D6\u62FD\u5E95\u90E8\u89C6\u56FE"))
+          }, "\u5411\u4E0A\u62D6\u62FD\u5E95\u90E8\u89C6\u56FE"), thresh_lib_1["default"].createElement(NativeView, {
+            type: this.state.type,
+            params: {
+              text: this.state.text
+            },
+            width: thresh_lib_1.ui.screenWidth,
+            height: thresh_lib_1.ui.rpx(100),
+            backgroundColor: 0xffFFFBF9
+          }), thresh_lib_1["default"].createElement(Button, __assign({}, this.buttonStyles, {
+            onTap: function onTap() {
+              try {
+                _this.$nestScrollView.open();
+              } catch (_e17) {
+                __reportError__(_e17, "", "/pages/basic/NestScrollViewDemo.tsx");
+
+                throw _e17;
+              }
+            }
+          }), thresh_lib_1["default"].createElement(Text, {
+            color: config_1.Colors.White
+          }, "\u6216\u8005\u70B9\u51FB\u4E0A\u6ED1")))
         }, thresh_lib_1["default"].createElement(Container, {
-          width: thresh_lib_1.ui.screenWidth
+          width: thresh_lib_1.ui.screenWidth,
+          height: thresh_lib_1.ui.screenHeight - 100,
+          row: false
         }, thresh_lib_1["default"].createElement(Container, {
           margin: {
             top: thresh_lib_1.ui.rpx(20),
@@ -19123,41 +21411,111 @@ function (_super) {
           width: thresh_lib_1.ui.rpx(100),
           height: thresh_lib_1.ui.rpx(10),
           borderRadius: thresh_lib_1.ui.rpx(5),
-          backgroundColor: config_1.Colors.White
+          backgroundColor: config_1.Colors.White,
+          flex: 0
         }), thresh_lib_1["default"].createElement(basicWidget_1.Image, {
+          flex: 1,
           width: thresh_lib_1.ui.screenWidth,
           src: "https://ss0.bdstatic.com/70cFuHSh_Q1YnxGkpoWK1HF6hhy/it/u=2438981516,3561412782&fm=26&gp=0.jpg"
-        }))));
-      } catch (_e10) {
-        __reportError__(_e10, "", "/pages/basic/NestScrollViewDemo.tsx");
+        }), thresh_lib_1["default"].createElement(Container, {
+          flex: 0,
+          backgroundColor: config_1.Colors.Lightgray
+        }, thresh_lib_1["default"].createElement(Button, __assign({}, this.buttonStyles, {
+          onTap: function onTap() {
+            try {
+              _this.$nestScrollView.close();
+            } catch (_e18) {
+              __reportError__(_e18, "", "/pages/basic/NestScrollViewDemo.tsx");
 
-        throw _e10;
+              throw _e18;
+            }
+          }
+        }), thresh_lib_1["default"].createElement(Text, {
+          color: config_1.Colors.White
+        }, "\u6216\u8005\u70B9\u51FB\u4E0B\u6ED1"))))));
+      } catch (_e19) {
+        __reportError__(_e19, "", "/pages/basic/NestScrollViewDemo.tsx");
+
+        throw _e19;
       }
     };
 
     return NestScrollViewDemo;
-  } catch (_e11) {
-    __reportError__(_e11, "", "/pages/basic/NestScrollViewDemo.tsx");
+  } catch (_e20) {
+    __reportError__(_e20, "", "/pages/basic/NestScrollViewDemo.tsx");
 
-    throw _e11;
+    throw _e20;
   }
 }(thresh_lib_1.Widget);
 
 exports["default"] = NestScrollViewDemo;
 
+var ListItem =
+/** @class */
+function (_super) {
+  try {
+    __extends(ListItem, _super);
+
+    function ListItem() {
+      try {
+        return _super !== null && _super.apply(this, arguments) || this;
+      } catch (_e21) {
+        __reportError__(_e21, "", "/pages/basic/NestScrollViewDemo.tsx");
+
+        throw _e21;
+      }
+    }
+
+    ListItem.prototype.render = function () {
+      try {
+        var _a = this.props,
+            image = _a.image,
+            text = _a.text,
+            index = _a.index;
+        return thresh_lib_1["default"].createElement(Container, {
+          alignItems: "center",
+          row: true,
+          backgroundColor: config_1.Colors.White,
+          padding: 10
+        }, thresh_lib_1["default"].createElement(basicWidget_1.Image, {
+          src: image,
+          width: 100,
+          height: 100
+        }), thresh_lib_1["default"].createElement(Text, {
+          width: 30,
+          align: "center"
+        }, index + 1), thresh_lib_1["default"].createElement(Text, {
+          flex: 1,
+          lineHeight: 1.5
+        }, text));
+      } catch (_e22) {
+        __reportError__(_e22, "", "/pages/basic/NestScrollViewDemo.tsx");
+
+        throw _e22;
+      }
+    };
+
+    return ListItem;
+  } catch (_e23) {
+    __reportError__(_e23, "", "/pages/basic/NestScrollViewDemo.tsx");
+
+    throw _e23;
+  }
+}(thresh_lib_1["default"].Widget);
+
 /***/ }),
-/* 315 */
+/* 325 */
 /***/ (function(module, exports, __webpack_require__) {
 
 
 
 var _interopRequireDefault = __webpack_require__(1);
 
-var _defineProperty = _interopRequireDefault(__webpack_require__(89));
+var _setPrototypeOf = _interopRequireDefault(__webpack_require__(248));
 
-var _create = _interopRequireDefault(__webpack_require__(243));
+var _create = _interopRequireDefault(__webpack_require__(252));
 
-var _setPrototypeOf = _interopRequireDefault(__webpack_require__(247));
+var _defineProperty = _interopRequireDefault(__webpack_require__(2));
 
 var __extends = void 0 && (void 0).__extends || function () {
   try {
@@ -19227,9 +21585,9 @@ var __extends = void 0 && (void 0).__extends || function () {
 
 var thresh_lib_1 = __webpack_require__(93);
 
-var config_1 = __webpack_require__(268);
+var config_1 = __webpack_require__(275);
 
-var Title_1 = __webpack_require__(282);
+var Title_1 = __webpack_require__(289);
 
 var Page = thresh_lib_1.basicWidgets.Page,
     AppBar = thresh_lib_1.basicWidgets.AppBar,
@@ -19367,22 +21725,1114 @@ function (_super) {
 exports["default"] = NoticeBarDemo;
 
 /***/ }),
-/* 316 */
+/* 326 */
 /***/ (function(module, exports, __webpack_require__) {
 
 
 
 var _interopRequireDefault = __webpack_require__(1);
 
-var _bind = _interopRequireDefault(__webpack_require__(271));
+var _setPrototypeOf = _interopRequireDefault(__webpack_require__(248));
 
-var _map = _interopRequireDefault(__webpack_require__(238));
+var _create = _interopRequireDefault(__webpack_require__(252));
 
-var _defineProperty = _interopRequireDefault(__webpack_require__(89));
+var _defineProperty = _interopRequireDefault(__webpack_require__(2));
 
-var _create = _interopRequireDefault(__webpack_require__(243));
+var _setTimeout2 = _interopRequireDefault(__webpack_require__(308));
 
-var _setPrototypeOf = _interopRequireDefault(__webpack_require__(247));
+var __extends = void 0 && (void 0).__extends || function () {
+  try {
+    var _extendStatics = function extendStatics(d, b) {
+      try {
+        _extendStatics = _setPrototypeOf["default"] || {
+          __proto__: []
+        } instanceof Array && function (d, b) {
+          try {
+            d.__proto__ = b;
+          } catch (_e) {
+            __reportError__(_e, "", "/pages/apis/ThemeProviderActions.tsx");
+
+            throw _e;
+          }
+        } || function (d, b) {
+          try {
+            for (var p in b) {
+              if (b.hasOwnProperty(p)) d[p] = b[p];
+            }
+          } catch (_e2) {
+            __reportError__(_e2, "", "/pages/apis/ThemeProviderActions.tsx");
+
+            throw _e2;
+          }
+        };
+
+        return _extendStatics(d, b);
+      } catch (_e3) {
+        __reportError__(_e3, "extendStatics", "/pages/apis/ThemeProviderActions.tsx");
+
+        throw _e3;
+      }
+    };
+
+    return function (d, b) {
+      try {
+        _extendStatics(d, b);
+
+        function __() {
+          try {
+            this.constructor = d;
+          } catch (_e4) {
+            __reportError__(_e4, "", "/pages/apis/ThemeProviderActions.tsx");
+
+            throw _e4;
+          }
+        }
+
+        d.prototype = b === null ? (0, _create["default"])(b) : (__.prototype = b.prototype, new __());
+      } catch (_e5) {
+        __reportError__(_e5, "", "/pages/apis/ThemeProviderActions.tsx");
+
+        throw _e5;
+      }
+    };
+  } catch (_e6) {
+    __reportError__(_e6, "", "/pages/apis/ThemeProviderActions.tsx");
+
+    throw _e6;
+  }
+}();
+
+(0, _defineProperty["default"])(exports, "__esModule", {
+  value: true
+});
+
+var thresh_lib_1 = __webpack_require__(93);
+
+var config_1 = __webpack_require__(275);
+
+var Page = thresh_lib_1.basicWidgets.Page,
+    AppBar = thresh_lib_1.basicWidgets.AppBar,
+    Container = thresh_lib_1.basicWidgets.Container,
+    Text = thresh_lib_1.basicWidgets.Text;
+
+var ThemeProviderActions =
+/** @class */
+function (_super) {
+  try {
+    __extends(ThemeProviderActions, _super);
+
+    function ThemeProviderActions() {
+      try {
+        var _this = _super !== null && _super.apply(this, arguments) || this;
+
+        _this.state = {
+          themeKey: 'base_common_btn_main'
+        };
+        return _this;
+      } catch (_e7) {
+        __reportError__(_e7, "ThemeProviderActions", "/pages/apis/ThemeProviderActions.tsx");
+
+        throw _e7;
+      }
+    }
+
+    ThemeProviderActions.prototype.widgetDidMount = function () {
+      try {
+        var _this = this;
+
+        (0, _setTimeout2["default"])(function () {
+          try {
+            _this.setState({
+              themeKey: 'base_common_btn_border'
+            });
+          } catch (_e8) {
+            __reportError__(_e8, "", "/pages/apis/ThemeProviderActions.tsx");
+
+            throw _e8;
+          }
+        }, 2000);
+      } catch (_e9) {
+        __reportError__(_e9, "", "/pages/apis/ThemeProviderActions.tsx");
+
+        throw _e9;
+      }
+    };
+
+    ThemeProviderActions.prototype.render = function () {
+      try {
+        return thresh_lib_1["default"].createElement(Page, {
+          appBar: thresh_lib_1["default"].createElement(AppBar, {
+            title: this.props.title || 'Thresh Provider'
+          }),
+          backgroundColor: config_1.Colors.Pagebg
+        }, thresh_lib_1["default"].createElement(Container, {
+          margin: 20
+        }, thresh_lib_1["default"].createElement(Text, {
+          themeKey: this.state.themeKey
+        }, "12345"), thresh_lib_1["default"].createElement(Text, {
+          themeKey: "richText"
+        })));
+      } catch (_e10) {
+        __reportError__(_e10, "", "/pages/apis/ThemeProviderActions.tsx");
+
+        throw _e10;
+      }
+    };
+
+    return ThemeProviderActions;
+  } catch (_e11) {
+    __reportError__(_e11, "", "/pages/apis/ThemeProviderActions.tsx");
+
+    throw _e11;
+  }
+}(thresh_lib_1.Widget);
+
+exports["default"] = ThemeProviderActions;
+
+/***/ }),
+/* 327 */
+/***/ (function(module, exports, __webpack_require__) {
+
+
+
+var _interopRequireDefault = __webpack_require__(1);
+
+var _setPrototypeOf = _interopRequireDefault(__webpack_require__(248));
+
+var _create = _interopRequireDefault(__webpack_require__(252));
+
+var _defineProperty = _interopRequireDefault(__webpack_require__(2));
+
+var __extends = void 0 && (void 0).__extends || function () {
+  try {
+    var _extendStatics = function extendStatics(d, b) {
+      try {
+        _extendStatics = _setPrototypeOf["default"] || {
+          __proto__: []
+        } instanceof Array && function (d, b) {
+          try {
+            d.__proto__ = b;
+          } catch (_e) {
+            __reportError__(_e, "", "/pages/basic/SwitchDemo.tsx");
+
+            throw _e;
+          }
+        } || function (d, b) {
+          try {
+            for (var p in b) {
+              if (b.hasOwnProperty(p)) d[p] = b[p];
+            }
+          } catch (_e2) {
+            __reportError__(_e2, "", "/pages/basic/SwitchDemo.tsx");
+
+            throw _e2;
+          }
+        };
+
+        return _extendStatics(d, b);
+      } catch (_e3) {
+        __reportError__(_e3, "extendStatics", "/pages/basic/SwitchDemo.tsx");
+
+        throw _e3;
+      }
+    };
+
+    return function (d, b) {
+      try {
+        _extendStatics(d, b);
+
+        function __() {
+          try {
+            this.constructor = d;
+          } catch (_e4) {
+            __reportError__(_e4, "", "/pages/basic/SwitchDemo.tsx");
+
+            throw _e4;
+          }
+        }
+
+        d.prototype = b === null ? (0, _create["default"])(b) : (__.prototype = b.prototype, new __());
+      } catch (_e5) {
+        __reportError__(_e5, "", "/pages/basic/SwitchDemo.tsx");
+
+        throw _e5;
+      }
+    };
+  } catch (_e6) {
+    __reportError__(_e6, "", "/pages/basic/SwitchDemo.tsx");
+
+    throw _e6;
+  }
+}();
+
+(0, _defineProperty["default"])(exports, "__esModule", {
+  value: true
+});
+
+var thresh_lib_1 = __webpack_require__(93);
+
+var config_1 = __webpack_require__(275);
+
+var Title_1 = __webpack_require__(289);
+
+var Box_1 = __webpack_require__(277);
+
+var Page = thresh_lib_1.basicWidgets.Page,
+    AppBar = thresh_lib_1.basicWidgets.AppBar,
+    Switch = thresh_lib_1.basicWidgets.Switch;
+
+var SwitchDemo =
+/** @class */
+function (_super) {
+  try {
+    __extends(SwitchDemo, _super);
+
+    function SwitchDemo() {
+      try {
+        var _this = _super !== null && _super.apply(this, arguments) || this;
+
+        _this.state = {
+          value: true
+        };
+        return _this;
+      } catch (_e7) {
+        __reportError__(_e7, "SwitchDemo", "/pages/basic/SwitchDemo.tsx");
+
+        throw _e7;
+      }
+    }
+
+    SwitchDemo.prototype.render = function () {
+      try {
+        var _this = this;
+
+        return thresh_lib_1["default"].createElement(Page, {
+          backgroundColor: config_1.Colors.Pagebg,
+          appBar: thresh_lib_1["default"].createElement(AppBar, {
+            title: "Switch \u5F00\u5173\u7EC4\u4EF6"
+          })
+        }, thresh_lib_1["default"].createElement(Title_1["default"], {
+          title: this.state.value ? '当前开关打开' : '当前开关关闭'
+        }), thresh_lib_1["default"].createElement(Box_1["default"], null, thresh_lib_1["default"].createElement(Switch, {
+          value: this.state.value,
+          activeColor: 0xFFFA871E,
+          onChange: function onChange(_a) {
+            try {
+              var value = _a.value;
+
+              _this.setState({
+                value: value
+              });
+            } catch (_e8) {
+              __reportError__(_e8, "onChange", "/pages/basic/SwitchDemo.tsx");
+
+              throw _e8;
+            }
+          }
+        })));
+      } catch (_e9) {
+        __reportError__(_e9, "", "/pages/basic/SwitchDemo.tsx");
+
+        throw _e9;
+      }
+    };
+
+    return SwitchDemo;
+  } catch (_e10) {
+    __reportError__(_e10, "", "/pages/basic/SwitchDemo.tsx");
+
+    throw _e10;
+  }
+}(thresh_lib_1["default"].Widget);
+
+exports["default"] = SwitchDemo;
+
+/***/ }),
+/* 328 */
+/***/ (function(module, exports, __webpack_require__) {
+
+
+
+var _interopRequireDefault = __webpack_require__(1);
+
+var _setPrototypeOf = _interopRequireDefault(__webpack_require__(248));
+
+var _create = _interopRequireDefault(__webpack_require__(252));
+
+var _assign = _interopRequireDefault(__webpack_require__(199));
+
+var _defineProperty = _interopRequireDefault(__webpack_require__(2));
+
+var _bind = _interopRequireDefault(__webpack_require__(278));
+
+var __extends = void 0 && (void 0).__extends || function () {
+  try {
+    var _extendStatics = function extendStatics(d, b) {
+      try {
+        _extendStatics = _setPrototypeOf["default"] || {
+          __proto__: []
+        } instanceof Array && function (d, b) {
+          try {
+            d.__proto__ = b;
+          } catch (_e) {
+            __reportError__(_e, "", "/pages/basic/PickerDemo.tsx");
+
+            throw _e;
+          }
+        } || function (d, b) {
+          try {
+            for (var p in b) {
+              if (b.hasOwnProperty(p)) d[p] = b[p];
+            }
+          } catch (_e2) {
+            __reportError__(_e2, "", "/pages/basic/PickerDemo.tsx");
+
+            throw _e2;
+          }
+        };
+
+        return _extendStatics(d, b);
+      } catch (_e3) {
+        __reportError__(_e3, "extendStatics", "/pages/basic/PickerDemo.tsx");
+
+        throw _e3;
+      }
+    };
+
+    return function (d, b) {
+      try {
+        _extendStatics(d, b);
+
+        function __() {
+          try {
+            this.constructor = d;
+          } catch (_e4) {
+            __reportError__(_e4, "", "/pages/basic/PickerDemo.tsx");
+
+            throw _e4;
+          }
+        }
+
+        d.prototype = b === null ? (0, _create["default"])(b) : (__.prototype = b.prototype, new __());
+      } catch (_e5) {
+        __reportError__(_e5, "", "/pages/basic/PickerDemo.tsx");
+
+        throw _e5;
+      }
+    };
+  } catch (_e6) {
+    __reportError__(_e6, "", "/pages/basic/PickerDemo.tsx");
+
+    throw _e6;
+  }
+}();
+
+var __assign = void 0 && (void 0).__assign || function () {
+  try {
+    __assign = _assign["default"] || function (t) {
+      try {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+          s = arguments[i];
+
+          for (var p in s) {
+            if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
+          }
+        }
+
+        return t;
+      } catch (_e7) {
+        __reportError__(_e7, "", "/pages/basic/PickerDemo.tsx");
+
+        throw _e7;
+      }
+    };
+
+    return __assign.apply(this, arguments);
+  } catch (_e8) {
+    __reportError__(_e8, "", "/pages/basic/PickerDemo.tsx");
+
+    throw _e8;
+  }
+};
+
+(0, _defineProperty["default"])(exports, "__esModule", {
+  value: true
+});
+
+var thresh_lib_1 = __webpack_require__(93);
+
+var Box_1 = __webpack_require__(277);
+
+var Title_1 = __webpack_require__(289);
+
+var config_1 = __webpack_require__(275);
+
+var Page = thresh_lib_1.basicWidgets.Page,
+    AppBar = thresh_lib_1.basicWidgets.AppBar,
+    ScrollView = thresh_lib_1.basicWidgets.ScrollView,
+    Container = thresh_lib_1.basicWidgets.Container,
+    Text = thresh_lib_1.basicWidgets.Text,
+    Picker = thresh_lib_1.basicWidgets.Picker,
+    Button = thresh_lib_1.basicWidgets.Button;
+
+var PickerDemo =
+/** @class */
+function (_super) {
+  try {
+    __extends(PickerDemo, _super);
+
+    function PickerDemo() {
+      try {
+        var _this = _super !== null && _super.apply(this, arguments) || this;
+
+        _this.buttonStyles = {
+          width: 150,
+          padding: 10,
+          borderRadius: 5,
+          backgroundColor: config_1.Colors.Primary
+        };
+        return _this;
+      } catch (_e9) {
+        __reportError__(_e9, "PickerDemo", "/pages/basic/PickerDemo.tsx");
+
+        throw _e9;
+      }
+    }
+
+    PickerDemo.prototype.bindPicker = function (ref) {
+      try {
+        this.$picker = ref;
+      } catch (_e10) {
+        __reportError__(_e10, "", "/pages/basic/PickerDemo.tsx");
+
+        throw _e10;
+      }
+    };
+
+    PickerDemo.prototype.render = function () {
+      try {
+        var _context;
+
+        var _this = this;
+
+        return thresh_lib_1["default"].createElement(Page, {
+          appBar: thresh_lib_1["default"].createElement(AppBar, {
+            title: "Picker \u9009\u62E9\u7EC4\u4EF6"
+          }),
+          backgroundColor: config_1.Colors.Pagebg
+        }, thresh_lib_1["default"].createElement(ScrollView, null, thresh_lib_1["default"].createElement(Box_1["default"], null, thresh_lib_1["default"].createElement(Title_1["default"], {
+          title: "\u65E0\u9ED8\u8BA4\u503C\u65F6\uFF0C\u9ED8\u8BA4\u5B9A\u683C\u5728\u7B2C\u4E00\u4E2A\u9009\u9879"
+        }), thresh_lib_1["default"].createElement(Container, {
+          width: Box_1["default"].width,
+          height: 150
+        }, thresh_lib_1["default"].createElement(Picker, {
+          height: 150,
+          itemHeight: 45,
+          onChange: function onChange(value) {
+            try {
+              thresh_lib_1.Util.log(value);
+            } catch (_e11) {
+              __reportError__(_e11, "", "/pages/basic/PickerDemo.tsx");
+
+              throw _e11;
+            }
+          },
+          backgroundColor: config_1.Colors.Primary
+        }, thresh_lib_1["default"].createElement(Text, {
+          size: 20
+        }, "\u9999\u8549"), thresh_lib_1["default"].createElement(Text, {
+          size: 20
+        }, "\u82F9\u679C"), thresh_lib_1["default"].createElement(Text, {
+          size: 20
+        }, "\u68A8\u5B50")))), thresh_lib_1["default"].createElement(Box_1["default"], null, thresh_lib_1["default"].createElement(Title_1["default"], {
+          title: "\u9ED8\u8BA4\u503C\uFF1A\u68A8\u5B50"
+        }), thresh_lib_1["default"].createElement(Container, {
+          width: Box_1["default"].width,
+          height: 200
+        }, thresh_lib_1["default"].createElement(Picker, {
+          value: 2,
+          height: 200,
+          itemHeight: 45,
+          onChange: function onChange(value) {
+            try {
+              thresh_lib_1.Util.log(value);
+            } catch (_e12) {
+              __reportError__(_e12, "", "/pages/basic/PickerDemo.tsx");
+
+              throw _e12;
+            }
+          },
+          backgroundColor: config_1.Colors.Primary
+        }, thresh_lib_1["default"].createElement(Text, {
+          size: 20
+        }, "\u9999\u8549"), thresh_lib_1["default"].createElement(Text, {
+          size: 20
+        }, "\u82F9\u679C"), thresh_lib_1["default"].createElement(Text, {
+          size: 20
+        }, "\u68A8\u5B50"), thresh_lib_1["default"].createElement(Text, {
+          size: 20
+        }, "\u897F\u74DC"), thresh_lib_1["default"].createElement(Text, {
+          size: 20
+        }, "\u8292\u679C")))), thresh_lib_1["default"].createElement(Box_1["default"], null, thresh_lib_1["default"].createElement(Title_1["default"], {
+          title: "\u6EDA\u52A8\u5230\u6307\u5B9A\u503C"
+        }), thresh_lib_1["default"].createElement(Container, {
+          width: Box_1["default"].width,
+          height: 250
+        }, thresh_lib_1["default"].createElement(Picker, {
+          ref: (0, _bind["default"])(_context = this.bindPicker).call(_context, this),
+          value: 6,
+          height: 200,
+          itemHeight: 45,
+          onChange: function onChange(value) {
+            try {
+              thresh_lib_1.Util.log(value);
+            } catch (_e13) {
+              __reportError__(_e13, "", "/pages/basic/PickerDemo.tsx");
+
+              throw _e13;
+            }
+          },
+          backgroundColor: config_1.Colors.Primary
+        }, thresh_lib_1["default"].createElement(Text, {
+          size: 20
+        }, "\u9999\u8549"), thresh_lib_1["default"].createElement(Text, {
+          size: 20
+        }, "\u82F9\u679C"), thresh_lib_1["default"].createElement(Text, {
+          size: 20
+        }, "\u68A8\u5B50"), thresh_lib_1["default"].createElement(Text, {
+          size: 20
+        }, "\u897F\u74DC"), thresh_lib_1["default"].createElement(Text, {
+          size: 20
+        }, "\u8292\u679C"), thresh_lib_1["default"].createElement(Text, {
+          size: 20
+        }, "\u8461\u8404"), thresh_lib_1["default"].createElement(Text, {
+          size: 20
+        }, "\u54C8\u5BC6\u74DC"))), thresh_lib_1["default"].createElement(Container, {
+          alignContent: 'center'
+        }, thresh_lib_1["default"].createElement(Button, __assign({}, this.buttonStyles, {
+          onTap: function onTap() {
+            try {
+              _this.$picker.animateTo(0, 500);
+            } catch (_e14) {
+              __reportError__(_e14, "", "/pages/basic/PickerDemo.tsx");
+
+              throw _e14;
+            }
+          }
+        }), thresh_lib_1["default"].createElement(Text, {
+          color: config_1.Colors.White
+        }, "\u70B9\u51FB\u6EDA\u52A8\u5230\u9999\u8549"))))));
+      } catch (_e15) {
+        __reportError__(_e15, "", "/pages/basic/PickerDemo.tsx");
+
+        throw _e15;
+      }
+    };
+
+    return PickerDemo;
+  } catch (_e16) {
+    __reportError__(_e16, "", "/pages/basic/PickerDemo.tsx");
+
+    throw _e16;
+  }
+}(thresh_lib_1.Widget);
+
+exports["default"] = PickerDemo;
+
+/***/ }),
+/* 329 */
+/***/ (function(module, exports, __webpack_require__) {
+
+
+
+var _interopRequireDefault = __webpack_require__(1);
+
+var _setPrototypeOf = _interopRequireDefault(__webpack_require__(248));
+
+var _create = _interopRequireDefault(__webpack_require__(252));
+
+var _defineProperty = _interopRequireDefault(__webpack_require__(2));
+
+var _setTimeout2 = _interopRequireDefault(__webpack_require__(308));
+
+var _setInterval2 = _interopRequireDefault(__webpack_require__(320));
+
+var __extends = void 0 && (void 0).__extends || function () {
+  try {
+    var _extendStatics = function extendStatics(d, b) {
+      try {
+        _extendStatics = _setPrototypeOf["default"] || {
+          __proto__: []
+        } instanceof Array && function (d, b) {
+          try {
+            d.__proto__ = b;
+          } catch (_e) {
+            __reportError__(_e, "", "/pages/examples/timer.tsx");
+
+            throw _e;
+          }
+        } || function (d, b) {
+          try {
+            for (var p in b) {
+              if (b.hasOwnProperty(p)) d[p] = b[p];
+            }
+          } catch (_e2) {
+            __reportError__(_e2, "", "/pages/examples/timer.tsx");
+
+            throw _e2;
+          }
+        };
+
+        return _extendStatics(d, b);
+      } catch (_e3) {
+        __reportError__(_e3, "extendStatics", "/pages/examples/timer.tsx");
+
+        throw _e3;
+      }
+    };
+
+    return function (d, b) {
+      try {
+        _extendStatics(d, b);
+
+        function __() {
+          try {
+            this.constructor = d;
+          } catch (_e4) {
+            __reportError__(_e4, "", "/pages/examples/timer.tsx");
+
+            throw _e4;
+          }
+        }
+
+        d.prototype = b === null ? (0, _create["default"])(b) : (__.prototype = b.prototype, new __());
+      } catch (_e5) {
+        __reportError__(_e5, "", "/pages/examples/timer.tsx");
+
+        throw _e5;
+      }
+    };
+  } catch (_e6) {
+    __reportError__(_e6, "", "/pages/examples/timer.tsx");
+
+    throw _e6;
+  }
+}();
+
+(0, _defineProperty["default"])(exports, "__esModule", {
+  value: true
+});
+
+var thresh_lib_1 = __webpack_require__(93);
+
+var Page = thresh_lib_1.basicWidgets.Page,
+    AppBar = thresh_lib_1.basicWidgets.AppBar,
+    Text = thresh_lib_1.basicWidgets.Text;
+
+var TimerDemo =
+/** @class */
+function (_super) {
+  try {
+    __extends(TimerDemo, _super);
+
+    function TimerDemo(props) {
+      try {
+        var _this = _super.call(this, props) || this;
+
+        _this.state = {
+          timeoutUpdated: false,
+          intervalCount: 0
+        };
+        _this.timeout = (0, _setTimeout2["default"])(function () {
+          try {
+            _this.setState({
+              timeoutUpdated: true
+            });
+          } catch (_e7) {
+            __reportError__(_e7, "", "/pages/examples/timer.tsx");
+
+            throw _e7;
+          }
+        }, 5000);
+        _this.interval = (0, _setInterval2["default"])(function () {
+          try {
+            if (_this.state.intervalCount >= 10) {
+              clearInterval(_this.interval);
+              return;
+            }
+
+            _this.setState({
+              intervalCount: _this.state.intervalCount + 1
+            });
+          } catch (_e8) {
+            __reportError__(_e8, "", "/pages/examples/timer.tsx");
+
+            throw _e8;
+          }
+        }, 1000);
+        return _this;
+      } catch (_e9) {
+        __reportError__(_e9, "TimerDemo", "/pages/examples/timer.tsx");
+
+        throw _e9;
+      }
+    }
+
+    TimerDemo.prototype.widgetDidUnmount = function () {
+      try {
+        clearTimeout(this.timeout);
+        clearInterval(this.interval);
+      } catch (_e10) {
+        __reportError__(_e10, "", "/pages/examples/timer.tsx");
+
+        throw _e10;
+      }
+    };
+
+    TimerDemo.prototype.render = function () {
+      try {
+        return thresh_lib_1["default"].createElement(Page, {
+          appBar: thresh_lib_1["default"].createElement(AppBar, {
+            title: "Timer"
+          })
+        }, thresh_lib_1["default"].createElement(TimerItem, {
+          text: "\u666E\u901A\u5B9A\u65F6\u5668-5\u79D2\u66F4\u65B0: " + (this.state.timeoutUpdated ? '已更新' : '未更新')
+        }), thresh_lib_1["default"].createElement(TimerItem, {
+          text: "\u5FAA\u73AF\u5B9A\u65F6\u5668-10\u79D2\u505C\u6B62: " + this.state.intervalCount + " \u79D2"
+        }));
+      } catch (_e11) {
+        __reportError__(_e11, "", "/pages/examples/timer.tsx");
+
+        throw _e11;
+      }
+    };
+
+    return TimerDemo;
+  } catch (_e12) {
+    __reportError__(_e12, "", "/pages/examples/timer.tsx");
+
+    throw _e12;
+  }
+}(thresh_lib_1.Widget);
+
+exports["default"] = TimerDemo;
+
+var TimerItem =
+/** @class */
+function (_super) {
+  try {
+    __extends(TimerItem, _super);
+
+    function TimerItem() {
+      try {
+        return _super !== null && _super.apply(this, arguments) || this;
+      } catch (_e13) {
+        __reportError__(_e13, "", "/pages/examples/timer.tsx");
+
+        throw _e13;
+      }
+    }
+
+    TimerItem.prototype.render = function () {
+      try {
+        return thresh_lib_1["default"].createElement(Text, {
+          margin: 20
+        }, this.props.text);
+      } catch (_e14) {
+        __reportError__(_e14, "", "/pages/examples/timer.tsx");
+
+        throw _e14;
+      }
+    };
+
+    return TimerItem;
+  } catch (_e15) {
+    __reportError__(_e15, "", "/pages/examples/timer.tsx");
+
+    throw _e15;
+  }
+}(thresh_lib_1.Widget);
+
+/***/ }),
+/* 330 */
+/***/ (function(module, exports, __webpack_require__) {
+
+
+
+var _interopRequireDefault = __webpack_require__(1);
+
+var _setPrototypeOf = _interopRequireDefault(__webpack_require__(248));
+
+var _create = _interopRequireDefault(__webpack_require__(252));
+
+var _defineProperty = _interopRequireDefault(__webpack_require__(2));
+
+var _map = _interopRequireDefault(__webpack_require__(227));
+
+var _fill = _interopRequireDefault(__webpack_require__(296));
+
+var __extends = void 0 && (void 0).__extends || function () {
+  try {
+    var _extendStatics = function extendStatics(d, b) {
+      try {
+        _extendStatics = _setPrototypeOf["default"] || {
+          __proto__: []
+        } instanceof Array && function (d, b) {
+          try {
+            d.__proto__ = b;
+          } catch (_e) {
+            __reportError__(_e, "", "/pages/basic/DragableScrollViewDemo.tsx");
+
+            throw _e;
+          }
+        } || function (d, b) {
+          try {
+            for (var p in b) {
+              if (b.hasOwnProperty(p)) d[p] = b[p];
+            }
+          } catch (_e2) {
+            __reportError__(_e2, "", "/pages/basic/DragableScrollViewDemo.tsx");
+
+            throw _e2;
+          }
+        };
+
+        return _extendStatics(d, b);
+      } catch (_e3) {
+        __reportError__(_e3, "extendStatics", "/pages/basic/DragableScrollViewDemo.tsx");
+
+        throw _e3;
+      }
+    };
+
+    return function (d, b) {
+      try {
+        _extendStatics(d, b);
+
+        function __() {
+          try {
+            this.constructor = d;
+          } catch (_e4) {
+            __reportError__(_e4, "", "/pages/basic/DragableScrollViewDemo.tsx");
+
+            throw _e4;
+          }
+        }
+
+        d.prototype = b === null ? (0, _create["default"])(b) : (__.prototype = b.prototype, new __());
+      } catch (_e5) {
+        __reportError__(_e5, "", "/pages/basic/DragableScrollViewDemo.tsx");
+
+        throw _e5;
+      }
+    };
+  } catch (_e6) {
+    __reportError__(_e6, "", "/pages/basic/DragableScrollViewDemo.tsx");
+
+    throw _e6;
+  }
+}();
+
+(0, _defineProperty["default"])(exports, "__esModule", {
+  value: true
+});
+
+var thresh_lib_1 = __webpack_require__(93);
+
+var config_1 = __webpack_require__(275);
+
+var basicWidget_1 = __webpack_require__(247);
+
+var Page = thresh_lib_1.basicWidgets.Page,
+    AppBar = thresh_lib_1.basicWidgets.AppBar,
+    Container = thresh_lib_1.basicWidgets.Container,
+    Text = thresh_lib_1.basicWidgets.Text;
+
+var DrawerScrollViewDemo =
+/** @class */
+function (_super) {
+  try {
+    __extends(DrawerScrollViewDemo, _super);
+
+    function DrawerScrollViewDemo() {
+      try {
+        return _super !== null && _super.apply(this, arguments) || this;
+      } catch (_e7) {
+        __reportError__(_e7, "", "/pages/basic/DragableScrollViewDemo.tsx");
+
+        throw _e7;
+      }
+    }
+
+    DrawerScrollViewDemo.prototype.render = function () {
+      try {
+        return thresh_lib_1["default"].createElement(Page, {
+          appBar: thresh_lib_1["default"].createElement(AppBar, {
+            title: "DragableScrollView"
+          }),
+          backgroundColor: config_1.Colors.Pagebg
+        }, thresh_lib_1["default"].createElement(Container, {
+          relative: true
+        }, thresh_lib_1["default"].createElement(Container, {
+          width: thresh_lib_1.ui.screenWidth,
+          height: thresh_lib_1.ui.screenHeight - thresh_lib_1.ui.appbarHeight - thresh_lib_1.ui.statusBarHeight,
+          backgroundColor: config_1.Colors.Primary,
+          onTap: function onTap() {
+            try {
+              console.log(123);
+            } catch (_e8) {
+              __reportError__(_e8, "", "/pages/basic/DragableScrollViewDemo.tsx");
+
+              throw _e8;
+            }
+          }
+        }), thresh_lib_1["default"].createElement(InnerView, null)));
+      } catch (_e9) {
+        __reportError__(_e9, "", "/pages/basic/DragableScrollViewDemo.tsx");
+
+        throw _e9;
+      }
+    };
+
+    return DrawerScrollViewDemo;
+  } catch (_e10) {
+    __reportError__(_e10, "", "/pages/basic/DragableScrollViewDemo.tsx");
+
+    throw _e10;
+  }
+}(thresh_lib_1.Widget);
+
+exports["default"] = DrawerScrollViewDemo;
+
+var InnerView =
+/** @class */
+function (_super) {
+  try {
+    __extends(InnerView, _super);
+
+    function InnerView() {
+      try {
+        return _super !== null && _super.apply(this, arguments) || this;
+      } catch (_e11) {
+        __reportError__(_e11, "", "/pages/basic/DragableScrollViewDemo.tsx");
+
+        throw _e11;
+      }
+    }
+
+    InnerView.prototype.renderContent = function () {
+      try {
+        var _context, _context2;
+
+        return (0, _map["default"])(_context = (0, _fill["default"])(_context2 = new Array(50)).call(_context2, 1)).call(_context, function (_, index) {
+          try {
+            return thresh_lib_1["default"].createElement(Container, {
+              backgroundColor: config_1.Colors.White
+            }, thresh_lib_1["default"].createElement(Container, {
+              borderRadius: 5,
+              width: 20,
+              height: 20,
+              backgroundColor: index ? config_1.Colors.Primary : config_1.Colors.Red,
+              margin: 5
+            }));
+          } catch (_e12) {
+            __reportError__(_e12, "", "/pages/basic/DragableScrollViewDemo.tsx");
+
+            throw _e12;
+          }
+        });
+      } catch (_e13) {
+        __reportError__(_e13, "", "/pages/basic/DragableScrollViewDemo.tsx");
+
+        throw _e13;
+      }
+    };
+
+    InnerView.prototype.render = function () {
+      try {
+        var _this = this;
+
+        return thresh_lib_1["default"].createElement(basicWidget_1.DragableScrollView, {
+          ref: function ref(e) {
+            try {
+              return _this.$view = e;
+            } catch (_e14) {
+              __reportError__(_e14, "", "/pages/basic/DragableScrollViewDemo.tsx");
+
+              throw _e14;
+            }
+          },
+          initialSize: 0.5,
+          minSize: 0.2,
+          backgroundColor: config_1.Colors.White,
+          borderRadius: {
+            topLeft: 10,
+            topRight: 10
+          },
+          onScroll: function onScroll() {},
+          onDragPositionChange: function onDragPositionChange(e) {
+            try {
+              return console.log(e);
+            } catch (_e15) {
+              __reportError__(_e15, "", "/pages/basic/DragableScrollViewDemo.tsx");
+
+              throw _e15;
+            }
+          },
+          headerView: thresh_lib_1["default"].createElement(Container, {
+            alignItems: "center",
+            padding: 10,
+            backgroundColor: config_1.Colors.White,
+            onTap: function onTap() {
+              try {
+                if (!_this.$view) return;
+
+                _this.$view.dragPositionAnimateTo('initial');
+              } catch (_e16) {
+                __reportError__(_e16, "onTap", "/pages/basic/DragableScrollViewDemo.tsx");
+
+                throw _e16;
+              }
+            }
+          }, thresh_lib_1["default"].createElement(Container, {
+            width: 50,
+            height: 6,
+            borderRadius: 3,
+            backgroundColor: config_1.Colors.Primary
+          }))
+        }, this.renderContent());
+      } catch (_e17) {
+        __reportError__(_e17, "", "/pages/basic/DragableScrollViewDemo.tsx");
+
+        throw _e17;
+      }
+    };
+
+    return InnerView;
+  } catch (_e18) {
+    __reportError__(_e18, "", "/pages/basic/DragableScrollViewDemo.tsx");
+
+    throw _e18;
+  }
+}(thresh_lib_1.Widget);
+
+/***/ }),
+/* 331 */
+/***/ (function(module, exports, __webpack_require__) {
+
+
+
+var _interopRequireDefault = __webpack_require__(1);
+
+var _setPrototypeOf = _interopRequireDefault(__webpack_require__(248));
+
+var _create = _interopRequireDefault(__webpack_require__(252));
+
+var _defineProperty = _interopRequireDefault(__webpack_require__(2));
+
+var _map = _interopRequireDefault(__webpack_require__(227));
+
+var _bind = _interopRequireDefault(__webpack_require__(278));
 
 var __extends = void 0 && (void 0).__extends || function () {
   try {
@@ -19452,13 +22902,13 @@ var __extends = void 0 && (void 0).__extends || function () {
 
 var thresh_lib_1 = __webpack_require__(93);
 
-var config_1 = __webpack_require__(268);
+var config_1 = __webpack_require__(275);
 
-var Box_1 = __webpack_require__(270);
+var Box_1 = __webpack_require__(277);
 
-var Center_1 = __webpack_require__(277);
+var Center_1 = __webpack_require__(284);
 
-var Title_1 = __webpack_require__(282);
+var Title_1 = __webpack_require__(289);
 
 var Page = thresh_lib_1.basicWidgets.Page,
     AppBar = thresh_lib_1.basicWidgets.AppBar,
@@ -19483,9 +22933,9 @@ function (_super) {
       }
     }
 
-    HomePage.prototype.tapListItem = function (pageName) {
+    HomePage.prototype.widgetDidMount = function () {
       try {
-        thresh_lib_1["default"].pushPage(pageName);
+        thresh_lib_1["default"].pageDidShow();
       } catch (_e8) {
         __reportError__(_e8, "", "/pages/homePage.tsx");
 
@@ -19493,9 +22943,9 @@ function (_super) {
       }
     };
 
-    HomePage.prototype.widgetDidMount = function () {
+    HomePage.prototype.tapListItem = function (pageName) {
       try {
-        thresh_lib_1["default"].pageDidShow();
+        thresh_lib_1["default"].pushPage(pageName);
       } catch (_e9) {
         __reportError__(_e9, "", "/pages/homePage.tsx");
 
@@ -19511,7 +22961,9 @@ function (_super) {
 
         return thresh_lib_1["default"].createElement(Page, {
           appBar: thresh_lib_1["default"].createElement(AppBar, {
-            title: this.props.title || 'Thresh Demos'
+            title: this.props.title || 'Thresh Demos',
+            backgroundColor: config_1.Colors.White,
+            elevation: true
           }),
           backgroundColor: config_1.Colors.Pagebg
         }, thresh_lib_1["default"].createElement(ScrollView, null, thresh_lib_1["default"].createElement(Title_1["default"], {

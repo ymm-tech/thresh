@@ -24,12 +24,41 @@
 
 #import "ThreshConfig.h"
 
+@interface ThreshConfig ()
+
+@property (nonatomic, strong) InfoCollector *infoCollector;
+@property (nonatomic, strong) Loader *dataLoader;
+@property (nonatomic, strong) NativeBridge *bridge;
+
+@end
+
 @implementation ThreshConfig
+
+- (InfoCollector *)infoCollector {
+    if (!_infoCollector) {
+        _infoCollector = [InfoCollector new];
+    }
+    return _infoCollector;
+}
+
+- (Loader *)dataLoader {
+    if (!_dataLoader) {
+        _dataLoader = [Loader new];
+    }
+    return _dataLoader;
+}
+
+- (NativeBridge *)bridge {
+    if (!_bridge) {
+        _bridge = [NativeBridge new];
+    }
+    return _bridge;
+}
 
 #pragma mark - ThreshProtocol
 
 - (id<ThreshInfoExport>)exporter {
-    return [InfoCollector new];
+    return [self infoCollector];
 }
 
 - (id<ThreshRouterParams>)router {
@@ -41,16 +70,16 @@
 }
 
 - (id<ThreshDataLoader>)loader {
-    return [Loader new];
+    return self.dataLoader;
 }
 
 - (id<ThreshNativeBridge>)nativeBridge {
-    return [NativeBridge new];
+    return [self bridge];
 }
 
 #pragma mark - ThreshRouterParams
 - (NSString *)pageName {
-    return @"test-thresh-page";
+    return @"thresh-page";
 }
 
 - (NSString *)moduleName {
@@ -58,7 +87,7 @@
 }
 
 - (NSString *)routerString {
-    return @"thresh/test-thresh-page";
+    return @"thresh/thresh-page";
 }
 
 #pragma mark - ThreshNativePlatformView

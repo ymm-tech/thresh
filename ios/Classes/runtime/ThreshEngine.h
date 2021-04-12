@@ -49,8 +49,11 @@ NS_ASSUME_NONNULL_BEGIN
 
 // 事件传递
 - (void)sendJSEvent:(id)eventStr complete:(ThreshCompleteBlock)complete;
+- (void)sendJSEvent:(id)eventStr args:(NSDictionary *)args complete:(ThreshCompleteBlock)complete;
 // 方法调用
 - (void)invokeJSMethod:(NSString *)methodStr args:(id)args complete:(ThreshCompleteBlock)complete;
+
+@property (nonatomic, assign) NSUInteger contextId;
 
 @end
 

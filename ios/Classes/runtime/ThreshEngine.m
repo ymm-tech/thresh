@@ -30,8 +30,11 @@
 #import "ThreshAppDelegate.h"
 #import "ThreshJSLoader.h"
 
-static NSMutableDictionary *viewContextDic;
+static NSMapTable<NSString *, NSHashTable *> *_loadCallbacks; // 装载js回调
+static NSMutableDictionary *_viewContextDic;
 static NSUInteger contextId = 0;
+
+typedef void(^Callback)(BOOL success);
 
 @interface ThreshEngine () <ThreshJSChannelDelegate, ThreshPluginDelegate>
 
@@ -56,7 +59,8 @@ static NSUInteger contextId = 0;
 @implementation ThreshEngine
 
 + (void)load {
-    viewContextDic = @{}.mutableCopy;
+    _viewContextDic = @{}.mutableCopy;
+    _loadCallbacks = [[NSMapTable alloc] initWithKeyOptions:NSPointerFunctionsStrongMemory valueOptions:NSPointerFunctionsStrongMemory capacity:1];
 }
 
 #pragma mark - init
@@ -78,6 +82,7 @@ static NSUInteger contextId = 0;
         ThreshInfo(@"ThreshEngine init, pageName = %@, moduleName = %@", self.pageName, self.moduleName);
         if (engine) {
             [self _registerChannelsWithEngine:engine];
+            [self _activateJS];
         } else {
             ThreshWarn(@"ThreshEngine init need Flutter Engine");
         }
@@ -95,49 +100,90 @@ static NSUInteger contextId = 0;
 #pragma clang diagnostic pop
     }
     
-    NSString *moduleName = safeRespondsForProtocol(self.config, @selector(router), @selector(moduleName), nil) ? self.config.router.moduleName : nil;
-    self.jsCoreChannel = [[ThreshJSChannelManager sharedMgr] channelWithModule:moduleName supportSingleContext:[ThreshAppDelegate sharedInstance].supportJSSingleton];
+    self.jsCoreChannel = [[ThreshJSChannelManager sharedMgr] channelWithModule:self.moduleName];
     self.jsCoreChannel.delegate = self;
     __weak typeof(self) weakSelf = self;
     self.jsCoreChannel.exceptionHandler = ^(NSString * _Nonnull exception) {
         [weakSelf exceptionType:ThreshExceptionJS msg:exception];
     };
-    [self _loadAndEvalJS:^{}];
     
     [self _registerFlutterPlugin:[engine registrarForPlugin:NSStringFromClass([self class])]];
 }
 
-#pragma mark - JS Singleton
-
-- (void)preForJSSingleton {
+- (void)_activateJS {
     
-    if (![ThreshAppDelegate sharedInstance].supportJSSingleton) return;
-    contextId++;
-    viewContextDic[@(self.rootId)] = @(contextId);
+    // 改变 contextId
+    _contextId = ++contextId;
+    // 将 rootId 同 contextId 绑定
+    _viewContextDic[@(self.rootId)] = @(contextId);
+    // 将 jscore 回调同 contextId 绑定
     [self.jsCoreChannel addDelegate:self contextId:contextId];
-    [self.jsCoreChannel setGloablVariableWithName:@"threshContextId" value:@(contextId)];
+    // 加载bundle包
+    if (![[ThreshJSChannelManager sharedMgr] loadedWithModule:self.moduleName]) {
+        ThreshInfo(@"Loader: %@ haven't loaded, begin load", self.moduleName);
+        __weak typeof(self) weakSelf = self;
+        [self _startLoad:^(BOOL success) {
+            if (success) {
+                [[ThreshJSChannelManager sharedMgr] haveLoadedWithModule:weakSelf.moduleName];
+                ThreshInfo(@"Loader: %@ load success", weakSelf.moduleName);
+            } else {
+                ThreshInfo(@"Loader: %@ load failed", weakSelf.moduleName);
+            }
+        }];
+    } else {
+        ThreshInfo(@"Loader: %@ have loaded", self.moduleName);
+    }
 }
 
-#pragma mark - load data
+#pragma mark - load js
 
-- (void)_loadAndEvalJS:(void (^)(void))complete {
+- (void)_startLoad:(Callback)callback {
+    
+    // 记录回调
+    if ([[_loadCallbacks keyEnumerator].allObjects containsObject:self.moduleName]) {
+        ThreshInfo(@"Loader: %@ loading", self.moduleName);
+        NSHashTable *t = [_loadCallbacks objectForKey:self.moduleName];
+        [t addObject:callback];
+    } else {
+        ThreshInfo(@"Loader: %@ first load", self.moduleName);
+        NSHashTable *t = [[NSHashTable alloc] initWithOptions:NSPointerFunctionsStrongMemory capacity:1];
+        [t addObject:callback];
+        [_loadCallbacks setObject:t forKey:self.moduleName];
+        
+        // 开始加载
+        __weak typeof(self) weakSelf = self;
+        [self _loadAndEvalJS:^(BOOL success) {
+            if (success) {
+                NSHashTable *t = [_loadCallbacks objectForKey:weakSelf.moduleName];
+                [[t objectEnumerator].allObjects enumerateObjectsUsingBlock:^(Callback  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+                    if (obj) {
+                        obj(YES);
+                    }
+                }];
+                [_loadCallbacks removeObjectForKey:weakSelf.moduleName];
+            }
+        }];
+    }
+}
+
+- (void)_loadAndEvalJS:(void (^)(BOOL success))complete {
     
     dispatch_async(dispatch_get_global_queue(0, 0), ^{
+        
         __weak typeof(self) weakSelf = self;
-    
         void (^callback)(NSData *, NSError *) = ^(NSData *response, NSError *err) {
             
             __strong typeof(weakSelf) strongSelf = weakSelf;
             [strongSelf exportLifeCycle:ThreshAfterLoadBundle ext:@{}];
             NSString *dataJSString = [[NSString alloc] initWithData:response encoding:NSUTF8StringEncoding];
             if(dataJSString.length > 0) {
-                [strongSelf preForJSSingleton];
                 [strongSelf exportLifeCycle:ThreshBeforeEvalJS ext:@{}];
                 [strongSelf.jsCoreChannel evaluateJS:dataJSString callback:^{
                     [strongSelf exportLifeCycle:ThreshAfterEvalJS ext:@{}];
-                    complete();
+                    complete(YES);
                 }];
             } else {
+                complete(NO);
                 ThreshError(@"load js app error, js string length 0");
             }
         };
@@ -281,13 +327,7 @@ static NSUInteger contextId = 0;
     
     if (self.jsCoreChannel) {
         [self _destroyJSEnv];
-        if (![ThreshAppDelegate sharedInstance].supportJSSingleton) {
-            [self.jsCoreChannel releaseJSChannel];
-            self.jsCoreChannel.delegate = nil;
-            self.jsCoreChannel = nil;
-        } else {
-            [viewContextDic removeObjectForKey:@(self.rootId)];
-        }
+        [_viewContextDic removeObjectForKey:@(self.rootId)];
     }
 }
 
@@ -295,8 +335,8 @@ static NSUInteger contextId = 0;
 - (void)_destroyJSEnv {
     dispatch_semaphore_t s = dispatch_semaphore_create(0);
     NSMutableDictionary *params = @{@"method": @"onDestroyed"}.mutableCopy;
-    if ([ThreshAppDelegate sharedInstance].supportJSSingleton && viewContextDic[@(self.rootId)]) {
-        [params setObject:viewContextDic[@(self.rootId)] forKey:@"contextId"];
+    if (_viewContextDic[@(self.rootId)]) {
+        [params setObject:[NSString stringWithFormat:@"%@", _viewContextDic[@(self.rootId)]] forKey:@"contextId"];
     }
     [self.jsCoreChannel invokeMothod:kChannelNativeCallJS args:params complete:^(NSDictionary *response) {}];
     dispatch_semaphore_wait(s, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.03 * NSEC_PER_SEC)));
@@ -349,6 +389,10 @@ static NSUInteger contextId = 0;
                     }
                 }];
             }
+        } else if ([method isEqualToString:kInvokePlatformViewMethod]) {
+            if (safeRespondsForProtocol(self.config, @selector(nativePlatform), @selector(invokeInstanceMethodWithArgs:), nil)) {
+                [self.config.nativePlatform invokeInstanceMethodWithArgs:arguments[@"params"]];
+            }
         } else {
             ThreshError(@"unknown method !!!! %@", method);
         }
@@ -373,10 +417,10 @@ static NSUInteger contextId = 0;
 
 - (void)reloadJS {
     if (self.jsCoreChannel && [self.jsCoreChannel envReady]) {
-        if (![ThreshAppDelegate sharedInstance].supportJSSingleton) {
-            [self.jsCoreChannel reloadJS];
-        }
-        [self _loadAndEvalJS:^{}];
+        // 清空之前的context 并重新创建
+        [self.jsCoreChannel reloadJS];
+        // 加载
+        [self _startLoad:^(BOOL success) {}];
     }
 }
 
@@ -390,11 +434,17 @@ static NSUInteger contextId = 0;
 - (void)sendJSEvent:(id)eventStr complete:(ThreshCompleteBlock)complete {
     
     NSString *contextId = @"";
-    if ([ThreshAppDelegate sharedInstance].supportJSSingleton && viewContextDic[@(self.rootId)]) {
-        contextId = [NSString stringWithFormat:@"%@", viewContextDic[@(self.rootId)]];
-        [self.jsCoreChannel invokeMothod:kChannelFireJSEvent complete:complete withArguments:contextId, eventStr, nil];
-    } else {
-        [self.jsCoreChannel invokeMothod:kChannelFireJSEvent args:eventStr complete:complete];
+    if (_viewContextDic[@(self.rootId)]) {
+        contextId = [NSString stringWithFormat:@"%@", _viewContextDic[@(self.rootId)]];
+        [self.jsCoreChannel invokeMothod:kChannelFireJSEvent complete:complete withArguments:eventStr, contextId, nil];
+    }
+}
+
+- (void)sendJSEvent:(id)eventStr args:(NSDictionary *)args complete:(ThreshCompleteBlock)complete {
+    NSString *contextId = @"";
+    if (_viewContextDic[@(self.rootId)]) {
+        contextId = [NSString stringWithFormat:@"%@", _viewContextDic[@(self.rootId)]];
+        [self.jsCoreChannel invokeMothod:kChannelFireJSEvent complete:complete withArguments:eventStr, contextId, args, nil];
     }
 }
 

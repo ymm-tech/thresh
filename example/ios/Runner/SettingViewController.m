@@ -120,6 +120,7 @@
     [_scrollview addSubview:_tips];
     
     _ipLabel = [[UILabel alloc] initWithFrame:CGRectMake(margin, _tips.frame.origin.y + _tips.frame.size.height + margin, 0, 0)];
+    _ipLabel.textColor = [UIColor blackColor];
     _ipLabel.font = [UIFont systemFontOfSize:16.0f];
     _ipLabel.text = @"JS服务器IP";
     [_ipLabel sizeToFit];
@@ -128,9 +129,11 @@
     _ipTextField = [[UITextField alloc] initWithFrame:CGRectMake(width - 200.0f - margin, _tips.frame.origin.y + _tips.frame.size.height + margin, 200.0f, 16.0f)];
     _ipTextField.placeholder = @"请填写ip";
     _ipTextField.textAlignment = NSTextAlignmentRight;
+    _ipTextField.textColor = [UIColor blackColor];
     [_scrollview addSubview:_ipTextField];
     
     _portLabel = [[UILabel alloc] initWithFrame:CGRectMake(margin, _ipLabel.frame.origin.y + _ipLabel.frame.size.height + margin, 0, 0)];
+    _portLabel.textColor = [UIColor blackColor];
     _portLabel.font = [UIFont systemFontOfSize:16.0f];
     _portLabel.text = @"端口号";
     [_portLabel sizeToFit];
@@ -139,6 +142,7 @@
     _portTextField = [[UITextField alloc] initWithFrame:CGRectMake(width - 200.0f - margin, _ipLabel.frame.origin.y + _ipLabel.frame.size.height + margin, 200.0f, 16.0f)];
     _portTextField.placeholder = @"请填写端口号";
     _portTextField.textAlignment = NSTextAlignmentRight;
+    _portTextField.textColor = [UIColor blackColor];
     [_scrollview addSubview:_portTextField];
     
     _ipTextField.text = @"127.0.0.1";

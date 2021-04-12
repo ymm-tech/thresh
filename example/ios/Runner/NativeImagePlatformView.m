@@ -31,6 +31,8 @@
 @property (nonatomic, assign) int64_t viewId;
 @property (nonatomic, strong) id args;
 
+@property (nonatomic, strong) UILabel *label;
+
 @end
 
 @implementation NativeImagePlatformView
@@ -42,6 +44,11 @@
         _frame = frame;
         _viewId = viewId;
         _args = args;
+        
+        _label = [[UILabel alloc] init];
+        _label.font = [UIFont boldSystemFontOfSize:15.0f];
+        _label.textColor = [UIColor purpleColor];
+        _label.text = _args[@"text"];
     }
     return self;
 }
@@ -50,11 +57,7 @@
 
 - (UIView *)view {
     
-    UILabel *label = [UILabel new];
-    label.font = [UIFont boldSystemFontOfSize:15.0f];
-    label.textColor = [UIColor purpleColor];
-    label.text = _args[@"text"];
-    return label;
+    return _label;
 }
 
 @end

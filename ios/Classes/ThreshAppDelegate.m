@@ -32,8 +32,6 @@
 
 @property (nonatomic, strong) id<ThreshNativeBridge> nativeBridge;
 
-@property (nonatomic, assign) BOOL supportJSSingleton;
-
 @end
 
 @implementation ThreshAppDelegate
@@ -48,12 +46,10 @@
     return instance;
 }
 
-- (void)startThreshWithLogger:(id<ThreshLogger>)logger
-           supportJSSingleton:(BOOL)supportJSSingleton {
+- (void)startThreshWithLogger:(id<ThreshLogger>)logger {
     if (logger) {
         _logger = logger;
     }
-    _supportJSSingleton = supportJSSingleton;
 }
 
 @end
