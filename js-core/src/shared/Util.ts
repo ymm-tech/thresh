@@ -22,8 +22,10 @@
  *
  */
 
-import threshApp from '../..'
-import { ShowDividerKey } from '../manager/DevtoolsManager'
+import threshApp, { Widget } from '../..'
+import VNode from '../core/VNode'
+import BridgeManager from '../manager/BridgeManager'
+import { SHOW_DIVIDER_KEY } from '../manager/DevtoolsManager'
 
 /**
  * threshApp内部工具类
@@ -38,7 +40,7 @@ export default class Util {
     return flutterVersionNumber < aimFlutterVersionNumber
   }
 
-  static randomId () { return Math.random().toString(16) }
+  static randomId () { return Math.random().toString(16).replace('0.', '') }
   
   /**
    * 判断当前参数类型
@@ -59,7 +61,7 @@ export default class Util {
   /**
    * 将目标转换为一维数组
    */
-  static toFlatWidgetArray (source: any): any[] {
+  static toFlatWidgetArray (source: any[]): any[] {
     if (!source) return []
     if (!Array.isArray(source)) return [ source ]
     let target: any[] = []
@@ -100,11 +102,14 @@ export default class Util {
     if (Util.isNil(value)) return !showUndefined ? '' : 'undefined'
     let res: string
     if (Util.isString(value)) return value
+    if (value instanceof VNode) return `Widget ${value.type}`
+    if (value instanceof Widget) return `Widget ${value.__vNode__?.type || '[unknown]'}`
     try {
       res = JSON.stringify(value)
     } catch (e) {
-      console.error(e)
       res = value.toString()
+    } finally {
+      if (Util.isNil(res)) res = Util.type(value)
     }
     return res
   }
@@ -119,7 +124,7 @@ export default class Util {
         let tempArr: string[] = []
         for (let key in item) {
           const value = item[key]
-          if (key !== ShowDividerKey) tempArr.push(`[${key}] - ${Util.toString(value, true)}`)
+          if (key !== SHOW_DIVIDER_KEY) tempArr.push(`[${key}] - ${Util.toString(value, true)}`)
           else tempArr.push(`-----${Util.isString(value) ? value : ''}-----`)
           temp = tempArr.join('\n')
         }
@@ -193,5 +198,27 @@ export default class Util {
       last = current
       callback(...args)
     }
+  }
+
+  /**
+   * Native 日志
+   */
+  static log (content: string) {
+    const t: number = Date.now()
+    BridgeManager.invoke({
+      module: 'base',
+      method: 'log',
+      params: {
+        level: 2,
+        tag: '[[Dynamic Flutter JS Log]]',
+        content: `[${t}] - ${content}`
+      }
+    })
+  }
+
+  // ios 10.0.x 版本上 Promise 回调中的 resolve 存在异常
+  // 必须先通过 Promise.resolve() 进行一遍类似初始化的操作
+  static promiseResolveHackForIos_10_0_x () {
+    return Promise.resolve()
   }
 }

@@ -32,32 +32,35 @@ import com.eclipsesource.v8.V8Array;
 import com.eclipsesource.v8.V8Object;
 
 import androidx.annotation.Nullable;
-import io.manbang.frontend.thresh.Thresh;
-import io.manbang.frontend.thresh.channel.BridgeCallback;
-import io.manbang.frontend.thresh.channel.MethodConstants;
-import io.manbang.frontend.thresh.channel.NativeModule;
-import io.manbang.frontend.thresh.channel.MethodChannelModule;
+
 import io.manbang.frontend.thresh.runtime.jscore.bundle.BundleCallback;
 import io.manbang.frontend.thresh.runtime.jscore.bundle.JSBundleLoader;
 import io.manbang.frontend.thresh.runtime.jscore.runtime.JSCallback;
 import io.manbang.frontend.thresh.runtime.jscore.util.V8Util;
+import io.manbang.frontend.thresh.channel.BridgeCallback;
+import io.manbang.frontend.thresh.channel.MethodConstants;
+import io.manbang.frontend.thresh.channel.nativemodule.NativeModule;
+import io.manbang.frontend.thresh.channel.MethodChannelModule;
+import io.manbang.frontend.thresh.manager.ContextIdManager;
 import io.manbang.frontend.thresh.util.ThreshLogger;
 
-import java.lang.ref.WeakReference;
 import java.util.Locale;
 import java.util.Map;
 
 import io.manbang.frontend.thresh.view.LifecycleListener;
 
+import static io.manbang.frontend.thresh.channel.MethodConstants.CALL_TIMER_OPERATOR;
+
 /**
  * thresh engine
  */
-public class ThreshEngine implements LifecycleListener,EngineService{
+public class ThreshEngine implements LifecycleListener, EngineService {
 
     /**
      * bundle options
      */
     private ThreshEngineOptions engineOptions;
+    private String contextId;
     /**
      * channel
      */
@@ -78,42 +81,44 @@ public class ThreshEngine implements LifecycleListener,EngineService{
      * JS module
      */
     public JSModule jsModule;
+
     /**
      * thresh engine status
      *
      * <p> IF isReady true : thresh engine ok ,else fail</p>
      */
-    private boolean isReady;
 
-    public ThreshEngine(ThreshEngineOptions engineOptions) {
+    public ThreshEngine(ThreshEngineOptions engineOptions, String contextId) {
         this.engineOptions = engineOptions;
+        this.contextId = contextId;
         assertBundleParams();
-        if (Thresh.get().platform().supportJSSingleton()){
-            jsModule = Thresh.get().getJSManager().getJSModule(engineOptions.moduleName);
-            if (jsModule == null){
-                jsModule =  new JSModule(engineOptions.moduleName,engineOptions.bundleOptions);
-                Thresh.get().getJSManager().registerJSModule(new WeakReference<JSModule>(jsModule));
-            }
-        }else {
-            jsModule =  new JSModule(engineOptions.moduleName,engineOptions.bundleOptions);
+        jsModule = JSManager.getInstance().getJSModule(engineOptions.moduleName);
+        if (jsModule != null && !engineOptions.moduleVersion.equals(jsModule.getModuleVersion())) {
+            jsModule.destroy();
+            jsModule = null;
         }
-        jsModule.addRootId(engineOptions.rootId);
+        if (jsModule == null) {
+            jsModule = new JSModule(engineOptions.moduleName, engineOptions.moduleVersion, engineOptions.bundleOptions);
+            JSManager.getInstance().registerJSModule(jsModule);
+        }
         this.mMainHandler = new Handler(Looper.getMainLooper());
         registerMethodCall();
-        isReady = false;
     }
+
     /**
      * bind method channel for thresh engine
      */
     public void bindThreshMethodCall(MethodChannelModule channel) {
         this.threshChannel = channel;
     }
+
     /**
      * bind native bridge for thresh engine
      */
     public void bindNativeModule(NativeModule nativeModule) {
         this.nativeModule = nativeModule;
     }
+
     /**
      * bind bundle loader for thresh engine
      */
@@ -125,57 +130,79 @@ public class ThreshEngine implements LifecycleListener,EngineService{
      * register flutter <->  native <-> JS  call
      **/
     private void registerMethodCall() {
-        jsModule.jsThread.execute(new JSThread.ThreshJSTask() {
-            @Override
-            public void execute() {
-                jsModule.getExecutor().registerJavaMethod(new JavaCallback() {
-                    @Override
-                    public Object invoke(V8Object v8Object, V8Array v8Array) {
-                        performCallFlutter(v8Array);
-                        return null;
-                    }
-                },engineOptions.jsCallFlutterMethod);
-            }
-        });
-        jsModule.jsThread.execute(new JSThread.ThreshJSTask() {
-            @Override
-            public void execute() {
-                jsModule.getExecutor().registerJavaMethod(new JavaCallback() {
-                    @Override
-                    public Object invoke(V8Object v8Object, V8Array v8Array) {
-                        performCallNative(v8Array);
-                        return null;
-                    }
-                },engineOptions.jsCallNativeMethod);
-            }
-        });
 
-        jsModule.registerLifecycleEvent(engineOptions.callJSLifecycleMethod,engineOptions.callJSMethod);
+        jsModule.registerJavaMethodCallBack(jsCallFlutterCallBack, engineOptions.jsCallFlutterMethod);
+
+        jsModule.registerJavaMethodCallBack(jsCallNativeCallBack, engineOptions.jsCallNativeMethod);
+
+        jsModule.registerJavaMethodCallBack(jsCallTimerCallBack, engineOptions.callNativeTimer);
+
+        jsModule.registerLifecycleEvent(engineOptions.callJSLifecycleMethod, engineOptions.callJSMethod);
     }
+
+    private JavaCallback jsCallFlutterCallBack = new JavaCallback() {
+        @Override
+        public Object invoke(V8Object v8Object, V8Array v8Array) {
+            performCallFlutter(V8Util.toMap(v8Array));
+            return null;
+        }
+    };
+
+    private JavaCallback jsCallNativeCallBack = new JavaCallback() {
+        @Override
+        public Object invoke(V8Object v8Object, V8Array v8Array) {
+            performCallNative(V8Util.toMap(v8Array));
+            return null;
+        }
+    };
+
+    private JavaCallback jsCallTimerCallBack = new JavaCallback() {
+        @Override
+        public Object invoke(V8Object v8Object, V8Array v8Array) {
+            final Map args = V8Util.toMap(v8Array);
+            args.put(MethodConstants.CALL_METHOD, CALL_TIMER_OPERATOR);
+            performCallNative(args);
+            return null;
+        }
+    };
+
+
     /**
      * An method for js call flutter
      * <LI>  {@link ThreshEngineOptions#jsCallFlutterMethod} </LI>
      */
-    public void performCallFlutter(final V8Array parameters) {
-        final Map args = V8Util.toMap(parameters);
+    public void performCallFlutter(final Map args) {
+        if (isNotTargetContextId(args)) {
+            return;
+        }
         mMainHandler.post(new Runnable() {
             @Override
             public void run() {
-                if (threshChannel != null){
-                    threshChannel.invokeMethod(engineOptions.jsCallFlutterMethod,args);
+                if (threshChannel != null) {
+                    threshChannel.invokeMethod(engineOptions.jsCallFlutterMethod, args);
                 }
             }
         });
+    }
+
+    private boolean isNotTargetContextId(Map args) {
+        Object methodContextId = args.get("contextId");
+        if (methodContextId == null) {
+            return false;
+        }
+        return !this.contextId.equals(methodContextId);
     }
 
     /**
      * An method for js call native
      * <LI>  {@link ThreshEngineOptions#jsCallNativeMethod} </LI>
      */
-    private void performCallNative(final V8Array parameters) {
-        final Map args = V8Util.toMap(parameters);
-        if (args != null){
-            nativeModule.dispatchJSCallNativeEvent(ThreshEngine.this,args.get(MethodConstants.CALL_METHOD) + "", args);
+    private void performCallNative(Map args) {
+        if (isNotTargetContextId(args)) {
+            return;
+        }
+        if (args != null) {
+            nativeModule.dispatchJSCallNativeEvent(ThreshEngine.this, args.get(MethodConstants.CALL_METHOD) + "", args);
         }
     }
 
@@ -184,35 +211,32 @@ public class ThreshEngine implements LifecycleListener,EngineService{
      */
     @Override
     public void onPause() {
-        if (checkInit()){
-            return;
-        }
-        if (jsModule != null){
-            jsModule.onPause(engineOptions.rootId);
+        if (jsModule != null) {
+            jsModule.onPause(contextId);
         }
     }
+
     /**
      * {@link LifecycleListener#onResume()}
      */
     @Override
     public void onResume() {
-        if (checkInit()){
-            return;
-        }
-        if (jsModule != null){
-            jsModule.onResume(engineOptions.rootId);
+        if (jsModule != null) {
+            jsModule.onResume(contextId);
         }
     }
+
     /**
      * {@link LifecycleListener#onDestroy()}
      */
     @Override
     public void onDestroy() {
-        if (checkInit()){
-            return;
-        }
-        if (jsModule != null){
-            jsModule.onDestroy(engineOptions.rootId);
+        ContextIdManager.INSTANCE.clearByContextId(contextId);
+        if (jsModule != null) {
+            jsModule.onDestroy(contextId);
+            jsModule.unregisterJavaMethodCallBack(jsCallFlutterCallBack, engineOptions.jsCallFlutterMethod);
+            jsModule.unregisterJavaMethodCallBack(jsCallNativeCallBack, engineOptions.jsCallNativeMethod);
+            jsModule.unregisterJavaMethodCallBack(jsCallTimerCallBack, engineOptions.callNativeTimer);
         }
         // unregister channel
         if (threshChannel != null) {
@@ -222,32 +246,25 @@ public class ThreshEngine implements LifecycleListener,EngineService{
         bundleLoader = null;
         nativeModule = null;
     }
+
     /**
      * {@link LifecycleListener#onBackPressed()}
      */
     @Override
     public void onBackPressed() {
-        if (checkInit()){
-            return;
-        }
-        if (jsModule != null){
-            jsModule.onBackPressed(engineOptions.rootId);
+        if (jsModule != null) {
+            jsModule.onBackPressed(contextId);
         }
     }
 
-    public ThreshEngineOptions getThreshOptions(){
+    public ThreshEngineOptions getThreshOptions() {
         return engineOptions;
     }
 
-    public void setReady(boolean isReady){
-        this.isReady = isReady;
-        jsModule.jsStatusReady = isReady;
+    public void setReady(boolean isReady) {
         ThreshLogger.v(String.format(Locale.US, "[--- ThreshEngine READY %s --- ]", isReady ? "Success" : "Failure"));
     }
 
-    public boolean checkInit(){
-        return !isReady;
-    }
 
     public void assertBundleParams() {
         if (engineOptions == null
@@ -257,53 +274,113 @@ public class ThreshEngine implements LifecycleListener,EngineService{
             throw new ThreshException("Must be bundle options value.");
         }
     }
+
     @Override
-    public void loadScript(){
+    public void loadScript() {
         loadScript(null);
     }
+
+    @Override
+    public void forceLoadScript() {
+        loadScriptImpl(null);
+    }
+
     @Override
     public void loadScript(final JSCallback callback) {
-        if (bundleLoader != null){
-            bundleLoader.loadScript(null, engineOptions.bundleOptions, new BundleCallback() {
-                @Override
-                public void onResult(int code, String reason,String data) {
-                    if (code == 0 && !TextUtils.isEmpty(data)){
-                        if (callback != null){
-                            jsModule.executeScript(engineOptions.rootId,data, callback);
-                        }else {
-                            jsModule.executeScript(engineOptions.rootId, data, new JSCallback() {
-                                @Override
-                                public void success(@Nullable Object o) {
-                                    setReady(true);
-                                }
+        if(jsModule.isLoaded()){
+            return;
+        }
+        loadScriptImpl(callback);
+    }
 
-                                @Override
-                                public void error(int i, @Nullable String s, @Nullable Object o) {
-                                    setReady(false);
-                                }
-                            });
-                        }
-                    }else {
-                        ThreshLogger.e("READ BUNDLE ERROR:" + reason);
+    private void loadScriptImpl(final JSCallback callback){
+        if(bundleLoader == null){
+            if (callback != null) {
+                callback.error(-1, "BundleLoader cannot null", "");
+            }
+            return;
+        }
+        bundleLoader.loadScript(null, engineOptions.bundleOptions, new BundleCallback() {
+            @Override
+            public void onResult(int code, String reason, String data) {
+                if (code == 0 && !TextUtils.isEmpty(data)) {
+                    if (callback != null) {
+                        jsModule.executeScript(contextId, data, callback);
+                    } else {
+                        jsModule.executeScript(contextId, data, new JSCallback() {
+                            @Override
+                            public void success(@Nullable Object o) {
+                                setReady(true);
+                            }
+
+                            @Override
+                            public void error(int i, @Nullable String s, @Nullable Object o) {
+                                setReady(false);
+                            }
+                        });
                     }
+                } else {
+                    ThreshLogger.e("READ BUNDLE ERROR:" + reason);
                 }
-            });
-        }else {
-            if (callback !=null){
-                callback.error(-1,"BundleLoader cannot null","");
+            }
+        });
+    }
+
+
+    @Override
+    public void loadBundleScript(final BundleCallback callback) {
+        if (jsModule.isLoaded()) {
+            return;
+        }
+        if (bundleLoader != null) {
+            bundleLoader.loadScript(null, engineOptions.bundleOptions, callback);
+        } else {
+            if (callback != null) {
+                callback.onResult(-1, "BundleLoader cannot null", "");
             }
         }
     }
+
     @Override
-    public void executeJSFunction(String funcName, JSCallback callback,Map params) {
-        if (jsModule != null){
-            jsModule.executeJSFunction(funcName, callback, params);
+    public void executeScript(final String script, final JSCallback callback) {
+        if (jsModule.isLoaded()) {
+            return;
+        }
+        if (callback != null) {
+            jsModule.executeScript(contextId, script, callback);
+        } else {
+            jsModule.executeScript(contextId, script, new JSCallback() {
+                @Override
+                public void success(@Nullable Object o) {
+                    setReady(true);
+                }
+
+                @Override
+                public void error(int i, @Nullable String s, @Nullable Object o) {
+                    setReady(false);
+                }
+            });
         }
     }
+
     @Override
-    public void invokeNativeModule(String module, String method, Map params, BridgeCallback callback){
-        if (nativeModule != null){
-            nativeModule.invokeNativeModule(module,method,params,callback);
+    public void execMessage(String method, Object params) {
+        if (jsModule != null) {
+            jsModule.execMessage(contextId, method, params);
+        }
+    }
+
+    @Override
+    public void executeJSFunction(String funcName, JSCallback callback, Map params) {
+        if (jsModule != null) {
+            jsModule.executeJSFunction(contextId, funcName, callback, params);
+        }
+    }
+
+    @Override
+    public void invokeNativeModule(String module, String method, Map params, BridgeCallback callback) {
+        if (nativeModule != null) {
+            nativeModule.invokeNativeModule(module, method, params, callback);
         }
     }
 }

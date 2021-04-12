@@ -1,5 +1,5 @@
 /// MIT License
-/// 
+///
 /// Copyright (c) 2020 ManBang Group
 /// Permission is hereby granted, free of charge, to any person obtaining a copy
 /// of this software and associated documentation files (the "Software"), to deal
@@ -7,10 +7,10 @@
 /// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 /// copies of the Software, and to permit persons to whom the Software is
 /// furnished to do so, subject to the following conditions:
-/// 
+///
 /// The above copyright notice and this permission notice shall be included in all
 /// copies or substantial portions of the Software.
-/// 
+///
 /// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 /// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 /// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -21,9 +21,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:thresh/framework/core/dynamic_app.dart';
 import 'package:thresh/framework/core/dynamic_model.dart';
-import 'package:thresh/framework/channel/basic.dart';
 import 'package:thresh/basic/global_def.dart';
 import 'package:thresh/basic/util.dart';
 
@@ -41,6 +39,7 @@ class DFBasicWidget extends StatelessWidget {
   final Map<String, double> _absolute;
   final EdgeInsets _padding;
   final EdgeInsets _margin;
+  final Color _tintColor;
   final Color _backgroundColor;
   final Gradient _backgroundGradient;
   final Border _border;
@@ -61,30 +60,32 @@ class DFBasicWidget extends StatelessWidget {
   /// 子组件构造器
   final ChildBuilder childBuilder;
 
-  DFBasicWidget(this.model,
-      {Key key,
-      double width,
-      double height,
-      double minWidth,
-      double minHeight,
-      double maxWidth,
-      double maxHeight,
-      int flex,
-      Map<String, double> absolute,
-      EdgeInsets padding,
-      EdgeInsets margin,
-      Color backgroundColor,
-      Gradient backgroundGradient,
-      Border border,
-      BorderRadius borderRadius,
-      List<BoxShadow> boxShadow,
-      bool disabled = false,
-      double opacity = 1.0,
-      double tapOpacity,
-      Matrix4 transform,
-      this.child,
-      this.childBuilder})
-      : _width = model != null
+  DFBasicWidget(
+    this.model, {
+    Key key,
+    double width,
+    double height,
+    double minWidth,
+    double minHeight,
+    double maxWidth,
+    double maxHeight,
+    int flex,
+    Map<String, double> absolute,
+    EdgeInsets padding,
+    EdgeInsets margin,
+    Color tintColor,
+    Color backgroundColor,
+    Gradient backgroundGradient,
+    Border border,
+    BorderRadius borderRadius,
+    List<BoxShadow> boxShadow,
+    bool disabled = false,
+    double opacity = 1.0,
+    double tapOpacity,
+    Matrix4 transform,
+    this.child,
+    this.childBuilder,
+  })  : _width = model != null
             ? Util.getDouble(model.props['width']) ?? width
             : width,
         _height = model != null
@@ -106,17 +107,23 @@ class DFBasicWidget extends StatelessWidget {
         _absolute = model != null
             ? Util.getAbsolute(model.props['absolute'])
             : absolute,
-        _padding = model != null && model.name != 'ListView' && model.name != 'ScrollView'
+        _padding = model != null &&
+                model.name != 'ListView' &&
+                model.name != 'ScrollView'
             ? Util.getEdgeInsets(model.props['padding']) ?? padding
             : padding,
         _margin = model != null
             ? Util.getEdgeInsets(model.props['margin']) ?? margin
             : margin,
+        _tintColor = model != null
+            ? Util.getColor(model.props['tintColor']) ?? tintColor
+            : tintColor,
         _backgroundColor = model != null
             ? Util.getColor(model.props['backgroundColor']) ?? backgroundColor
             : backgroundColor,
         _backgroundGradient = model != null
-            ? Util.getGradient(model.props['backgroundGradient']) ?? backgroundGradient
+            ? Util.getGradient(model.props['backgroundGradient']) ??
+                backgroundGradient
             : backgroundGradient,
         _border = model != null
             ? Util.getBorder(model.props['border']) ?? border
@@ -134,13 +141,17 @@ class DFBasicWidget extends StatelessWidget {
             ? Util.getTransform(model.props['transform']) ?? transform
             : transform,
         _opacity = model != null
-            ? (Util.getDouble(model.props['opacity'],
-                    range: Range(min: 0, max: 1)) ??
+            ? (Util.getDouble(
+                  model.props['opacity'],
+                  range: Range(min: 0, max: 1),
+                ) ??
                 opacity)
             : 1.0,
         _tapOpacity = model != null
-            ? (Util.getDouble(model.props['tapOpacity'],
-                    range: Range(min: 0, max: 1)) ??
+            ? (Util.getDouble(
+                  model.props['tapOpacity'],
+                  range: Range(min: 0, max: 1),
+                ) ??
                 tapOpacity ??
                 Util.getDouble(model.props['opacity']) ??
                 1.0)
@@ -150,37 +161,44 @@ class DFBasicWidget extends StatelessWidget {
                 pageName: model.pageName,
                 widgetId: model.widgetId,
                 eventId: model.props['_onTapId'],
-                type: 'onTap')
+                type: 'onTap',
+              )
             : null,
         _onLongTap = model != null
             ? eventGlobalHandlerWithParam(
                 pageName: model.pageName,
                 widgetId: model.widgetId,
                 eventId: model.props['_onLongTapId'],
-                type: 'onLongTap')
+                type: 'onLongTap',
+              )
             : null,
         _onPan = model != null
             ? eventGlobalHandlerWithParam(
                 pageName: model.pageName,
                 widgetId: model.widgetId,
                 eventId: model.props['_onPanId'],
-                type: 'onPan')
+                type: 'onPan',
+              )
             : null,
         _onLayout = model != null
             ? eventGlobalHandlerWithParam(
                 pageName: model.pageName,
                 widgetId: model.widgetId,
                 eventId: model.props['_onLayoutId'],
-                type: 'onLayout')
+                type: 'onLayout',
+              )
             : null,
-        super(key: key ?? (model != null ? model.key: null));
+        super(key: key ?? (model != null ? model.key : null));
 
   @override
   Widget build(BuildContext context) {
-    return buildLayoutWidget(context);
+    final Widget $widget = buildLayoutWidget(context);
+    return isDragableScrollView ? Positioned.fill(child: $widget) : $widget;
   }
 
   Widget buildLayoutWidget(BuildContext context) {
+    if (isDragableScrollView) return buildTouchWidget(context);
+
     if (_absolute != null) {
       return Positioned(
         top: _absolute['top'],
@@ -214,53 +232,46 @@ class DFBasicWidget extends StatelessWidget {
   }
 
   Widget buildOpacityWidget(BuildContext context) {
-    if (_opacity != 1.0)
-      return Opacity(
-        opacity: _opacity,
-        child: buildLayoutListener(context),
-      );
-    return buildLayoutListener(context);
+    return Opacity(
+      opacity: _opacity,
+      child: buildLayoutListener(context),
+    );
   }
 
   Widget buildLayoutListener(BuildContext context) {
-    bool isPage = model != null && model.name == 'Page';
-    // 不存在 onLayout 也不是 Page
-    if (_onLayout == null && !isPage) return buildStyleWidget(context);
-    // 不存在 onLayout，是 Page，但是初始页面已加载
-    if (_onLayout == null && isPage && dynamicApp.firstPageDidLoad) return buildStyleWidget(context);
+    // 不用添加 onlayout 可以直接进行构建的情况
+    if (_onLayout == null) return buildStyleWidget(context);
+
     return NotificationListener<_DFSizeChangedLayoutNotification>(
-      child: _DFSizeChangedLayoutNotifier(child: buildStyleWidget(context), isPage: isPage),
+      child: _DFSizeChangedLayoutNotifier(
+        child: buildStyleWidget(context),
+      ),
       onNotification: (_DFSizeChangedLayoutNotification notification) {
-        if (isPage && !dynamicApp.firstPageDidLoad) {
-          // 在此处可以对首屏的渲染耗时进行精确统计
-          dynamicApp.firstPageDidLoad = true;
-          dynamicApp.call(method: ChannelMethod.pageDidLoad);
-        }
-        if (_onLayout != null) {
-          final layoutInfo = LayoutInfo(
-            x: notification.offset.dx,
-            y: notification.offset.dy,
-            width: notification.size.width,
-            height: notification.size.height,
-            margin: _margin,
-          );
-          _onLayout(layoutInfo.toMap());
-        }
-          
+        final layoutInfo = LayoutInfo(
+          x: notification.offset.dx,
+          y: notification.offset.dy,
+          width: notification.size.width,
+          height: notification.size.height,
+          margin: _margin,
+        );
+        _onLayout(layoutInfo.toMap());
         return true;
       },
     );
   }
 
   Widget buildStyleWidget(BuildContext context) {
-    BoxConstraints constraint = BoxConstraints(
-        minWidth: _minWidth ?? 0,
-        minHeight: _minHeight ?? 0,
-        maxWidth: _maxWidth ?? double.infinity,
-        maxHeight: _maxHeight ?? double.infinity);
+    if (isDragableScrollView) return buildMainWidget(context);
 
+    BoxConstraints constraint = BoxConstraints(
+      minWidth: _minWidth ?? 0,
+      minHeight: _minHeight ?? 0,
+      maxWidth: _maxWidth ?? double.infinity,
+      maxHeight: _maxHeight ?? double.infinity,
+    );
+    Widget styleWidget;
     if (_borderRadius == null) {
-      return Container(
+      styleWidget = Container(
         margin: _margin,
         padding: _padding,
         width: _width,
@@ -271,7 +282,7 @@ class DFBasicWidget extends StatelessWidget {
         child: buildMainWidget(context),
       );
     } else {
-      return Container(
+      styleWidget = Container(
         width: _width,
         height: _height,
         constraints: constraint,
@@ -287,6 +298,13 @@ class DFBasicWidget extends StatelessWidget {
         ),
       );
     }
+    if (_tintColor != null) {
+      styleWidget = ColorFiltered(
+        colorFilter: ColorFilter.mode(_tintColor, BlendMode.modulate),
+        child: styleWidget,
+      );
+    }
+    return styleWidget;
   }
 
   Widget buildMainWidget(BuildContext context) {
@@ -301,11 +319,12 @@ class DFBasicWidget extends StatelessWidget {
       gradient: _backgroundGradient,
       boxShadow: _boxShadow,
       border: _border,
-      borderRadius: _borderRadius
+      borderRadius: _borderRadius,
     );
   }
 
-  bool isAbsolute() => _absolute != null;
+  bool get isAbsolute => _absolute != null || isDragableScrollView;
+  bool get isDragableScrollView => model?.name == 'DragableScrollView';
 }
 
 class DFTouchable extends StatefulWidget {
@@ -417,16 +436,13 @@ class DFTouchableState extends State<DFTouchable> {
 }
 
 class _DFSizeChangedLayoutNotifier extends SingleChildRenderObjectWidget {
-  final bool isPage;
-  const _DFSizeChangedLayoutNotifier({
-    Key key,
-    Widget child,
-    this.isPage
-  }) : super(key: key, child: child);
+  const _DFSizeChangedLayoutNotifier({Key key, Widget child})
+      : super(key: key, child: child);
 
   @override
   _DFRenderSizeChangedWithCallback createRenderObject(BuildContext context) {
-    return _DFRenderSizeChangedWithCallback(isPage: isPage, onLayoutChangedCallback: (Size size, Offset offset) {
+    return _DFRenderSizeChangedWithCallback(
+        onLayoutChangedCallback: (Size size, Offset offset) {
       _DFSizeChangedLayoutNotification(size, offset).dispatch(context);
     });
   }
@@ -435,12 +451,10 @@ class _DFSizeChangedLayoutNotifier extends SingleChildRenderObjectWidget {
 class _DFRenderSizeChangedWithCallback extends RenderProxyBox {
   _DFRenderSizeChangedWithCallback({
     RenderBox child,
-    @required this.isPage,
     @required this.onLayoutChangedCallback,
   })  : assert(onLayoutChangedCallback != null),
         super(child);
 
-  final bool isPage;
   final Function onLayoutChangedCallback;
 
   Size _oldSize;
@@ -448,19 +462,18 @@ class _DFRenderSizeChangedWithCallback extends RenderProxyBox {
   @override
   void performLayout() {
     super.performLayout();
-    if (isPage) sendNotification(Offset.zero);
-    else {
-      Future.microtask(() {
-        sendNotification(localToGlobal(Offset.zero));
-      });
-    }
+    Future.microtask(() {
+      sendNotification(localToGlobal(Offset.zero));
+    });
   }
 
-  void sendNotification (Offset offset) {
-    if (_oldSize == null || size.width != _oldSize.width || size.height != _oldSize.height) {
-        onLayoutChangedCallback(size, offset);
-      }
-      _oldSize = size;
+  void sendNotification(Offset offset) {
+    if (_oldSize == null ||
+        size.width != _oldSize.width ||
+        size.height != _oldSize.height) {
+      onLayoutChangedCallback(size, offset);
+    }
+    _oldSize = size;
   }
 }
 

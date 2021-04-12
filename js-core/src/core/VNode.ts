@@ -25,15 +25,17 @@
 import Widget from './Widget'
 import { ListView } from './basicWidget'
 import Util from '../shared/Util'
-import { RenderData } from '../types/type'
+import { RenderData, ThreshProvider } from '../types/type'
+import threshApp from './ThreshApp'
+import appContainer from './AppContainer'
 
 export type PropChildrenVNodeType = VNode | VNode[]
 const ChildrenKey: string = 'children'
-type W = Widget <any, any>
+type W = Widget<any, any>
 type Key = string | number | void
 type Ref = ((widget: W) => void) | void
 
-interface PropChildrenVNode {
+export interface PropChildrenVNode {
   [childrenPropName: string]: PropChildrenVNodeType
 }
 interface NodeEvents {
@@ -67,6 +69,8 @@ export default class VNode {
   childrenIsArray: boolean = true
   // 节点 id
   nodeId: string
+  // 节点为 NativeView 时的 viewId
+  nativeViewId?: string
   // 节点上的事件
   events: NodeEvents = {}
   // 节点所属页面
@@ -75,6 +79,8 @@ export default class VNode {
   pageNode: VNode | void
   // 节点是否已挂载
   isMount: boolean = false
+  // context id
+  contextId: string = appContainer.contextId as string
 
   key?: Key
   parentKey?: Key
@@ -83,7 +89,7 @@ export default class VNode {
   shouldRender: boolean = true
 
   static nodeIdIndex: number = 0
-  static getNodeId (type: string): string {
+  static getNodeId(type: string): string {
     return `${type}#${++VNode.nodeIdIndex}`
   }
   static asyncEventTypes: string[] = [
@@ -103,11 +109,14 @@ export default class VNode {
     'onActionsOpen',
     'onActionsClose',
     'onDragStatusChange',
+    'onDragPositionChange',
+    'onOpen',
+    'onSubmitted',
     ...VNode.asyncEventTypes,
   ]
-  static throttledEventTypes: string[] = [ 'onTap' ]
+  static throttledEventTypes: string[] = ['onTap']
 
-  constructor ({
+  constructor({
     type,
     props,
     widgetBuilder,
@@ -139,11 +148,15 @@ export default class VNode {
     this.ref = ref
     this.nodeId = VNode.getNodeId(type)
 
+    if (this.isNativeViewNode()) {
+      this.nativeViewId = `${this.nodeId}#${this.props.type}#${Date.now()}`
+    }
+
     this.findVNodeInProps()
   }
 
   // 在 props 中查找所有的 vnode
-  findVNodeInProps () {
+  findVNodeInProps() {
     for (let key in this.props) {
       const item: any = this.props[key]
       if (item instanceof VNode && this.isBasicWidget) {
@@ -163,7 +176,7 @@ export default class VNode {
   }
 
   // 在 props 中查找事件
-  findEventsInProps () {
+  findEventsInProps() {
     if (!this.isBasicWidget) return
     this.events = {}
     let eventId: number = 0
@@ -179,7 +192,7 @@ export default class VNode {
   }
 
   // 触发组件实例 render
-  doRender () {
+  doRender() {
     if (!this.shouldRender) return
     this.shouldRender = false
     if (!this.widget) {
@@ -187,17 +200,17 @@ export default class VNode {
       this.widget.__vNode__ = this
     }
     this.widget.props = this.props
-    
+
     if (!this.isBasicWidget) {
       const node: VNode | void = this.widget.render()
       if (!node) throw new Error(`Widget's render method must return a widget. Error in: <${this.type} />`)
       node.parent = this
-      this.children = [ node ]
+      this.children = [node]
     }
   }
 
   // 执行组件更新
-  doUpdate (): VNode | void {
+  doUpdate(): VNode | void {
     if (!this.widget) {
       this.widget = new this.widgetBuilder(this.props)
       this.widget.__vNode__ = this
@@ -208,22 +221,25 @@ export default class VNode {
   }
 
   // 新旧节点融合
-  doMerge (oldNode: VNode) {
+  doMerge(oldNode: VNode) {
+    this.contextId = oldNode.contextId
     this.isMount = true
     this.nodeId = oldNode.nodeId
+    this.nativeViewId = oldNode.nativeViewId
     this.widget = oldNode.widget
     this.widget.__vNode__ = this
   }
 
   // 将 vNode 转换为 flutter 可用的 json
-  toRenderData (pageName: string, setStateful: boolean = true): RenderData {
+  toRenderData(pageName: string, setStateful: boolean = true): RenderData {
     this.pageName = pageName
     if (this.pageNode) this.pageNode = void 0
     this.findEventsInProps()
     this.doRender()
     if (this.ref) this.ref(this.widget)
 
-    if (!this.isBasicWidget) { // 非原子组件，children 只有 1 个元素
+    if (!this.isBasicWidget) {
+      // 非原子组件，children 只有 1 个元素
       // flutter version 1.1.0 及以上，所有自定义组件都是 stateful
       // flutter version 1.1.0 以下，只有声明了 state 的自定义组件才是 stateful
       if (this.children.length) {
@@ -245,7 +261,7 @@ export default class VNode {
         }
       })
 
-      if (this.type === 'Page') {
+      if (this.isPageNode()) {
         const rootNode: VNode = this.fetchRootNode()
         if (rootNode.pageNode) {
           throw new Error('Each page only has one <Page />')
@@ -253,19 +269,38 @@ export default class VNode {
         rootNode.pageNode = this
       }
 
+      if (this.isNativeViewNode()) {
+        const params = this.props.params || {}
+        if (!params.__viewId__) {
+          params.__viewId__ = this.nativeViewId
+          this.props.params = params
+        }
+      }
+
       return {
         name: this.type,
         widgetId: this.nodeId,
         isStateful: setStateful,
         pageName,
-        props: Object.assign({}, this.props, childrenRenderData),
+        props: this.execPropsProvider(Object.assign({}, this.props, childrenRenderData)),
         key: this.key || this.parentKey
       }
     }
   }
 
+  private execPropsProvider(props: Object): Object {
+    const propsProviders: ThreshProvider[] = threshApp.providers.propsProvider || []
+    let index = propsProviders.length - 1
+    while (index > -1) {
+      const provider = propsProviders[index--]
+      const tempProps = provider.propsProvider(props)
+      if (tempProps) props = tempProps
+    }
+    return props
+  }
+
   // 在当前 vnode 上查找目标节点
-  fetch (targetNodeId: string): VNode {
+  fetch(targetNodeId: string): VNode {
     if (this.nodeId === targetNodeId) return this
     let targetVNode: VNode
     this.mapChildren((vNode: VNode) => {
@@ -280,7 +315,7 @@ export default class VNode {
   }
 
   // 查找距离当前节点向上最近的可更新的原子节点
-  fetchNearlyCanUpdateBasicNode (): VNode {
+  fetchNearlyCanUpdateBasicNode(): VNode {
     const node: VNode = this.fetchNearlyCustomNode()
     let firstChildNode: VNode = node.children[0]
     while (firstChildNode && !firstChildNode.isBasicWidget) {
@@ -289,38 +324,46 @@ export default class VNode {
     return firstChildNode
   }
   // 查找距离当前节点向上最近的非原子节点
-  fetchNearlyCustomNode (): VNode {
+  fetchNearlyCustomNode(): VNode {
     if (!this.isBasicWidget) return this
     const parent: VNode | void = this.parent
     if (parent) return parent.fetchNearlyCustomNode()
     return this
   }
   // 查找距离当前节点向下最近的原子节点
-  fetchNearlyBasicNode (): VNode {
+  fetchNearlyBasicNode(): VNode {
     if (this.isBasicWidget) return this
     return this.children[0].fetchNearlyBasicNode()
   }
   // 查找根节点
-  fetchRootNode (): VNode {
+  fetchRootNode(): VNode {
     if (!this.parent) return this
     const parent: VNode | void = this.parent
     if (parent) return parent.fetchRootNode()
     return this
   }
   // 查找页面名
-  fetchNodePageName (): string {
+  fetchNodePageName(): string {
     if (this.pageName) return this.pageName
     if (this.parent) return this.parent.fetchNodePageName()
     return ''
   }
 
   // 毕竟两个节点的 type & key 是否相等
-  isSameAs (otherNode: VNode) {
+  isSameAs(otherNode: VNode) {
     return this.type === otherNode.type && this.key === otherNode.key
   }
 
+  isPageNode() {
+    return this.isBasicWidget && this.type === 'Page'
+  }
+
+  isNativeViewNode() {
+    return this.isBasicWidget && this.type === 'NativeView'
+  }
+
   // 触发组件上的事件
-  async invokeEvent (targetNodeId: string, eventId: string, eventType: string, params: any) {
+  async invokeEvent(targetNodeId: string, eventId: string, eventType: string, params: any) {
     const targetNode: VNode = this.fetch(targetNodeId)
     if (!targetNode) return
     const eventFn: Function = targetNode.events[eventId]
@@ -329,14 +372,14 @@ export default class VNode {
     else {
       try {
         await eventFn(params)
-      } catch (err) {} finally {
+      } catch (err) { } finally {
         this.stopAsyncEvent(targetNode, eventType)
       }
     }
   }
 
   // 停止异步事件
-  stopAsyncEvent (node: VNode, eventType: string) {
+  stopAsyncEvent(node: VNode, eventType: string) {
     if (!node || !eventType || !VNode.asyncEventTypes.includes(eventType)) return
     if (node.type === 'ListView') {
       (node.widget as unknown as ListView).stopAsyncOperate(eventType === 'onRefresh' ? 'refresh' : 'loadMore')
@@ -344,7 +387,7 @@ export default class VNode {
   }
 
   // 触发组件生命周期方法
-  invokeLifeCycle (lifeStep: string) {
+  invokeLifeCycle(lifeStep: string) {
     if (!this.widget || !LifeCycle.isExist(lifeStep)) return
     if (!this.isMount && lifeStep === LifeCycle.widgetDidUpdate) {
       this.isMount = true
@@ -354,35 +397,35 @@ export default class VNode {
       else this.isMount = false
       this.widget[lifeStep]()
     }
-    
+
     this.mapChildren((vNode: VNode) => {
       vNode.invokeLifeCycle(lifeStep)
     })
   }
 
   // 向数组尾部添加子节点
-  appendChild (child: VNode, target: VNode[] = this.children) {
+  appendChild(child: VNode, target: VNode[] = this.children) {
     if (target.includes(child)) this.removeChild(child)
-    target.push(child) 
+    target.push(child)
   }
   // 移除数组中的某个节点
-  removeChild (child: VNode, target: VNode[] = this.children) {
+  removeChild(child: VNode, target: VNode[] = this.children) {
     const removeIndex: number = target.indexOf(child)
     if (removeIndex > -1) target.splice(removeIndex, 1)
   }
   // 向 basicWidgetPropChildren 中的某个数组属性添加子节点
-  appendChildInArrayProps (child: VNode, propName: string) {
+  appendChildInArrayProps(child: VNode, propName: string) {
     this.appendChild(child, this.getTargetChildrenArrayInPropChildren(propName))
   }
 
   // 遍历当前节点或目标中的所有子节点
-  private mapChildren (
+  private mapChildren(
     cb: (vNode: VNode, key: string, fromArray: boolean) => boolean | void,
     mapTarget?: PropChildrenVNode | VNode[]
   ) {
     if (!mapTarget) {
       for (let i = 0; i < this.children.length; i++) {
-        const item : VNode = this.children[i]
+        const item: VNode = this.children[i]
         if (item instanceof VNode && cb(item, ChildrenKey, true) === false) return
       }
       for (let key in this.basicWidgetPropChildren) {
@@ -398,7 +441,7 @@ export default class VNode {
     } else {
       if (Util.isArray(mapTarget)) {
         for (let i = 0; i < mapTarget.length; i++) {
-          const item : VNode = mapTarget[i]
+          const item: VNode = mapTarget[i]
           if (item instanceof VNode && cb(item, '', true) === false) return
         }
       } else {
@@ -417,7 +460,7 @@ export default class VNode {
   }
 
   // 获取 basicWidgetPropChildren 中的某个数组属性
-  private getTargetChildrenArrayInPropChildren (propName: string): VNode[] {
+  private getTargetChildrenArrayInPropChildren(propName: string): VNode[] {
     if (!this.basicWidgetPropChildren[propName]) this.basicWidgetPropChildren[propName] = []
     return this.basicWidgetPropChildren[propName] as VNode[]
   }
@@ -436,8 +479,8 @@ export class LifeCycle {
   static widgetDidMount: string = LifeCycle.lifes[0]
   static widgetDidUpdate: string = LifeCycle.lifes[1]
   static widgetDidUnmount: string = LifeCycle.lifes[2]
-  
-  static isExist (lifeStep: string): boolean {
+
+  static isExist(lifeStep: string): boolean {
     return LifeCycle.lifes.indexOf(lifeStep) > -1
   }
 }

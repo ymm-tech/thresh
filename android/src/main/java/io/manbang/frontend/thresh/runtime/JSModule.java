@@ -25,334 +25,273 @@ package io.manbang.frontend.thresh.runtime;
 
 import android.os.SystemClock;
 import android.text.TextUtils;
+import android.util.Log;
 
 import com.eclipsesource.v8.JavaCallback;
-import com.eclipsesource.v8.JavaVoidCallback;
 import com.eclipsesource.v8.V8Array;
 import com.eclipsesource.v8.V8Object;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import androidx.annotation.NonNull;
-import io.manbang.frontend.thresh.Thresh;
+
 import io.manbang.frontend.thresh.runtime.jscore.MBJSExecutor;
 import io.manbang.frontend.thresh.runtime.jscore.bundle.BundleOptions;
 import io.manbang.frontend.thresh.runtime.jscore.runtime.JSCallback;
 import io.manbang.frontend.thresh.runtime.jscore.util.V8Util;
+import io.manbang.frontend.thresh.manager.config.ThreshConfigManager;
 import io.manbang.frontend.thresh.util.ThreshLogger;
 
 /**
  * A JS Module can be provided to js executor instances.
  */
 public class JSModule {
-    /**
-     * module name
-     */
-    @NonNull
-    private String moduleName;
-    /**
-     * bundle options
-     */
-    private BundleOptions bundleOptions;
-    /**
-     * Call JS event method
-     */
+
+    private @NonNull
+    String moduleName;
     private String callJSLifecycleMethod;
-    /**
-     * Call the specified js method
-     */
     private String callJSMethod;
-    /**
-     * General event type
-     */
-    private List<String> eventType;
-    /**
-     * js executor
-     */
     private MBJSExecutor executor;
-
-    /**
-     * JSContext status
-     *      <LI> not loaded (false), loaded (true) </LI>
-     */
-    public boolean jsStatusReady;
-    /**
-     * JS thread
-     */
+    private boolean isLoaded;
     public JSThread jsThread;
-    /**
-     * Used for generating monotonically-increasing sequence numbers for JSContext
-     */
-    private AtomicInteger mSequenceGenerator = new AtomicInteger();
-    /**
-     * Maintain the relationship between rootId and contextId
-     */
-    private Map<String,String> mRootIds;
+    private String moduleVersion;
+    private Map<String, List<JavaCallback>> javaCallBackMap = new HashMap<>();
+    private List<JSFunctionInfo> initFunInfoList= new ArrayList<>();
 
-    public JSModule(String moduleName,final BundleOptions bundleOptions) {
+    public JSModule(@NonNull String moduleName, String moduleVersion, final BundleOptions bundleOptions) {
         this.moduleName = moduleName;
-        this.bundleOptions = bundleOptions;
         jsThread = new JSThread(moduleName);
-        jsThread.execute(new JSThread.ThreshJSTask() {
+        this.moduleVersion = moduleVersion;
+        runInJsThread(new Runnable() {
             @Override
-            public void execute() {
+            public void run() {
                 executor = new MBJSExecutor(bundleOptions);
             }
         });
     }
 
-    /**
-     * @param rootId
-     */
-    public void addRootId(String rootId){
-        if (Thresh.get().platform().supportJSSingleton()){
-            if (TextUtils.isEmpty(rootId)) {
-                throw new IllegalStateException("Cannot loadApp while rootId is null.");
-            }
-            if (mRootIds == null){
-                mRootIds = new HashMap<>();
-            }
-            mRootIds.put(rootId,"");
-        }
-    }
-    public String getModuleName(){
+    public String getModuleName() {
         return this.moduleName;
     }
 
-    public MBJSExecutor getExecutor(){
+    public String getModuleVersion() {
+        return moduleVersion;
+    }
+
+    public boolean isLoaded() {
+        return isLoaded;
+    }
+
+    public MBJSExecutor getExecutor() {
         return this.executor;
     }
 
-    public void registerCallFlutter(final String jsCallFlutterMethod, final JavaCallback callback) {
-        registerJavaMethod(new JavaCallback() {
+
+    public void registerJavaMethodCallBack(final JavaCallback javaCallback, final String name) {
+
+        if (!javaCallBackMap.containsKey(name)) {
+            javaCallBackMap.put(name, new ArrayList<JavaCallback>());
+        }
+        javaCallBackMap.get(name).add(javaCallback);
+
+        runInJsThread(new Runnable() {
             @Override
-            public Object invoke(V8Object receiver, V8Array parameters) {
-                if (callback == null){
-                    callback.invoke(receiver,parameters);
-                }
-                return null;
+            public void run() {
+                executor.registerJavaMethod(new JavaCallback() {
+                    @Override
+                    public Object invoke(V8Object v8Object, V8Array v8Array) {
+                        List<JavaCallback> javaCallbackList = javaCallBackMap.get(name);
+                        for (JavaCallback callback : javaCallbackList) {
+                            callback.invoke(v8Object, v8Array);
+                        }
+                        return null;
+                    }
+                }, name);
             }
-        }, jsCallFlutterMethod);
-
-
+        });
     }
 
-    public void registerCallNative(final String jsCallNativeMethod,final JavaCallback callback) {
-        registerJavaMethod(new JavaCallback() {
-            @Override
-            public Object invoke(V8Object receiver, V8Array parameters) {
-                if (callback == null){
-                    callback.invoke(receiver,parameters);
-                }
-                return null;
-            }
-        }, jsCallNativeMethod);
+    public void unregisterJavaMethodCallBack(JavaCallback javaCallback, String name) {
+        List<JavaCallback> javaCallbackList = javaCallBackMap.get(name);
+        if (javaCallbackList != null) {
+            javaCallbackList.remove(javaCallback);
+        }
     }
+
+    public void runInJsThread(final Runnable runnable) {
+        this.jsThread.execute(new JSThread.ThreshJSTask() {
+            @Override
+            public void execute() {
+                if (runnable != null) {
+                    runnable.run();
+                }
+            }
+        });
+    }
+
     /**
      * Register life cycle events, bind the container to the JS cycle
      */
-    public void registerLifecycleEvent(String callJSLifecycleMethod,String callJSMethod){
+    public void registerLifecycleEvent(String callJSLifecycleMethod, String callJSMethod) {
         this.callJSLifecycleMethod = callJSLifecycleMethod;
         this.callJSMethod = callJSMethod;
-        if (this.eventType == null){
-            this.eventType = new ArrayList<>();
-            this.eventType.add("pageOnShow");
-            this.eventType.add("pageOnHide");
-            this.eventType.add("nativePop");
-            // for iOS
-            this.eventType.add("willDestroy");
-        }
     }
 
     public void onPause(String pageId) {
-        execMessage(pageId,"pageOnHide",null);
+        execMessage(pageId, "pageOnHide", null);
     }
 
     public void onResume(String pageId) {
-        execMessage(pageId,"pageOnShow",null);
+        execMessage(pageId, "pageOnShow", null);
     }
 
     public void onDestroy(String pageId) {
-        if (checkInit()){
+        if (!isLoaded()) {
             return;
         }
         //Notify js page destruction
-        execMessage(pageId,"onDestroyed",null);
+        execMessage(pageId, "onDestroyed", null);
 
-        if (!Thresh.get().platform().supportJSSingleton()){
-            destroy();
-        }
     }
 
     public void onBackPressed(String pageId) {
-        execMessage(pageId,"nativePop",null);
+        execMessage(pageId, "nativePop", null);
     }
 
     /**
-     * Execute js specified method
+     * Execute js message method
      *
      * <p> js life cycle events </p>
      * <p> Specify a js method </p>
      */
-    public void execMessage(final String rootId,final String method, final Object params) {
-        if (checkInit()){
+    public void execMessage(final String contextId, final String method, final Object params) {
+        if (!isLoaded()) {
             return;
         }
-        ThreshLogger.v("rootId :" + rootId +", method : " + method + " , params :" + params);
-        jsThread.execute(new JSThread.ThreshJSTask() {
+        ThreshLogger.v("contextId :" + contextId + ", method : " + method + " , params :" + params);
+        runInJsThread(new Runnable() {
+            private final List<String> eventType = Arrays.asList(
+                    "pageOnShow", "pageOnHide", "nativePop", "willDestroy"
+            );
+
             @Override
-            public void execute() {
-                if (!TextUtils.isEmpty(method) && eventType != null && eventType.contains(method)) {
-                    if (Thresh.get().platform().supportJSSingleton()){
-                        executor.executeJSFunction(callJSLifecycleMethod, null, mRootIds != null ? mRootIds.get(rootId) : null,method);
-                    }else {
-                        executor.executeJSFunction(callJSLifecycleMethod, null,method);
-                    }
-                } else {
-                    Map callParams = new HashMap();
-                    callParams.put("method", method);
-                    callParams.put("params", params);
-                    if (Thresh.get().platform().supportJSSingleton()){
-                        callParams.put("contextId", mRootIds != null ? mRootIds.get(rootId) : "");
-                    }
-                    V8Object object = V8Util.toV8Object(executor.runtime(), callParams);
-                    executor.executeJSFunction(callJSMethod, null, object);
+            public void run() {
+                if (eventType.contains(method)) {
+                    executor.executeJSFunction(callJSLifecycleMethod, null, method,contextId);
+                    return;
                 }
+                Map<String, Object> callParams = new HashMap();
+                callParams.put("method", method);
+                callParams.put("params", params);
+                wrapParamWithContextId(callParams, contextId);
+                V8Object object = V8Util.toV8Object(executor.runtime(), callParams);
+                executor.executeJSFunction(callJSMethod, null, object);
                 ThreshLogger.v("[finish]");
             }
         });
     }
 
-    public boolean checkInit(){
-        return this.executor == null && !jsStatusReady;
-    }
-
-
-    public void registerJavaMethod(final JavaVoidCallback callback, final String name) {
-        try {
-            jsThread.execute(new JSThread.ThreshJSTask() {
-                @Override
-                public void execute() {
-                    executor.registerJavaMethod(callback, name);
-                    ThreshLogger.v(name + "[finish]");
-                }
-            });
-
-        } catch (Exception e) {
-            ThreshLogger.e(e, "Unhandled exception %s", e.toString());
-        }
-
-    }
-
-    public void registerJavaMethod(final JavaCallback callback, final String name) {
-
-        try {
-            jsThread.execute(new JSThread.ThreshJSTask() {
-                @Override
-                public void execute() {
-                    executor.registerJavaMethod(callback, name);
-                    ThreshLogger.v(name + "[finish]");
-                }
-            });
-        } catch (Exception e) {
-            ThreshLogger.e(e, "Unhandled exception %s", e.toString());
-        }
-    }
-
-    public void registerJavaMethod(final Object object, final String methodName, final String functionName,
-                                   final Class<?>[] parameterTypes) {
-        try {
-            jsThread.execute(new JSThread.ThreshJSTask() {
-                @Override
-                public void execute() {
-                    executor.registerJavaMethod(object, methodName, functionName, parameterTypes);
-                }
-            });
-        } catch (Exception e) {
-            ThreshLogger.e(e, "Unhandled exception %s", e.toString());
-        }
-    }
 
     /**
      * Execute JS Bundle
      */
-    public Object executeScript(final String rootId,final String script, final JSCallback callback) {
+    public Object executeScript(final String contextId, final String script, final JSCallback callback) {
         try {
-            jsThread.execute(new JSThread.ThreshJSTask() {
+            runInJsThread(new Runnable() {
                 @Override
-                public void execute() {
+                public void run() {
                     long startTime = SystemClock.elapsedRealtime();
-                    if (Thresh.get().platform().supportJSSingleton() && !TextUtils.isEmpty(rootId)){
-                        String id = String.valueOf(getSequenceNumber());
-                        mRootIds.put(rootId,id);
-                        executor.runtime().add("threshContextId",id);
+                    if (!TextUtils.isEmpty(contextId)) {
+                        executor.runtime().add("threshContextId", contextId);
                     }
-                    Object result = executor.executeScript(script,callback);
-                    ThreshLogger.v("real loadJSTime：" + (SystemClock.elapsedRealtime() - startTime) + "ms \n", 0) ;
+                    Object result = executor.executeScript(script, callback);
+                    ThreshLogger.v("real loadJSTime：" + (SystemClock.elapsedRealtime() - startTime) + "ms \n", 0);
                     if (callback != null) {
                         callback.success(result);
                     }
+                    isLoaded = true;
+                    for (JSFunctionInfo info:initFunInfoList){
+                        executeJSFunction(info.contextId,info.funcName,info.callback,info.params);
+                    }
+                    initFunInfoList.clear();
                     ThreshLogger.v("[finish]");
                 }
             });
-
         } catch (Exception e) {
             ThreshLogger.e(e, "Unhandled exception %s", e.toString());
             if (callback != null) {
-                callback.error(-1, e.getMessage(),e.getCause());
+                callback.error(-1, e.getMessage(), e.getCause());
             }
         }
         return null;
     }
-    /**
-     * Execute JS Bundle
-     */
-    public Object executeScript(final String script, final JSCallback callback) {
 
-        executeScript("",script,callback);
-        return null;
+
+    private static class JSFunctionInfo {
+        String contextId;
+        String funcName;
+        JSCallback callback;
+        Map params;
+
+        public JSFunctionInfo(String contextId, String funcName, JSCallback callback, Map params) {
+            this.contextId = contextId;
+            this.funcName = funcName;
+            this.callback = callback;
+            this.params = params;
+        }
     }
+
     /**
      * Execute JS Function
      */
-    public void executeJSFunction(final String funcName, final JSCallback callback,final Map params) {
-        if (!jsStatusReady){
-            ThreshLogger.v(funcName + "[js status fail]");
+    public void executeJSFunction(String contextId, final String funcName, final JSCallback callback, final Map params) {
+
+        if (!isLoaded()) {
+            initFunInfoList.add(new JSFunctionInfo(contextId,funcName,callback,params));
             return;
         }
-        try {
-            jsThread.execute(new JSThread.ThreshJSTask() {
-                @Override
-                public void execute() {
+
+        ThreshLogger.v(contextId + ":" + params.get("method"));
+
+        wrapParamWithContextId(params, contextId);
+
+        runInJsThread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    ThreshLogger.v(funcName + "[start]");
                     V8Object object = V8Util.toV8Object(executor.runtime(), params);
-                    executor.executeJSFunction(funcName, callback,object);
+                    executor.executeJSFunction(funcName, callback, object);
                     ThreshLogger.v(funcName + "[finish]");
+                } catch (Exception e) {
+                    ThreshLogger.e(e, "executeJSFunction Unhandled exception %s", e.toString());
+                    if (callback != null) {
+                        callback.error(-1, e.getMessage(), e.getCause());
+                    }
+                }
+            }
+        });
+    }
+
+    public void destroy() {
+        if (executor != null) {
+            runInJsThread(new Runnable() {
+                @Override
+                public void run() {
+                    executor.close();
+                    executor = null;
                 }
             });
-        } catch (Exception e) {
-            ThreshLogger.e(e, "executeJSFunction Unhandled exception %s", e.toString());
-            if (callback != null) {
-                callback.error(-1, e.getMessage(),e.getCause());
-            }
         }
     }
 
-    public void destroy(){
-        if (executor != null){
-            executor.close();
-            executor = null;
-        }
-        jsStatusReady = false;
+    private void wrapParamWithContextId(final Map params, String contextId) {
+        params.put("contextId", contextId);
     }
 
-    /**
-     * Gets a sequence number.
-     */
-    public int getSequenceNumber() {
-        return mSequenceGenerator.incrementAndGet();
-    }
+
 }

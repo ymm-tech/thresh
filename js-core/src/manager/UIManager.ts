@@ -22,7 +22,7 @@
  *
  */
 
-import MethodChannel from "../channel/MethodChannel"
+import MethodChannel, { FlutterMethodChannelType } from "../channel/MethodChannel"
 
 interface MediaQueryInfo {
   width?: number,
@@ -72,7 +72,10 @@ export default class UIManager {
   }
   static setAppBarHeight (appBarHeight: number) {
     mediaQuery.appBarHeight = appBarHeight
-    MethodChannel.call('setAppBarHeight', { appBarHeight })
+    MethodChannel.call({
+      method: FlutterMethodChannelType.setAppBarHeight,
+      params: { appBarHeight },
+    })
   }
 }
 

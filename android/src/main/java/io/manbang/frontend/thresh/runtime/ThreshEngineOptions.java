@@ -24,7 +24,6 @@
 package io.manbang.frontend.thresh.runtime;
 
 import io.manbang.frontend.thresh.runtime.jscore.bundle.BundleOptions;
-
 /**
  * Contains and exposes a variety of non type specific options that can be applied to a load in
  * Thresh.
@@ -44,6 +43,10 @@ public final class ThreshEngineOptions {
      */
     private static final String METHOD_NATIVE_CALL_JS  = "methodChannel_native_call_js";
 
+    private static final String TIMER_OPERATOR = "methodChannel_timer_operator";
+
+    private static final String TIMER_OPERATOR_CALLBACK = "methodChannel_timer_fire";
+
     /**
      * JS calls Native message method ,then Native calls Flutter message method and is used for three-way communication
      */
@@ -57,11 +60,8 @@ public final class ThreshEngineOptions {
      * business module name
      */
     public String moduleName;
-
-    /**
-     * root id
-     */
-    public String rootId;
+    
+    public String moduleVersion;
 
     public BundleOptions bundleOptions;
     /**
@@ -90,17 +90,27 @@ public final class ThreshEngineOptions {
      */
     public long pageStartTime;
 
+    public String callNativeTimer ;
+
+    public String callNativeTimerFire ;
+
     public static class Builder{
 
         private BundleOptions bundleOptions;
 
         private String moduleName = MODULE_NAME;
+        
+        private String moduleVersion = "";
 
         private String callJSLifecycleMethod = METHOD_FIRE_JS_EVENT;
 
         private String jsCallNativeMethod = METHOD_JS_CALL_NATIVE;
 
         private String callJSMethod = METHOD_NATIVE_CALL_JS;
+
+        private String callNativeTimer = TIMER_OPERATOR;
+
+        private String callNativeTimerFire = TIMER_OPERATOR_CALLBACK;
 
         public String jsCallFlutterMethod = METHOD_CHANNEL_JS_CALL_FLUTTER;
 
@@ -122,6 +132,12 @@ public final class ThreshEngineOptions {
             this.moduleName = moduleName;
             return this;
         }
+        
+        public Builder moduleVersion(String moduleVersion){
+            this.moduleVersion = moduleVersion;
+            return this;
+        }
+        
         /**
          * Register general JS call Native method
          *
@@ -187,12 +203,13 @@ public final class ThreshEngineOptions {
     private ThreshEngineOptions(Builder builder){
         bundleOptions = builder.bundleOptions;
         moduleName = builder.moduleName;
+        moduleVersion =builder.moduleVersion;
         callJSLifecycleMethod = builder.callJSLifecycleMethod;
         jsCallNativeMethod = builder.jsCallNativeMethod;
         callJSMethod = builder.callJSMethod;
         jsCallFlutterMethod = builder.jsCallFlutterMethod;
         pageStartTime = builder.pageStartTime;
-        rootId = builder.rootId;
-
+        callNativeTimer = builder.callNativeTimer;
+        callNativeTimerFire = builder.callNativeTimerFire;
     }
 }

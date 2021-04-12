@@ -24,44 +24,46 @@ void initPlugin(dynamic url) async {
   }, onError: (error, trace) {
     print("exception:" + error.toString());
     print("stackTrace:" + error.trace ?? error.stackTrace?.toString() ?? '');
-    print("bizName:" + '[bizName] - ${params['biz'] ?? 'unknown'}; [pageName] - ${params['page'] ?? 'unknown'}; [referPageName] - ${params['referPageName'] ?? 'unknown'}');
+    print("bizName:" +
+        '[bizName] - ${params['biz'] ?? 'unknown'}; [pageName] - ${params['page'] ?? 'unknown'}; [referPageName] - ${params['referPageName'] ?? 'unknown'}');
   });
 }
 
 /// thresh app 初始化入口
-Widget initThresh(bool local, [ Map<String, dynamic> params ]) {
+Widget initThresh(bool local, [Map<String, dynamic> params]) {
   RouteInfo route;
   int whiteScreenOvertime = 3000;
   String routePageName;
   String routeReferPageName;
   String bizName = 'unknown';
   String jsBundlePath;
+  String jsContextId;
   bool debugMode = local;
   if (params != null) {
     // buildType = 2: release mode
     debugMode = params['buildType']?.toString() != '2';
     routePageName = params['page'];
     bizName = params['biz'];
-    if (params['jsBundlePath'] != null) jsBundlePath = Uri.decodeComponent(params['jsBundlePath']);
+    if (params['jsBundlePath'] != null)
+      jsBundlePath = Uri.decodeComponent(params['jsBundlePath']);
+    if (params['contextId'] != null) jsContextId = params['contextId'];
     if (params['whiteScreenOvertime'] != null) {
       try {
         whiteScreenOvertime = int.parse(params['whiteScreenOvertime']);
       } catch (e) {}
     }
-    if (routePageName == null) {
-      return NotFoundPage(url: _formatQueryToUrl(params));
-    }
+    // if (routePageName == null) {
+    //   return NotFoundPage(url: _formatQueryToUrl(params));
+    // }
     routeReferPageName = params['referPageName'];
 
-    route = RouteInfo(
-        routePageName,
-        params: params
-    );
+    route = RouteInfo(routePageName, params: params);
   }
   return initThreshApp(
       runApp: false,
       debugMode: debugMode,
       jsBundlePath: jsBundlePath,
+      jsContextId: jsContextId,
       defaultRoute: route,
       showWhiteScreenWhenWaitingForMillionSeconds: whiteScreenOvertime,
       notFoundPage: (BuildContext context, Map<String, String> pathInfo) {
@@ -78,33 +80,38 @@ Widget initThresh(bool local, [ Map<String, dynamic> params ]) {
       },
       errorHandler: (ThreshError error) {
         print(error);
-        devtools.insert(InfoType.log, DevInfo(title: 'errorReport', content: '''
-error: ${error?.toString()},
-'''));
+        devtools.insert(
+          InfoType.log,
+          DevInfo(title: 'errorReport', content: 'error: ${error?.toString()}'),
+        );
         if (local) return;
 
         String exception = error.toString();
         String stackTrace = error.trace ?? error.stackTrace?.toString() ?? '';
-        String pageName = error.pageName ?? dynamicApp?.pageName ?? routePageName ?? 'unknown';
-        String referPageName = error.referPageName ?? dynamicApp?.referPageName ?? routeReferPageName ?? 'unknown';
+        String pageName = error.pageName ??
+            dynamicApp?.pageName ??
+            routePageName ??
+            'unknown';
+        String referPageName = error.referPageName ??
+            dynamicApp?.referPageName ??
+            routeReferPageName ??
+            'unknown';
 
         print("exception :" + exception);
         print("stackTrace :" + stackTrace);
         print("pageName :" + pageName);
         print("referPageName :" + referPageName);
-      }
-  );
+      });
 }
 
 /// 占位页面构造器
-Widget _placeholderPageBuilder(BuildContext context, [ String pageName = '' ]) {
+Widget _placeholderPageBuilder(BuildContext context, [String pageName = '']) {
   return Scaffold(
       backgroundColor: Colors.white,
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(44),
         child: getAppBar(context, pageName),
-      )
-  );
+      ));
 }
 
 /// 自定义 app bar
@@ -133,8 +140,7 @@ AppBar getAppBar(BuildContext context, String pageName) {
       leading: leading,
       elevation: 0,
       backgroundColor: backgroundColor,
-      brightness: brightness ? Brightness.dark : Brightness.light
-  );
+      brightness: brightness ? Brightness.dark : Brightness.light);
 }
 
 /// 退出当前页面
@@ -142,16 +148,13 @@ void _popPage(BuildContext context) {
   if (Navigator.canPop(context)) {
     Navigator.pop(context);
   } else {
-    dynamicChannel.callNative(
-        module: 'base',
-        method: 'closeWindow'
-    );
+    dynamicChannel.callNative(module: 'base', method: 'closeWindow');
   }
 }
 
 /// 解析路由
 /// 格式："thresh/thresh-page?page=orderDetail&biz=trade&orderId=12392241252577280"
-Map<String, dynamic> _parseRoute(dynamic url){
+Map<String, dynamic> _parseRoute(dynamic url) {
   List<String> urls = url.split('?');
   String query = '';
   if (urls.length == 2) {
@@ -173,7 +176,7 @@ String _formatQueryToUrl(Map<String, dynamic> params) {
   if (params == null) return 'unknown url';
   List<String> queryList = [];
   String pageName = params['page'] ?? 'unknown';
-  for(String key in params.keys) {
+  for (String key in params.keys) {
     if (key != 'page') queryList.add('$key=${params[key]}');
   }
   return pageName + queryList.join('&');

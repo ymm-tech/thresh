@@ -1,5 +1,5 @@
 /// MIT License
-/// 
+///
 /// Copyright (c) 2020 ManBang Group
 /// Permission is hereby granted, free of charge, to any person obtaining a copy
 /// of this software and associated documentation files (the "Software"), to deal
@@ -7,10 +7,10 @@
 /// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 /// copies of the Software, and to permit persons to whom the Software is
 /// furnished to do so, subject to the following conditions:
-/// 
+///
 /// The above copyright notice and this permission notice shall be included in all
 /// copies or substantial portions of the Software.
-/// 
+///
 /// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 /// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 /// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -29,8 +29,10 @@ import 'package:thresh/basic/global_def.dart';
 
 /// 基础组件 DFScrollView
 class DFScrollView extends DFBasicWidget {
-  DFScrollView(DynamicModel model, {
+  DFScrollView(
+    DynamicModel model, {
     Key key,
+    this.scrollable = true,
     this.direction = 'vertical',
     this.padding,
     this.controller,
@@ -38,6 +40,7 @@ class DFScrollView extends DFBasicWidget {
     this.onScroll,
   }) : super(model, key: key);
 
+  final bool scrollable;
   final String direction;
   final EdgeInsets padding;
   final ScrollController controller;
@@ -51,8 +54,8 @@ class DFScrollView extends DFBasicWidget {
       removeTop: true,
       removeBottom: true,
       context: context,
-      child: NotificationListener(
-        onNotification: (ScrollNotification notification) {
+      child: NotificationListener<ScrollNotification>(
+        onNotification: (notification) {
           if (onScroll == null) return true;
           onScroll(notification.metrics.pixels.toInt());
           return true;
@@ -67,23 +70,25 @@ class DFScrollView extends DFBasicWidget {
             controller: controller,
             padding: padding,
             scrollDirection: isVertical ? Axis.vertical : Axis.horizontal,
-            physics: AlwaysScrollableScrollPhysics(),
+            physics: scrollable
+                ? AlwaysScrollableScrollPhysics()
+                : NeverScrollableScrollPhysics(),
             children: [
               Column(
                 mainAxisAlignment: MainAxisAlignment.start,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: children.map((child) {
                   return isVertical
-                    ? Column(
-                        children: [ child ],
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                      )
-                    : Row(
-                        children: [ child ],
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                      );
+                      ? Column(
+                          children: [child],
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                        )
+                      : Row(
+                          children: [child],
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                        );
                 }).toList(),
               )
             ],
@@ -94,7 +99,8 @@ class DFScrollView extends DFBasicWidget {
   }
 
   static bool isScrollView(Widget w) {
-    return ((w is DynamicWidget) && (w.widgetInstance is DFScrollView)) || (w is DFScrollView);
+    return ((w is DynamicWidget) && (w.widgetInstance is DFScrollView)) ||
+        (w is DFScrollView);
   }
 }
 
@@ -121,18 +127,23 @@ class ProxyDFScrollView extends ProxyBase {
 
     return DFScrollView(
       model,
+      controller: controller,
+      scrollable: Util.getBoolean(props['scrollable'], nullIsTrue: true),
       direction: Util.getDirection(props['direction']),
       padding: Util.getEdgeInsets(props['padding']),
-      controller: controller,
       children: Util.getWidgetList(buildProps['children']),
-      onScroll: getOnScrollDebouncedMethod(eventGlobalHandlerWithParam(pageName: model.pageName, widgetId: model.widgetId, eventId: model.props['_onScrollId'], type: 'onScroll')),
+      onScroll: getOnScrollDebouncedMethod(eventGlobalHandlerWithParam(
+          pageName: model.pageName,
+          widgetId: model.widgetId,
+          eventId: model.props['_onScrollId'],
+          type: 'onScroll')),
     );
   }
 
   Function getOnScrollDebouncedMethod(Function onScroll) {
     if (onScroll == null) return null;
     return Util.throttle((offset) {
-      onScroll({ 'offset': offset });
+      onScroll({'offset': offset});
     });
   }
 }

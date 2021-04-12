@@ -130,7 +130,7 @@ export default class ListViewDemo extends Widget <any, any> {
           }}
           onLoadMore={() => {
             const { page } = this.state
-            if (page >= 5) return Promise.resolve()
+            // if (page >= 5) return Promise.resolve()
             this.setState({
               loading: true,
             })
@@ -152,7 +152,8 @@ export default class ListViewDemo extends Widget <any, any> {
             {
               this.state.loading
                 ? <Icon type="loading" />
-                : <Text>{this.state.page >= 5 ? '没有更多了' : '上拉加载更多'}</Text>
+                // : <Text>{this.state.page >= 5 ? '没有更多了' : '上拉加载更多'}</Text>
+                : <Text>上拉加载更多</Text>
             }
           </Container>
         </ListView>

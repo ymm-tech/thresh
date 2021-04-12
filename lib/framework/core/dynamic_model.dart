@@ -1,5 +1,5 @@
 /// MIT License
-/// 
+///
 /// Copyright (c) 2020 ManBang Group
 /// Permission is hereby granted, free of charge, to any person obtaining a copy
 /// of this software and associated documentation files (the "Software"), to deal
@@ -7,10 +7,10 @@
 /// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 /// copies of the Software, and to permit persons to whom the Software is
 /// furnished to do so, subject to the following conditions:
-/// 
+///
 /// The above copyright notice and this permission notice shall be included in all
 /// copies or substantial portions of the Software.
-/// 
+///
 /// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 /// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 /// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -20,6 +20,7 @@
 /// SOFTWARE.
 
 import 'package:flutter/material.dart';
+import 'package:thresh/basic/util.dart';
 import 'package:thresh/framework/core/dynamic_app.dart';
 import 'package:thresh/framework/core/dynamic_builder.dart';
 import 'package:thresh/framework/core/dynamic_widget.dart';
@@ -33,46 +34,59 @@ typedef FindModelCallback = DynamicModel Function(DynamicModel);
 class DynamicModel {
   /// 以页面为单位缓存所有的 controller
   static Map<String, Map<String, dynamic>> controllers = {};
+
   /// widgetName
   String name;
+
   /// 所属页面名称
   String pageName;
+
   /// widgetId
   String widgetId;
+
   /// 当前model对应的widget是否是stateful
   bool isStateful;
+
   /// 当前model对应的widget的key
   Key key;
+
   /// 当前widget对应的props
   Map<String, dynamic> props = {};
+
   /// props的属性为DynamicModel时构建出的值
   Map<String, dynamic> buildProps = {};
   // 父节点 model
   DynamicModel parent;
+
   /// 当前model构建出的动态组件
   DynamicWidget dynamicWidget;
+
   /// 持有当前stateful model对应widget实例的state，当页面render时赋值
   DynamicWidgetState dynamicWidgetState;
+
   /// 持有动态组件内部的组件实例
   DFBasicWidget widgetInstance;
 
   set controller(dynamic controller) {
     if (DynamicModel.controllers[pageName] == null) {
-      DynamicModel.controllers[pageName] = { widgetId: controller };
+      DynamicModel.controllers[pageName] = {widgetId: controller};
     } else {
       DynamicModel.controllers[pageName][widgetId] = controller;
     }
   }
-  dynamic get controller => DynamicModel.controllers[pageName] != null
-    ? DynamicModel.controllers[pageName][widgetId]
-    : null;
 
-  DynamicModel.create(Map<String, dynamic> widgetModel, {
+  dynamic get controller => DynamicModel.controllers[pageName] != null
+      ? DynamicModel.controllers[pageName][widgetId]
+      : null;
+
+  DynamicModel.create(
+    Map<String, dynamic> widgetModel, {
     BuildContext context,
     DynamicModel parentModel,
   }) {
     if (dynamicApp == null) {
-      devtools.debug('create', 'dynamic_model.dart', 'return', 'dynamicApp is null: ${dynamicApp == null}');
+      devtools.debug('create', 'dynamic_model.dart', 'return',
+          'dynamicApp is null: ${dynamicApp == null}');
       return;
     }
 
@@ -87,21 +101,21 @@ class DynamicModel {
     for (String key in tempProps.keys) {
       dynamic data = tempProps[key];
       if (DynamicModel.isModelMap(data)) {
-        DynamicModel dynamicModel = DynamicModel.create(data, context: context, parentModel: this);
+        DynamicModel dynamicModel =
+            DynamicModel.create(data, context: context, parentModel: this);
         props[key] = dynamicModel;
         dynamicModel.buildDynamicWidget(
-          context: context ?? dynamicApp.context,
-          propKeyInParentModel: key,
-          propIsArray: false
-        );
-      } else if (DynamicModel.isModelList(data)) {
-        props[key] = data.map((item) {
-          DynamicModel dynamicModel = DynamicModel.create(item, context: context, parentModel: this);
-          dynamicModel.buildDynamicWidget(
             context: context ?? dynamicApp.context,
             propKeyInParentModel: key,
-            propIsArray: true
-          );
+            propIsArray: false);
+      } else if (DynamicModel.isModelList(data)) {
+        props[key] = data.map((item) {
+          DynamicModel dynamicModel =
+              DynamicModel.create(item, context: context, parentModel: this);
+          dynamicModel.buildDynamicWidget(
+              context: context ?? dynamicApp.context,
+              propKeyInParentModel: key,
+              propIsArray: true);
           return dynamicModel;
         }).toList();
       } else {
@@ -124,15 +138,18 @@ class DynamicModel {
     bool propIsArray = false,
     bool isInListViewBuilder = false,
   }) {
-    Widget buildRes = dynamicBuilder.buildWidgetWithModel(this, context ?? dynamicApp.context);
+    Widget buildRes = dynamicBuilder.buildWidgetWithModel(
+        this, context ?? dynamicApp.context);
     if (buildRes is DynamicWidget) dynamicWidget = buildRes;
     if (parent == null || isInListViewBuilder) return buildRes;
     if (!propIsArray) {
       parent.buildProps[propKeyInParentModel] = buildRes;
     } else {
       dynamic buildPropsItemArray = parent.buildProps[propKeyInParentModel];
-      if (buildPropsItemArray == null) parent.buildProps[propKeyInParentModel] = [ buildRes ];
-      else buildPropsItemArray.add(buildRes);
+      if (buildPropsItemArray == null)
+        parent.buildProps[propKeyInParentModel] = [buildRes];
+      else
+        buildPropsItemArray.add(buildRes);
     }
     return buildRes;
   }
@@ -160,10 +177,9 @@ class DynamicModel {
 
   /// 判断当前 List 中的元素是否是 DynamicModel 或者能够用来构建 DynamicModel
   static bool isModelList(data) {
-    return (data is List) && (data.length > 0) && (
-      (data.first is DynamicModel) ||
-      DynamicModel.isModelMap(data.first)
-    );
+    return (data is List) &&
+        (data.length > 0) &&
+        ((data.first is DynamicModel) || DynamicModel.isModelMap(data.first));
   }
 
   /// 判断当前 Map 是否可以用来构建 DynamicModel
@@ -172,11 +188,10 @@ class DynamicModel {
   }
 
   /// 查找指定的 widgets
-  static List<DynamicModel> findTargetModels({
-    @required DynamicModel aimModel,
-    @required String aimWidgetId,
-    FindModelCallback findCallback
-  }) {
+  static List<DynamicModel> findTargetModels(
+      {@required DynamicModel aimModel,
+      @required String aimWidgetId,
+      FindModelCallback findCallback}) {
     List<DynamicModel> targetModels = [];
 
     if (aimModel.widgetId == aimWidgetId) {
@@ -188,18 +203,16 @@ class DynamicModel {
       dynamic data = aimModel.props[key];
       if (data is DynamicModel) {
         targetModels.addAll(findTargetModels(
-          aimModel: aimModel.props[key],
-          aimWidgetId: aimWidgetId,
-          findCallback: findCallback
-        ));
+            aimModel: aimModel.props[key],
+            aimWidgetId: aimWidgetId,
+            findCallback: findCallback));
       }
       if (DynamicModel.isModelList(data)) {
         for (int i = 0; i < data.length; i++) {
           targetModels.addAll(findTargetModels(
-            aimModel: data[i],
-            aimWidgetId: aimWidgetId,
-            findCallback: findCallback
-          ));
+              aimModel: data[i],
+              aimWidgetId: aimWidgetId,
+              findCallback: findCallback));
         }
       }
     }
@@ -208,12 +221,15 @@ class DynamicModel {
 }
 
 void dynamicWidgetPrinter(DynamicModel dw) {
-  String content = '''
-[name] - ${dw.name}
-[widgetId] - ${dw.widgetId}
-[props] - ${dw.props}''';
-  devtools.insert(InfoType.render, DevInfo(
-    title: 'Dynamic Widget Model',
-    content: content
-  ));
+  devtools.insert(
+    InfoType.render,
+    DevInfo(
+      title: 'Dynamic Widget Model',
+      content: Util.formatMutipulLineText([
+        '[name] - ${dw.name}',
+        '[widgetId] - ${dw.widgetId}',
+        '[props] - ${dw.props}',
+      ]),
+    ),
+  );
 }

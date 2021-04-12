@@ -22,20 +22,86 @@
  *
  */
 
-import threshApp from '../..'
 import BridgeManager from '../manager/BridgeManager'
 import UtilManager from '../manager/UtilManager'
 import Util from '../shared/Util'
 import { ChannelParams, BridgeParams } from '../types/type'
+import threshApp from '../core/ThreshApp'
+import appContainer from '../core/AppContainer'
+import { PerformanceInfo } from '../core/PageContainer'
 
 declare const methodChannel_js_call_flutter: Function
 declare const methodChannel_js_call_native: Function
 
 /**
+ * JS 向 Flutter 发出消息的类型枚举
+ */
+export enum FlutterMethodChannelType {
+  none = '', // 改消息会被忽略
+  setBundleDir = 'setBundleDir',
+  devtools = 'devtools',
+  bridgeRequest = 'bridgeRequest',
+  onError = 'onError',
+  // UI
+  mediaQuery = 'mediaQuery',
+  setAppBarHeight = 'setAppBarHeight',
+  pushPage = 'pushPage',
+  popPage = 'popPage',
+  showModal = 'showModal',
+  showToast = 'showToast',
+  hideToast = 'hideToast',
+  updateWidget = 'updateWidget',
+  pageNotFound = 'pageNotFound',
+  stopAlwaysRender = 'stopAlwaysRender',
+  onDestroyed = 'onDestroyed',
+  // Utils  
+  copy = 'copy',
+  blur = 'blur',
+  // Widget Methods
+  updateTitle = 'updateTitle',
+  scrollTo = 'scrollTo',
+  stopAsyncOperate = 'stopAsyncOperate',
+  openActions = 'openActions',
+  closeActions = 'closeActions',
+  swipeTo = 'swipeTo',
+  setValue = 'setValue',
+  jumpTo = 'jumpTo',
+  animateTo = 'animateTo',
+  setNestScrollViewStatus = 'setNestScrollViewStatus',
+  dragPositionAnimateTo = 'dragPositionAnimateTo',
+}
+/**
+ * JS 向  Native 发出消息的类型枚举
+ */
+export enum NativeMethodChannelType {
+  print = 'print',
+  reload = 'reload',
+  pageDidShow = 'pageDidShow',
+  invokeNativeViewMethod = 'invokeNativeViewMethod',
+  bridgeRequest = 'bridgeRequest',
+}
+/**
+ * JS 接收到的消息类型枚举
+ */
+export enum MethodChannelReceiveType {
+  mediaQuery = 'mediaQuery',
+  ready = 'ready',
+  setupPage = 'setupPage',
+  needPopPage = 'needPopPage',
+  hasPopPage = 'hasPopPage',
+  triggerEvent = 'triggerEvent',
+  lifeCycle = 'lifeCycle',
+  bridgeResponse = 'bridgeResponse',
+  closeWindow = 'closeWindow',
+  pageDidLoad = 'pageDidLoad',
+  onDestroyed = 'onDestroyed',
+}
+
+/**
  * 打印method channel方法参数
  */
 const methodChannelConsole = (channelParams: ChannelParams) => {
-  const { method, params } = channelParams
+  const { method, params, contextId } = channelParams
   console.group('[CHANNEL PRINT] method: ' + method)
   if (params) {
     if (params.widgetRenderData) {
@@ -45,7 +111,8 @@ const methodChannelConsole = (channelParams: ChannelParams) => {
       params.widgetUpdateData = JSON.parse(params.widgetUpdateData)
     }
   }
-  console.log('[CHANNEL PRINT] params: ', params)
+  console.log('contextId: ', contextId)
+  console.log('params: ', params)
   console.groupEnd()
 }
 
@@ -56,8 +123,7 @@ const methodChannelConsole = (channelParams: ChannelParams) => {
 function jsCallNative (channelParams: ChannelParams) {
   try {
     channelParams = formatChannelParams(channelParams)
-    if (!channelParams.method) return
-    // reportChannelLog(channelParams, 'Native')
+    if (channelParams.method === FlutterMethodChannelType.none) return
     methodChannel_js_call_native(channelParams)
   } catch (e) {} finally {
     // if (threshApp.debugMode && process.env.NODE_ENV === 'development') {
@@ -66,11 +132,9 @@ function jsCallNative (channelParams: ChannelParams) {
   }
 }
 function jsCallFlutter (channelParams: ChannelParams) {
-  if (threshApp && !threshApp._alive) return
   try {
     channelParams = formatChannelParams(channelParams)
-    if (!channelParams.method) return
-    // reportChannelLog(channelParams, 'Flutter')
+    if (channelParams.method === FlutterMethodChannelType.none) return
     methodChannel_js_call_flutter(channelParams)
   } catch (e) {} finally {
     // if (threshApp.debugMode && process.env.NODE_ENV === 'development') {
@@ -79,117 +143,93 @@ function jsCallFlutter (channelParams: ChannelParams) {
   }
 }
 
-function formatChannelParams (channelParams: ChannelParams): ChannelParams {
+function formatChannelParams (channelParams: ChannelParams, stringifyParams: boolean = false): ChannelParams {
   let { params } = channelParams
   if (Util.isNil(params)) params = {}
   if (!Util.isObject(params)) {
     UtilManager.error('Channel params must pass in an object!')
-    return { method: '' }
+    return { method: FlutterMethodChannelType.none }
   }
-  if (!Util.isNil(params.__channelStartTime__)) {
-    UtilManager.error('Channel params cannot use "__channelStartTime__" as a key!')
-    return { method: '' }
-  }
-  params.__channelStartTime__ = Date.now()
-  channelParams.params = params
+  // if (!Util.isNil(params.__channelStartTime__)) {
+  //   UtilManager.error('Channel params cannot use "__channelStartTime__" as a key!')
+  //   return { method: FlutterMethodChannelType.none }
+  // }
+  // params.__channelStartTime__ = Date.now()
+  if (!channelParams.contextId) channelParams.contextId = appContainer.contextId
+  channelParams.params = stringifyParams ? JSON.stringify(params) : params
   return channelParams
 }
-
-// function reportChannelLog (channelParams: ChannelParams, callType: 'Flutter' | 'Native') {
-//   const noLogMethods: string[] = [ 'devtools', 'clearTimer', 'setInterval', 'setTimeout', 'print', 'reload', 'bridgeRequest' ]
-//   const { method, params } = channelParams
-//   if (method && !noLogMethods.includes(method)) {
-//     let content: any = { method }
-//     if (method === 'pushPage') {
-//       content.params = {
-//         pageName: params.pageName,
-//         isModal: params.isModal,
-//         popup: params.popup,
-//         hasRenderData: !!params.widgetRenderData
-//       }
-//     } else if (method === 'replacePage') {
-//       content.params = {
-//         pageName: params.pageName,
-//         hasRenderData: !!params.widgetRenderData
-//       }
-//     } else if (method === 'updateWidget') {
-//       content.params = {
-//         pageName: params.pageName,
-//         hasRenderData: !!params.widgetUpdateData,
-//         needUpdateWidgetId: params.needUpdateWidgetId,
-//         invokeDidUpdateWidgetId: params.invokeDidUpdateWidgetId,
-//       }
-//     } else if (method === 'showToast') {
-//       content.params = {
-//         hasRenderData: !!params.toastRenderData,
-//         toastInfo: params.toastInfo
-//       }
-//     } else content.params = params
-
-//     BridgeManager.invoke({
-//       module: 'base',
-//       method: 'log',
-//       params: {
-//         level: 0,
-//         tag: callType === 'Flutter' ? 'Thresh_jsCallFlutter' : 'Thresh_jsCallNative',
-//         content: JSON.stringify(content)
-//       }
-//     })
-//   }
-// }
 
 /**
  * 通信类
  * 封装了js调用native和flutter的方法
  */
 export default class MethodChannel {
-  // 是否已调用 pageDidShow
-  static hasCallPageDidShow: boolean = false
-  // 页面显示首帧时的时间戳
-  static pageDidLoadTime: number
-  // js 与 flutter 首次通信时的时间戳
-  static jsStartTime: number = 0
-  // js -> flutter 首次通信的耗时
-  static channelFirstSpendTime: number = 0
-  // js runApp 时的时间戳
-  static jsRunAppTime: number = 0
+  static MAX_CHUNK_SIZE: number = 1024 * 10
 
   // 调用注入方法
-  static call (method: string, params: any = {}) {
-    if (!MethodChannel.jsStartTime) MethodChannel.jsStartTime = Date.now()
-    jsCallFlutter({ method, params })
+  static call ({
+    method,
+    params = {},
+    contextId,
+  }: {
+    method: FlutterMethodChannelType | NativeMethodChannelType
+    params?: any
+    contextId?: string
+  }) {
+    jsCallFlutter({
+      contextId,
+      method,
+      params
+    })
   }
+
   // 页面初次渲染完成时通知 native
   static pageDidShow (networkTime: number = 0) {
-    if (MethodChannel.hasCallPageDidShow) return
-    MethodChannel.hasCallPageDidShow = true
+    const performanceInfo: PerformanceInfo | undefined = appContainer.getPagePerformanceInfo()
+    if (!performanceInfo || performanceInfo.hasReported) return
 
-    const { pageDidLoadTime, jsStartTime, channelFirstSpendTime, jsRunAppTime } = MethodChannel
-    jsCallNative({ method: 'pageDidShow', params: {
-      flutterVersion: threshApp.flutterVersion,
-      jsVersion: threshApp.jsVersion,
-      pageName: threshApp.pageName || 'unknown',
-      networkTime,
-      pageDidLoad: pageDidLoadTime || (Date.now() - networkTime),
-      jsStartTime,
-      jsRunAppTime,
-      channelFirstSpendTime,
-      pageDidShowTime: Date.now()
-    } })
+    performanceInfo.hasReported = true
+
+    const pageShowTimestamp = Date.now()
+    const pageName = threshApp.pageName || 'unknown'
+    
+    jsCallNative({
+      method: NativeMethodChannelType.pageDidShow,
+      params: {
+        flutterVersion: threshApp.flutterVersion,
+        jsVersion: threshApp.jsVersion,
+        pageName,
+        // 网络通信耗时
+        networkTime,
+        // 页面创建时的时间戳
+        pageCreateTimestamp: performanceInfo.createTimestamp,
+        // 页面首帧加载完成的时间戳
+        pageLoadTimestamp: performanceInfo.loadTimestamp,
+        // 页面显示时的时间戳（包含网络通信耗时）
+        pageShowTimestamp,
+      }
+    })
     UtilManager.log({
+      pageName,
       networkTime,
-      jsRenderTime: Date.now() - MethodChannel.jsRunAppTime - networkTime,
-      jsTotalTime: Date.now() - MethodChannel.jsStartTime,
-      channelFirstSpendTime
+      pageLoadTime: performanceInfo.loadTimestamp - performanceInfo.createTimestamp,
+      pageShowTime: pageShowTimestamp - performanceInfo.createTimestamp
     })
   }
   // 输出到native
   static print (params: any = {}) {
-    jsCallNative({ method: 'print', params })
+    jsCallNative({
+      method: NativeMethodChannelType.print,
+      params
+    })
   }
   // 重载bundle.js
   static reload () {
-    jsCallNative({ method: 'reload', params: {} })
+    jsCallNative({
+      method: NativeMethodChannelType.reload,
+      params: {}
+    })
   }
   // 触发 NativeView 方法
   static invokeNativeViewMethod ({
@@ -203,19 +243,21 @@ export default class MethodChannel {
     viewType: string,
     viewParams?: any,
   }) {
-    jsCallNative({ method: 'invokeNativeViewMethod', params: {
-      methodName,
-      methodParams,
-      viewType,
-      viewParams,
-    } })
+    jsCallNative({
+      method: NativeMethodChannelType.invokeNativeViewMethod,
+      params: {
+        methodName,
+        methodParams,
+        viewType,
+        viewParams,
+      }
+    })
   }
   // bridge方法
   static bridge (methodId: string, params: BridgeParams) {
-    const channelMethodName = 'bridgeRequest'
     if (!Util.isProd && BridgeManager.isNetworkRequest(params)) {
       jsCallFlutter({
-        method: channelMethodName,
+        method: FlutterMethodChannelType.bridgeRequest,
         params: {
           methodId,
           request: Util.toString(params),
@@ -224,7 +266,7 @@ export default class MethodChannel {
       return
     }
     jsCallNative({
-      method: channelMethodName,
+      method: NativeMethodChannelType.bridgeRequest,
       params: {
         methodId,
         request: params,

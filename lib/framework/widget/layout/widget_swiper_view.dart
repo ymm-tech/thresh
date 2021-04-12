@@ -1,5 +1,5 @@
 /// MIT License
-/// 
+///
 /// Copyright (c) 2020 ManBang Group
 /// Permission is hereby granted, free of charge, to any person obtaining a copy
 /// of this software and associated documentation files (the "Software"), to deal
@@ -7,10 +7,10 @@
 /// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 /// copies of the Software, and to permit persons to whom the Software is
 /// furnished to do so, subject to the following conditions:
-/// 
+///
 /// The above copyright notice and this permission notice shall be included in all
 /// copies or substantial portions of the Software.
-/// 
+///
 /// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 /// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 /// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -73,11 +73,12 @@ class ProxyDFSwiperView extends ProxyBase {
 
     List<Widget> children = Util.getWidgetList(buildProps['children']);
     int initPage = Util.getInt(props['initIndex']) ?? 0;
+    double viewportFraction = Util.getDouble(props['viewportFraction'],range: Range(min:0,max: 1.0)) ?? 1.0;
     PageController controller;
     if (model.controller != null && model.controller is PageController) {
       controller = model.controller;
     } else {
-      controller = PageController(initialPage: initPage > children.length - 1 ? 0 : initPage);
+      controller = PageController(initialPage: initPage > children.length - 1 ? 0 : initPage,viewportFraction:viewportFraction);
       model.controller = controller;
     }
 

@@ -22,14 +22,11 @@
  *
  */
 
-import threshApp from '../..'
-import MethodChannel from '../channel/MethodChannel'
-import Dispatcher from '../channel/dispatchMethod'
+import MethodChannel, { FlutterMethodChannelType } from '../channel/MethodChannel'
+import dispatcher from '../channel/dispatchMethod'
 import VNode from '../core/VNode'
-import appContainer, { MODAL_TAG } from '../core/AppContainer'
-import Util from '../shared/Util'
+import appContainer from '../core/AppContainer'
 import bus from '../shared/bus'
-import EventManager from './EventManager'
 import UIManager from './UIManager'
 import { PageInfo, RenderData } from '../types/type'
 import { ToastInfo } from '../types/widget'
@@ -39,8 +36,6 @@ import { Page } from '../core/basicWidget'
  * 页面渲染管理器
  */
 export default class RenderManager {
-  private static pageId: number = 1
-  private static modalNumber: number = 0
   /**
    * 获取当前页面信息
    */
@@ -63,120 +58,122 @@ export default class RenderManager {
    */
   static pageNotFound (nextPath: string) {
     const allPaths: string[] = Array.from(appContainer.routes.keys())
-    MethodChannel.call('pageNotFound', {
-      allPath: allPaths.join('\n'),
-      nextPath,
-      prevPath: appContainer.referPageName || ''
+    MethodChannel.call({
+      method: FlutterMethodChannelType.pageNotFound,
+      params: {
+        allPath: allPaths.join('\n'),
+        nextPath,
+        prevPath: appContainer.referPageName || ''
+      },
     })
   }
   /**
    * 建立页面/模态框
    * @param {VNode} renderTree 
-   * @param {String} pageName 
-   * @param {Boolean} isModal 是否作为模态框显示
-   * @param {Boolean} popup 作为模态框显示时是否从底部弹出
+   * @param {String} pageName
+   * @param {number} createTimestamp 页面创建时间
    */
-  static pushPage (renderTree: VNode, pageName: string, isModal: boolean = false, popup: boolean = false) {
+  static pushPage (renderTree: VNode, pageName: string, createTimestamp: number) {
     if (appContainer.isEmpty && (UIManager.screenWidth === 0 || UIManager.screenHeight === 0)) {
       throw new Error(`[UI ERROR] screenWidth: ${UIManager.screenWidth}, screenHeight: ${UIManager.screenHeight}`)
     }
-    if (!appContainer.isEmpty && !isModal) EventManager.fire('pageOnHide')
+    const contextId: string = appContainer.contextId as string
+    if (!appContainer.isEmpty) Page.invokePageOnHide(contextId)
     const page = RenderManager._buildPage(renderTree, pageName)
-    appContainer.pushPage(page.pageName, renderTree, isModal)
-    if (!isModal) EventManager.fire('pageOnShow')
-    MethodChannel.call('pushPage', {
-      widgetRenderData: page.pageData,
-      pageName: page.pageName,
-      isModal,
-      popup
+    appContainer.pushPage(page.pageName, renderTree, createTimestamp)
+    MethodChannel.call({
+      method: FlutterMethodChannelType.pushPage,
+      params: {
+        pageName: page.pageName,
+        widgetRenderData: page.pageData,
+      },
     })
-  }
-  /**
-   * 用一个新的页面替换当前显示的页面
-   * @param {VNode} newRenderTree 
-   * @param {String} newPageName
-   */
-  static replacePage (newRenderTree: VNode, newPageName: string) {
-    EventManager.fire('pageOnHide')
-    const page: PageInfo = RenderManager._buildPage(newRenderTree, newPageName)
-    appContainer.replacePage(page.pageName, newRenderTree)
-    EventManager.fire('pageOnShow')
-    MethodChannel.call('replacePage', {
-      widgetRenderData: page.pageData,
-      pageName: page.pageName
-    })
+    const pageOnShowEventName = `pageOnShow#${page.pageName}`
+    bus.register(() => {
+      Page.invokePageOnShow(contextId)
+      bus.remove(pageOnShowEventName)
+    }, pageOnShowEventName)
   }
   /**
    * 推出当前页面
    */
   static async popPage (): Promise<void> {
-    const pageName: string = appContainer.namesCache[appContainer.namesCache.length - 1]
+    const showName: string | void = appContainer.currentShowName
+    if (!showName) return
 
     if (!appContainer.currentShowIsModal) {
       const shouldPop: boolean = await Page.invokeBeforePagePop()
       if (!shouldPop) return
     }
 
-    const popPageCallback: Function = resolve => {
-      bus.register(() => {
-        resolve()
-      }, pageName)
-    }
-    if (RenderManager.canPop()) {
-      // 如果当前页面可关闭
-      // 则在向 flutter 发出关闭页面消息并注册关闭回调
-      // 回调将会在 flutter 关闭页面并向 js 发出 popPage 消息后，在 Dispatch.popPage() 中被触发，并同时触发 pageOnHide
-      MethodChannel.call('popPage', { pageName })
+    // 如果当前页面可执行 popPage 操作
+    // 则向 flutter 发出 popPage 消息
+    // flutter 完成相关操作后向 js 发出 hasPopPage 消息
+    if (appContainer.canPop) {
+      MethodChannel.call({
+        method: FlutterMethodChannelType.popPage,
+        params: { pageName: showName },
+      })
+      // 注册 popPage 完成的回调
+      // 该回调会在 dispatcher.hasPopPage 中被调用
+      const popPageCallback: Function = resolve => {
+        bus.register(() => {
+          resolve()
+        }, showName)
+      }
       return new Promise(resolve => {
         popPageCallback(resolve)
       })
-    } else {
-      return new Promise(resolve => {
-        popPageCallback(resolve)
-        // 当前页面不可关闭，则手动触发 Dispatch.popPage()
-        Dispatcher.popPage({ pageName })
-      })
+    }
+    // 当前页面不可执行 popPage 操作
+    // 则直接调用 closeWindow 关闭当前 native 窗口
+    // 页面 onHide onShow onDestroy 等操作由 native 来触发
+    else {
+      dispatcher.closeWindow()
     }
   }
   /**
-   * threshApp当前页面是否可以推出
-   */
-  static canPop (): boolean {
-    // 存在根flutter页面时一定可以pop
-    // 不存在时只有当页面数量大于1时才可以pop
-    return threshApp.hasRootFlutterPage || appContainer.namesCache.length > 1
-  }
-  /**
-   * 显示模态
+   * 显示 modal
    */
   static showModal (modalRenderTree: VNode, title: string, popup: boolean) {
-    RenderManager.modalNumber++
-    RenderManager.pushPage(modalRenderTree, title, true, popup)
+    const modal = RenderManager._buildPage(modalRenderTree, title)
+    appContainer.showModal(modal.pageName, modalRenderTree)
+    MethodChannel.call({
+      method: FlutterMethodChannelType.showModal,
+      params: {
+        modalName: modal.pageName,
+        widgetRenderData: modal.pageData,
+        popup
+      },
+    })
   }
   /**
-   * 隐藏模态
+   * 隐藏 modal
    */
-  static async hideModal (): Promise<void> {
-    if (RenderManager.modalNumber) {
-      RenderManager.modalNumber--
-      return await RenderManager.popPage()
-    }
+  static hideModal () {
+    return RenderManager.popPage()
   }
   /**
    * 显示taost
    */
   static showToast (toastRenderTree: VNode, toastInfo: ToastInfo = {}) {
     const toastRenderData: RenderData = toastRenderTree.toRenderData('toast#' + (toastInfo.name || Date.now()))
-    MethodChannel.call('showToast', {
-      toastRenderData: Util.toString(toastRenderData),
-      toastInfo: Util.toString(toastInfo)
+    MethodChannel.call({
+      method: FlutterMethodChannelType.showToast,
+      params: {
+        toastRenderData: JSON.stringify(toastRenderData),
+        toastInfo: JSON.stringify(toastInfo),
+      },
     })
   }
   /**
    * 隐藏taost
    */
   static hideToast (toastName: string) {
-    MethodChannel.call('hideToast', { toastName })
+    MethodChannel.call({
+      method: FlutterMethodChannelType.hideToast,
+      params: { toastName },
+    })
   }
   /**
    * 更新widget
@@ -189,18 +186,25 @@ export default class RenderManager {
   static updateWidget (updateRenderTree: VNode, needUpdateWidgetId: string, invokeDidUpdateWidgetId: string, pageName: string) {
     // 当需要更新 widget 时查看 widget cache 中是否已经存在需要被替换的 widget tree 的根节点标记
     const updateRenderData: RenderData = updateRenderTree.toRenderData(pageName)
-    MethodChannel.call('updateWidget', {
-      widgetUpdateData: Util.toString(updateRenderData),
-      needUpdateWidgetId,
-      invokeDidUpdateWidgetId,
-      pageName
+    MethodChannel.call({
+      method: FlutterMethodChannelType.updateWidget,
+      params: {
+        pageName,
+        needUpdateWidgetId,
+        invokeDidUpdateWidgetId,
+        widgetUpdateData: JSON.stringify(updateRenderData),
+      },
+      contextId: updateRenderTree.contextId,
     })
   }
   /**
    * 停止 flutter 中永久渲染组件的渲染
    */
-  static stopAlwaysRender () {
-    MethodChannel.call('stopAlwaysRender')
+  static stopAlwaysRender (contextId?: string) {
+    MethodChannel.call({
+      method: FlutterMethodChannelType.stopAlwaysRender,
+      contextId,
+    })
   }
   /**
    * 获取设备媒体信息
@@ -209,20 +213,23 @@ export default class RenderManager {
    * 如：debugMode bizName 等
    */
   static getMediaQuery (jsVersion: string) {
-    MethodChannel.call('mediaQuery', { jsEnv: process.env.NODE_ENV, jsVersion })
+    MethodChannel.call({
+      method: FlutterMethodChannelType.mediaQuery,
+      params: { jsEnv: process.env.NODE_ENV, jsVersion },
+    })
   }
   /**
    * 构建页面
    * 返回一个可以被flutter解析渲染的 jsonTreeString
    */
   private static _buildPage (renderTree: VNode, pageName: string): PageInfo {
-    if (!pageName) throw new Error('set up page must has a pageName')
-    pageName = `${pageName}#${RenderManager.pageId++}`
+    if (!pageName) throw new Error('set up page must have a pageName')
+    pageName = `${pageName}#${appContainer.pageId}`
     const renderData: RenderData = renderTree.toRenderData(pageName)
-    if (!renderTree.fetchRootNode().pageNode && !pageName.startsWith(MODAL_TAG)) throw new Error('Each page must has one <Page />')
+    if (!renderTree.fetchRootNode().pageNode && !appContainer.pageIsModal(pageName)) throw new Error('Each page must have one <Page />')
     return {
       pageName,
-      pageData: Util.toString(renderData)
+      pageData: JSON.stringify(renderData)
     }
   }
 }

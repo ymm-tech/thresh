@@ -32,7 +32,7 @@ export default class SwiperViewDemo extends Thresh.Widget <any, any> {
       >
         <Title title="横向滑动" />
         <Box>
-          <SwiperView width={Box.width} height={ui.screenHeight / 4}>
+          <SwiperView width={Box.width} height={ui.screenHeight / 4} viewportFraction={0.9}>
             {this.renderContent()}
           </SwiperView>
         </Box>

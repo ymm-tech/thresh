@@ -23,16 +23,15 @@
  */
 package io.manbang.frontend.thresh_example;
 
+import io.flutter.embedding.engine.FlutterEngine;
 import io.flutter.plugin.common.MethodChannel;
-import io.flutter.view.FlutterView;
 import io.manbang.frontend.thresh.channel.MethodChannelModule;
 import io.manbang.frontend.thresh.runtime.EngineService;
-import io.manbang.frontend.thresh.runtime.ThreshEngine;
 
 public class ThreshDemoMethodChannel extends MethodChannelModule {
 
-    public ThreshDemoMethodChannel(FlutterView flutterView, EngineService engineService) {
-        super(flutterView,engineService);
+    public ThreshDemoMethodChannel(FlutterEngine engine, EngineService engineService) {
+        super(engine,engineService);
     }
 
     @Override

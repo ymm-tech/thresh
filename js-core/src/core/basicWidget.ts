@@ -26,7 +26,7 @@ import Widget, { BasicWidget } from './Widget'
 import VNode from './VNode'
 import appContainer from './AppContainer'
 import ChildrenRule from './ChildrenRule'
-import MethodChannel from '../channel/MethodChannel'
+import MethodChannel, { FlutterMethodChannelType } from '../channel/MethodChannel'
 import Util from '../shared/Util'
 import {
   PageProps,
@@ -35,12 +35,15 @@ import {
   ScrollViewProps,
   ListViewProps,
   NestScrollViewProps,
+  DrawerScrollViewProps,
+  DragableScrollViewProps,
   SwipeActionsViewProps,
   NativeViewProps,
   SwiperViewProps,
   TextProps,
   IconProps,
   ImageProps,
+  QrImageProps,
   SpinProps,
   RefreshProps,
   NoticeBarProps,
@@ -48,6 +51,8 @@ import {
   RadioProps,
   CheckboxProps,
   InputProps,
+  SwitchProps,
+  PickerProps
 } from '../types/widget'
 
 /**
@@ -57,8 +62,8 @@ import {
 // 页面组件
 export class Page extends BasicWidget <PageProps, any> {
   static async invokeBeforePagePop (): Promise<boolean> {
-    const pageNode: VNode | void = Page.getLastInShowPage()
-    if (!pageNode) return
+    const pageNode: VNode | void = Page.getPageWithContextId(appContainer.contextId as string)
+    if (!pageNode) return true
     if (!pageNode.props.beforePop) return true
     const beforePopRes = pageNode.props.beforePop()
     if (beforePopRes === false) return false
@@ -69,25 +74,23 @@ export class Page extends BasicWidget <PageProps, any> {
     return true
   }
 
-  static invokePageOnShow (fromPageName?: string) {
-    const pageNode: VNode | void = Page.getLastInShowPage()
+  static invokePageOnShow (contextId: string) {
+    const pageNode: VNode | void = Page.getPageWithContextId(contextId)
     if (!pageNode) return
-    pageNode.props.onShow && pageNode.props.onShow({
-      fromPageName: typeof fromPageName ===  'string' ? fromPageName.split('#')[0] : ''
-    })
+    pageNode.props.onShow && pageNode.props.onShow()
   }
 
-  static invokePageOnHide () {
-    const pageNode: VNode | void = this.getLastInShowPage()
+  static invokePageOnHide (contextId: string) {
+    const pageNode: VNode | void = this.getPageWithContextId(contextId)
     if (!pageNode) return
     pageNode.props.onHide && pageNode.props.onHide()
   }
 
-  private static getLastInShowPage (): VNode | void {
+  private static getPageWithContextId (contextId: string): VNode | void {
     if (appContainer.isEmpty) return
-    const willShowPageNode: VNode | void = appContainer.currentPageData
-    if (!willShowPageNode) return
-    return willShowPageNode.pageNode
+    const targetPageNode: VNode | void = appContainer.getPageDataWithContextId(contextId)
+    if (!targetPageNode) return
+    return targetPageNode.pageNode
   }
 }
 // 顶部导航栏组件
@@ -97,7 +100,7 @@ export class AppBar extends BasicWidget <AppBarProps, any> {
     const lastTitle: string = !Util.isNil(this.__lastTitle) ? this.__lastTitle : (this.props.title || '')
     if (lastTitle === title) return
     this.__lastTitle = title
-    __setNavProps(this, 'updateTitle', { title })
+    __setNavProps(this, FlutterMethodChannelType.updateTitle, { title })
   }
 }
 // 容器组件
@@ -105,31 +108,49 @@ export class Container extends BasicWidget <ContainerProps, any> {}
 // 滑动容器组件
 export class ScrollView extends BasicWidget <ScrollViewProps, any> {
   scrollTo (offset: number, duration?: number) {
-    __setNavProps(this, 'scrollTo', { offset, duration })
+    __setNavProps(this, FlutterMethodChannelType.scrollTo, { offset, duration })
   }
 }
 // 列表容器组件
 export class ListView extends BasicWidget <ListViewProps, any> {
   scrollTo (offset: number, duration?: number) {
-    __setNavProps(this, 'scrollTo', { offset, duration })
+    __setNavProps(this, FlutterMethodChannelType.scrollTo, { offset, duration })
   }
 
   stopAsyncOperate (type: 'refresh' | 'loadMore') {
-    __setNavProps(this, 'stopAsyncOperate', { type })
+    __setNavProps(this, FlutterMethodChannelType.stopAsyncOperate, { type })
   }
 }
 export class NestScrollView extends BasicWidget <NestScrollViewProps, any> {
   // scrollTo (offset: number, duration?: number) {
-  //   __setNavProps(this, 'scrollTo', { offset, duration })
+  //   __setNavProps(this, FlutterMethodChannelType.scrollTo, { offset, duration })
   // }
+  // 打开ScrollView（上滑）
+  open () {
+    __setNavProps(this, FlutterMethodChannelType.setNestScrollViewStatus, { isOpened: true })
+  }
+  // 关闭ScrollView（下滑）
+  close () {
+    __setNavProps(this, FlutterMethodChannelType.setNestScrollViewStatus, { isOpened: false })
+  }
+}
+export class DrawerScrollView extends BasicWidget <DrawerScrollViewProps, any> {}
+
+export class DragableScrollView extends BasicWidget <DragableScrollViewProps, any> {
+  scrollTo (offset: number, duration?: number) {
+    __setNavProps(this, FlutterMethodChannelType.scrollTo, { offset, duration })
+  }
+  dragPositionAnimateTo (positionType: 'initial' | 'max' | 'min') {
+    __setNavProps(this, FlutterMethodChannelType.dragPositionAnimateTo, { positionType })
+  }
 }
 
 export class SwipeActionsView extends BasicWidget <SwipeActionsViewProps, any> {
   openActions () {
-    __setNavProps(this, 'openActions', {})
+    __setNavProps(this, FlutterMethodChannelType.openActions, {})
   }
   closeActions () {
-    __setNavProps(this, 'closeActions', {})
+    __setNavProps(this, FlutterMethodChannelType.closeActions, {})
   }
 }
 SwipeActionsView.childrenRule = new ChildrenRule({
@@ -139,7 +160,7 @@ SwipeActionsView.childrenRule = new ChildrenRule({
 
 export class SwiperView extends BasicWidget <SwiperViewProps, any> {
   swipeTo (index: number, duration?: number) {
-    __setNavProps(this, 'swipeTo', { index, duration })
+    __setNavProps(this, FlutterMethodChannelType.swipeTo, { index, duration })
   }
 }
 export class NativeView extends BasicWidget <NativeViewProps, any> {
@@ -176,6 +197,12 @@ export class Image extends BasicWidget <ImageProps, any> {}
 Image.childrenRule = new ChildrenRule({
   length: 0,
   widgetName: 'Image'
+})
+// 图片组件
+export class QrImage extends BasicWidget <QrImageProps, any> {}
+QrImage.childrenRule = new ChildrenRule({
+  length: 0,
+  widgetName: 'QrImage'
 })
 // 文本组件
 export class Text extends BasicWidget <TextProps, any> {}
@@ -220,6 +247,12 @@ Radio.childrenRule = new ChildrenRule({
   name: 'title',
   widgetName: 'Radio'
 })
+// 开关组件
+export class Switch extends BasicWidget <SwitchProps, any> {}
+Switch.childrenRule = new ChildrenRule({
+  length: 0,
+  widgetName: 'Switch'
+})
 // 复选框组件
 export class Checkbox extends BasicWidget <CheckboxProps, any> {}
 Checkbox.childrenRule = new ChildrenRule({
@@ -230,7 +263,7 @@ Checkbox.childrenRule = new ChildrenRule({
 // 输入框组件
 export class Input extends BasicWidget <InputProps, any> {
   setValue (value: string) {
-    __setNavProps(this, 'setValue', { value })
+    __setNavProps(this, FlutterMethodChannelType.setValue, { value })
   }
 }
 Input.childrenRule = new ChildrenRule({
@@ -238,15 +271,33 @@ Input.childrenRule = new ChildrenRule({
   widgetName: 'Input'
 })
 
-function __setNavProps (widget: Widget<any, any>, method: string, params: object = {}) {
+function __setNavProps (widget: Widget<any, any>, method: FlutterMethodChannelType, params: object = {}) {
   const vNode: VNode = widget.__vNode__
   if (!vNode.isMount) return
-  MethodChannel.call(method, {
-    pageName: vNode.pageName,
-    widgetId: vNode.nodeId,
-    ...params
+  MethodChannel.call({
+    method,
+    params: {
+      pageName: vNode.pageName,
+      widgetId: vNode.nodeId,
+      ...params
+    },
   })
 }
+
+// 选择组件
+export class Picker extends BasicWidget <PickerProps, any> {
+  // 跳转到指定位置
+  jumpTo (index: number) {
+    __setNavProps(this, FlutterMethodChannelType.jumpTo, { index })
+  }
+  // 滚动到指定位置
+  animateTo(index:number, duration?:number){
+    __setNavProps(this, FlutterMethodChannelType.animateTo, { index, duration })
+  }
+}
+Picker.childrenRule = new ChildrenRule({
+  widgetName: 'Picker'
+})
 
 export default {
   Page,
@@ -255,12 +306,15 @@ export default {
   ScrollView,
   ListView,
   NestScrollView,
+  DrawerScrollView,
+  DragableScrollView,
   SwipeActionsView,
   SwiperView,
   NativeView,
 
   Icon,
   Image,
+  QrImage,
   Text,
   Spin,
   Refresh,
@@ -269,5 +323,7 @@ export default {
   Button,
   Radio,
   Checkbox,
-  Input
+  Input,
+  Switch,
+  Picker,
 }

@@ -57,6 +57,7 @@ Widget initThreshApp({
   bool debugMode = false,
   String appName,
   Widget mainApp,
+  String jsContextId,
   String jsBundlePath,
   RouteInfo defaultRoute,
   NotFoundPageBuilder notFoundPage,
@@ -94,18 +95,21 @@ Widget initThreshApp({
       ..appName = appName
       ..mainApp = mainApp
       ..debugMode = debugMode
+      ..jsContextId = jsContextId ?? Util.randomString(withTimestamp: true)
       ..jsBundlePath = jsBundlePath
       ..defaultRoute = defaultRoute
       ..notFoundPage = notFoundPage
       ..errorHandler = errorHandler
       ..onWhiteScreen = onWhiteScreen
       ..placeholderPageBuilder = placeholderPageBuilder
-      ..sendMediaQuery()
       ..canReload = true;
     rootApp = dynamicApp.start(isAppInit: runApp);
     RegisterProxy.register();
-    devtools.debug('initThreshApp', 'main.dart', 'info',
-        'jsContextId: ${dynamicApp?.jsContextId ?? 'not set'}');
+    devtools.debug(
+      'initThreshApp',
+      'main.dart',
+      'info',
+    );
   } catch (error, trace) {
     ThreshError threshError =
         ThreshError(error.toString(), trace: trace?.toString() ?? '');
@@ -136,13 +140,14 @@ Widget initThreshApp({
             padding: EdgeInsets.all(10),
             children: [
               Text(
-                  'Dynamic flutter app has an error!\nMore details have print below.\n\n${error.toString()}\n\n${trace?.toString() ?? ''}')
+                  'Thresh app has an error!\nMore details have print below.\n\n${error.toString()}\n\n${trace?.toString() ?? ''}')
             ],
           ),
         );
       }
       if (runApp)
         _callRunApp(MaterialApp(
+          color: Colors.white, // TODO - Colors.transparent,
           home: rootApp,
         ));
     }
@@ -165,10 +170,11 @@ void _showWhiteScreenIfWaitLongTime(int overTime) {
       dynamicApp.stateStack.last.setPage(whiteScreen);
     } else {
       Navigator.push(
-          dynamicApp.rootContext,
-          MaterialPageRoute(
-            builder: (context) => whiteScreen,
-          ));
+        dynamicApp.rootContext,
+        DynamicPageRoute(
+          builder: (context) => whiteScreen,
+        ),
+      );
     }
   });
 }

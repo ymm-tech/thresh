@@ -23,25 +23,17 @@
  */
 package io.manbang.frontend.thresh.view;
 
-import android.app.Activity;
 import android.content.Context;
-import android.os.Build;
 import android.util.AttributeSet;
-import android.view.View;
-import android.view.accessibility.AccessibilityManager;
 
-import java.lang.reflect.Field;
-
-import io.flutter.view.AccessibilityBridge;
-import io.flutter.view.FlutterNativeView;
-import io.flutter.view.FlutterView;
+import io.flutter.embedding.android.FlutterSurfaceView;
+import io.flutter.embedding.android.FlutterTextureView;
+import io.flutter.embedding.android.FlutterView;
 
 /**
  * fix FlutterView bug
  */
 public class ThreshFlutterView extends FlutterView {
-
-    private AccessibilityManager.AccessibilityStateChangeListener mAccessibilityStateChangeListener;
 
     public ThreshFlutterView(Context context) {
         super(context);
@@ -51,73 +43,11 @@ public class ThreshFlutterView extends FlutterView {
         super(context, attrs);
     }
 
-    public ThreshFlutterView(Context context, AttributeSet attrs, FlutterNativeView nativeView) {
-        super(context, attrs, nativeView);
-    }
-    @Override
-    protected void onAttachedToWindow() {
-        super.onAttachedToWindow();
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            try {
-                Field accessibilityNodeProviderField = FlutterView.class.getDeclaredField("mAccessibilityNodeProvider");
-                accessibilityNodeProviderField.setAccessible(true);
-                AccessibilityBridge accessibilityNodeProvider = (AccessibilityBridge) accessibilityNodeProviderField.get(this);
-                Field listenerField = AccessibilityBridge.class.getDeclaredField("accessibilityStateChangeListener");
-                listenerField.setAccessible(true);
-                final AccessibilityManager.AccessibilityStateChangeListener accessibilityStateChangeListener = (AccessibilityManager.AccessibilityStateChangeListener) listenerField.get(accessibilityNodeProvider);
-                if (accessibilityStateChangeListener != null) {
-                    AccessibilityManager accessibilityManager = (AccessibilityManager) getContext().getSystemService(
-                            Activity.ACCESSIBILITY_SERVICE);
-                    accessibilityManager.removeAccessibilityStateChangeListener(accessibilityStateChangeListener);
-                    mAccessibilityStateChangeListener = new AccessibilityManager.AccessibilityStateChangeListener() {
-                        @Override
-                        public void onAccessibilityStateChanged(boolean enabled) {
-                            try {
-                                accessibilityStateChangeListener.onAccessibilityStateChanged(enabled);
-                            } catch (Throwable e) {
-                                e.printStackTrace();
-                            }
-                        }
-                    };
-                    accessibilityManager.addAccessibilityStateChangeListener(mAccessibilityStateChangeListener);
-                }
-            } catch (Throwable e) {
-                e.printStackTrace();
-            }
-        }
+    public ThreshFlutterView(Context context, FlutterSurfaceView flutterSurfaceView) {
+        super(context,flutterSurfaceView);
     }
 
-    @Override
-    protected void onDetachedFromWindow() {
-        super.onDetachedFromWindow();
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            try {
-                if (mAccessibilityStateChangeListener != null) {
-                    AccessibilityManager accessibilityManager = (AccessibilityManager) getContext().getSystemService(Activity.ACCESSIBILITY_SERVICE);
-                    if (accessibilityManager != null){
-                        accessibilityManager.removeAccessibilityStateChangeListener(mAccessibilityStateChangeListener);
-                    }
-                }
-            } catch (Throwable e) {
-                e.printStackTrace();
-            }
-        }
+    public ThreshFlutterView(Context context, FlutterTextureView flutterTextureView) {
+        super(context, flutterTextureView);
     }
-    @Override
-    public boolean checkInputConnectionProxy(View view) {
-        if (view == null) {
-            return false;
-        }
-        if (getFlutterNativeView() == null){
-            return false;
-        }
-        if (getFlutterNativeView().getPluginRegistry() == null){
-            return false;
-        }
-        if (getFlutterNativeView().getPluginRegistry().getPlatformViewsController() == null){
-            return false;
-        }
-        return super.checkInputConnectionProxy(view);
-    }
-
 }

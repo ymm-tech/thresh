@@ -2,10 +2,14 @@ import Thresh, { basicWidgets } from 'thresh-lib'
 import { Colors } from '../../config'
 import Title from '../../widgets/Title'
 import Box from '../../widgets/Box'
+import { Container } from 'thresh-lib/src/core/basicWidget'
 
 const { Page, AppBar, ScrollView, Text } = basicWidgets
 
 export default class TextDemo extends Thresh.Widget <any, any> {
+  widgetDidMount () {
+    Thresh.pageDidShow()
+  }
   render () {
     return (
       <Page
@@ -31,6 +35,18 @@ export default class TextDemo extends Thresh.Widget <any, any> {
             >
               这是一段富文本，
             </Text>
+          </Box>
+
+          <Box>
+            <Container height={50} border={{ color: Colors.Primary }} justifyContent="center" alignItems="center">
+            <Text
+            border={{ color: Colors.Red }}
+              // backgroundColor={Colors.Primary}
+              // padding={5}
+            >
+              HFJKHDSJFHJSDHFJKD
+            </Text>
+            </Container>
           </Box>
         </ScrollView>
       </Page>

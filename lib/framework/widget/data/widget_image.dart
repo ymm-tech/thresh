@@ -1,5 +1,5 @@
 /// MIT License
-/// 
+///
 /// Copyright (c) 2020 ManBang Group
 /// Permission is hereby granted, free of charge, to any person obtaining a copy
 /// of this software and associated documentation files (the "Software"), to deal
@@ -7,10 +7,10 @@
 /// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 /// copies of the Software, and to permit persons to whom the Software is
 /// furnished to do so, subject to the following conditions:
-/// 
+///
 /// The above copyright notice and this permission notice shall be included in all
 /// copies or substantial portions of the Software.
-/// 
+///
 /// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 /// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 /// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -149,7 +149,9 @@ class _DFImageWidgetState extends State<_DFImageWidget> {
   }
 
   stopRender() {
-    if (widget == null || widget.src == null || widget.src.toLowerCase().endsWith('.gif')) {
+    if (widget == null ||
+        widget.src == null ||
+        widget.src.toLowerCase().endsWith('.gif')) {
       setState(() {
         imageProvider = null;
       });
@@ -183,7 +185,8 @@ class _DFImageWidgetState extends State<_DFImageWidget> {
   getImage() async {
     ImageProvider p = await getImageProvider(widget.src);
     if (widget.onLoad != null) {
-      ImageStreamListener listener = ImageStreamListener((ImageInfo info, bool synchronousCall) {
+      ImageStreamListener listener =
+          ImageStreamListener((ImageInfo info, bool synchronousCall) {
         widget.onLoad({'width': info.image.width, 'height': info.image.height});
       }, onError: (e, s) {});
 
@@ -205,28 +208,48 @@ class _DFImageWidgetState extends State<_DFImageWidget> {
 
   Future<ImageProvider> getImageProvider(String url) async {
     if (url == null) return null;
-    String fullPath = Util.getBundleFilePath(url);
     // 网络图片
     if (url.startsWith('http://') || url.startsWith('https://')) {
-      devtools.insert(InfoType.event, DevInfo(title: 'Load Image', content: '''
-From: ${dynamicApp.jsEnvIsProd ? 'Cache' : 'Network'}
-Url: $url'''));
-      return dynamicApp.jsEnvIsProd ? CachedNetworkImageProvider(url) : NetworkImage(url);
+      devtools.insert(
+        InfoType.event,
+        DevInfo(
+          title: 'Load Image',
+          content: Util.formatMutipulLineText([
+            'From: ${dynamicApp.jsEnvIsProd ? 'Cache' : 'Network'}',
+            'Url: $url',
+          ]),
+        ),
+      );
+      return dynamicApp.jsEnvIsProd
+          ? CachedNetworkImageProvider(url)
+          : NetworkImage(url);
+    }
+    // 本地图片
+    else {
+      String fullPath = url;
+      if (!fullPath.startsWith('assets://'))
+        fullPath = Util.getBundleFilePath(url);
+      if (fullPath.startsWith('assets://')) {
+        devtools.insert(
+          InfoType.event,
+          DevInfo(
+            title: 'Load Image',
+            content: Util.formatMutipulLineText([
+              'From: Assets',
+              'Path: $fullPath',
+            ]),
+          ),
+        );
+        Uint8List byteData = await loadImageFromAssets(fullPath);
+        return MemoryImage(byteData);
+      } else {
+        // 资源包图片
+        Uint8List byteData = await loadImageFromMemoryFile(File(fullPath));
+        return MemoryImage(byteData);
+      }
     }
     // assets 图片
-    else if (fullPath.startsWith('assets://')) {
-      devtools.insert(InfoType.event, DevInfo(title: 'Load Image', content: '''
-From: Assets
-Path: $fullPath'''));
-      Uint8List byteData = await loadImageFromAssets(fullPath);
-      return MemoryImage(byteData);
-    } else {
-      // 资源包图片
-      Uint8List byteData = await loadImageFromMemoryFile(File(fullPath));
-      return MemoryImage(byteData);
-    }
   }
-
 
   Future<Uint8List> loadImageFromMemoryFile(File file) async {
     List<int> bytes = await file.readAsBytes();
@@ -235,23 +258,18 @@ Path: $fullPath'''));
 }
 
 Future<Uint8List> loadImageFromAssets(String url) async {
-  final dynamic res = await dynamicChannel?.callNative(
-      module: 'dynamicFlutter',
-      method: 'getNativeImage',
-      params: {
-        'imageSource': 'assets',
-        'imagePath': url,
-      }
-  );
+  final dynamic res = await dynamicChannel
+      ?.callNative(module: 'dynamicFlutter', method: 'getNativeImage', params: {
+    'imageSource': 'assets',
+    'imagePath': url,
+  });
   dynamic result = Util.filterBridgeResponse(res);
-  if(result is List){
+  if (result is List) {
     List<int> bytes = result.cast<int>();
     return Uint8List.fromList(bytes);
   }
   return result;
 }
-
-
 
 class ProxyDFImage extends ProxyBase {
   DFStopAlwaysRenderController controller;
@@ -269,17 +287,16 @@ class ProxyDFImage extends ProxyBase {
 
     String src = Util.getString(props['src']);
 
-    // if (src.toLowerCase().endsWith('.gif')) {
-      String controllerName = 'Image: $src';
-      if (model.controller != null && model.controller is DFStopAlwaysRenderController) {
-        controller = model.controller;
-      } else {
-        controller = DFStopAlwaysRenderController();
-        model.controller = controller;
-        dynamicApp?.stopAlwaysRenderControllers?.add(controller);
-      }
-      controller.name = controllerName;
-    // }
+    String controllerName = 'Image: $src';
+    if (model.controller != null &&
+        model.controller is DFStopAlwaysRenderController) {
+      controller = model.controller;
+    } else {
+      controller = DFStopAlwaysRenderController();
+      model.controller = controller;
+      dynamicApp?.stopAlwaysRenderControllers?.add(controller);
+    }
+    controller.name = controllerName;
 
     return DFImage(model,
         controller: controller,

@@ -21,6 +21,7 @@
  * SOFTWARE.
  *
  */
+
 package io.manbang.frontend.thresh_example;
 
 import android.content.Context;
@@ -33,8 +34,8 @@ import android.widget.EditText;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SwitchCompat;
-import io.manbang.frontend.thresh.containers.ThreshDelegate;
 import io.manbang.frontend.thresh.runtime.jscore.bundle.BundleType;
+import io.manbang.frontend.thresh.containers.ThreshFlutterActivityLaunchConfigs;
 import io.manbang.frontend.thresh.util.ThreshToast;
 
 public class MainActivity extends AppCompatActivity {
@@ -43,56 +44,66 @@ public class MainActivity extends AppCompatActivity {
 
     EditText edLocalIp;
     SharedPreferences sharedPreferences;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        sharedPreferences= getSharedPreferences("thresh_data", Context.MODE_PRIVATE);
+        sharedPreferences = getSharedPreferences("thresh_data", Context.MODE_PRIVATE);
         findViewById(R.id.tv_open_local).setOnClickListener(new View.OnClickListener() {
-          @Override
-          public void onClick(View v) {
-              Intent intent = new Intent(MainActivity.this, ThreshDemoActivity.class);
-              intent.putExtra("load_mode", BundleType.ASSETS_FILE.getType());
-              intent.putExtra(ThreshDelegate.KEY_ROUTER_NAME,"thresh/thresh-page?page=homePage");
-              startActivity(intent);
-          }
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(MainActivity.this, ThreshDemoActivity.class);
+                intent.putExtra("load_mode", BundleType.ASSETS_FILE.getType()).putExtra(
+                        ThreshFlutterActivityLaunchConfigs.EXTRA_INITIAL_ROUTE,
+                        "thresh/thresh-page?page=homePage")
+                        //                      .putExtra(ThreshFlutterActivityLaunchConfigs.EXTRA_BACKGROUND_MODE, ThreshFlutterActivityLaunchConfigs.BackgroundMode.transparent)
+                        .putExtra(
+                                ThreshFlutterActivityLaunchConfigs.EXTRA_DESTROY_ENGINE_WITH_ACTIVITY,
+                                true);
+                startActivity(intent);
+            }
         });
         findViewById(R.id.tv_open_local_fragment).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(MainActivity.this, ThreshDemoFragmentActivity.class);
                 intent.putExtra("load_mode", BundleType.ASSETS_FILE.getType());
-                intent.putExtra(ThreshDelegate.KEY_ROUTER_NAME,"thresh/thresh-page?page=homePage");
+                intent.putExtra(ThreshFlutterActivityLaunchConfigs.EXTRA_INITIAL_ROUTE, "thresh/thresh-page?page=homePage");
                 startActivity(intent);
             }
         });
-      findViewById(R.id.tv_open_debug_page).setOnClickListener(new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            if (switchServer.isChecked()){
-                sharedPreferences.edit().putString("debug_local_ip",edLocalIp.getText().toString().trim()).commit();
-                Intent intent = new Intent(MainActivity.this, ThreshDemoActivity.class);
-                intent.putExtra("load_mode", BundleType.JS_SERVER.getType());
-                intent.putExtra("debug_local_ip",edLocalIp.getText().toString().trim());
-                intent.putExtra("debug_local_port","12345");
-                intent.putExtra(ThreshDelegate.KEY_ROUTER_NAME,"thresh/thresh-page?page=homePage");
-                startActivity(intent);
-            }else {
-                ThreshToast.makeText(MainActivity.this,"请先打开沙盒模式",0);
+        findViewById(R.id.tv_open_debug_page).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (switchServer.isChecked()) {
+                    sharedPreferences.edit().putString("debug_local_ip",
+                                                       edLocalIp.getText().toString().trim())
+                            .commit();
+                    Intent intent = new Intent(MainActivity.this, ThreshDemoActivity.class);
+                    intent.putExtra("load_mode", BundleType.JS_SERVER.getType())
+                            .putExtra("debug_local_ip", edLocalIp.getText().toString().trim())
+                            .putExtra("debug_local_port", "12345")
+                            .putExtra(ThreshFlutterActivityLaunchConfigs.EXTRA_INITIAL_ROUTE, "thresh/thresh-page?page=homePage")
+                            .putExtra(ThreshFlutterActivityLaunchConfigs.EXTRA_DESTROY_ENGINE_WITH_ACTIVITY, true);
+                    startActivity(intent);
+                } else {
+                    ThreshToast.makeText(MainActivity.this, "请先打开沙盒模式", 0);
+                }
             }
-        }
-      });
-      switchServer = findViewById(R.id.switch_server_debug_env);
-      edLocalIp = findViewById(R.id.ed_local_ip);
-      edLocalIp.setEnabled(true);
-      edLocalIp.setText(sharedPreferences.getString("debug_local_ip",edLocalIp.getText().toString().trim()));
-      switchServer.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-        @Override
-        public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-            switchServer.setChecked(isChecked);
-            edLocalIp.setEnabled(!isChecked);
-        }
-      });
+        });
+        switchServer = findViewById(R.id.switch_server_debug_env);
+        edLocalIp = findViewById(R.id.ed_local_ip);
+        edLocalIp.setEnabled(true);
+        edLocalIp.setText(sharedPreferences.getString("debug_local_ip",
+                                                      edLocalIp.getText().toString().trim()));
+        switchServer.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                switchServer.setChecked(isChecked);
+                edLocalIp.setEnabled(!isChecked);
+            }
+        });
     }
 
     @Override

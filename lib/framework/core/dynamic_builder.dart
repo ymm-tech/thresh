@@ -1,5 +1,5 @@
 /// MIT License
-/// 
+///
 /// Copyright (c) 2020 ManBang Group
 /// Permission is hereby granted, free of charge, to any person obtaining a copy
 /// of this software and associated documentation files (the "Software"), to deal
@@ -7,10 +7,10 @@
 /// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 /// copies of the Software, and to permit persons to whom the Software is
 /// furnished to do so, subject to the following conditions:
-/// 
+///
 /// The above copyright notice and this permission notice shall be included in all
 /// copies or substantial portions of the Software.
-/// 
+///
 /// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 /// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 /// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -20,6 +20,7 @@
 /// SOFTWARE.
 
 import 'package:flutter/material.dart';
+import 'package:thresh/basic/util.dart';
 import 'package:thresh/framework/core/dynamic_app.dart';
 import 'package:thresh/framework/core/dynamic_model.dart';
 import 'package:thresh/framework/core/dynamic_widget.dart';
@@ -38,13 +39,15 @@ class _DynamicBuilder {
     }
     return _instance;
   }
+
   factory _DynamicBuilder() => _DynamicBuilder.getInstance();
   _DynamicBuilder._();
 
   /// 将widgetModel构建为widgetTree
-  Widget buildWidgetWithModel(DynamicModel model, [ BuildContext context ]) {
+  Widget buildWidgetWithModel(DynamicModel model, [BuildContext context]) {
     if (dynamicApp == null) return Container();
-    Widget buildRes = _registerWidget.render(model, context ?? dynamicApp.context);
+    Widget buildRes =
+        _registerWidget.render(model, context ?? dynamicApp.context);
     if (buildRes is DynamicWidget) model.dynamicWidget = buildRes;
     // printModelBuildRes(model, buildRes);
     return buildRes;
@@ -52,15 +55,19 @@ class _DynamicBuilder {
 }
 
 void printModelBuildRes(DynamicModel model, dynamic buildRes) {
-  String content = '''
-[type] - ${model.name}
-[widgetId] - ${model.widgetId}
-[buildRes] - $buildRes''';
+  List<String> content = [
+    '[type] - ${model.name}',
+    '[widgetId] - ${model.widgetId}',
+    '[buildRes] - $buildRes',
+  ];
   if (buildRes is DynamicWidget) {
-    content += '\n[widgetInstance] - ${buildRes.widgetInstance}';
+    content.add('[widgetInstance] - ${buildRes.widgetInstance}');
   }
-  devtools.insert(InfoType.render, DevInfo(
-    title: 'Model Build Result',
-    content: content
-  ));
+  devtools.insert(
+    InfoType.render,
+    DevInfo(
+      title: 'Model Build Result',
+      content: Util.formatMutipulLineText(content),
+    ),
+  );
 }

@@ -27,7 +27,7 @@ import android.util.Log;
 
 import java.util.Locale;
 
-import io.manbang.frontend.thresh.Thresh;
+import io.manbang.frontend.thresh.manager.handler.ThreshHandlerManager;
 
 /**
  * thresh logger
@@ -50,39 +50,20 @@ public class ThreshLogger {
         TAG = tag;
     }
     public static void v(String format, Object... args) {
-        if (Thresh.get().platform().reporterListener != null){
-            Thresh.get().platform().reporterListener.log(Log.VERBOSE,TAG,buildMessage(format, args),null);
-        }else {
-            Log.v(TAG, buildMessage(format, args));
-        }
+        ThreshHandlerManager.INSTANCE.reportHandler().log(Log.VERBOSE,TAG,buildMessage(format, args),null);
     }
 
     public static void d(String format, Object... args) {
-        if (DEBUG){
-            if (Thresh.get().platform().reporterListener != null){
-                Thresh.get().platform().reporterListener.log(Log.DEBUG,TAG,buildMessage(format, args),null);
-            }else {
-                Log.d(TAG, buildMessage(format, args));
-            }
-        }
+        ThreshHandlerManager.INSTANCE.reportHandler().log(Log.DEBUG,TAG,buildMessage(format, args),null);
     }
 
     public static void e(String format, Object... args) {
-        if (Thresh.get().platform().reporterListener != null){
-            Thresh.get().platform().reporterListener.log(Log.ERROR,TAG,buildMessage(format, args),null);
-            Thresh.get().platform().reporterListener.reportException(buildMessage(format, args),null);
-        }else {
-            Log.e(TAG, buildMessage(format, args));
-        }
+        ThreshHandlerManager.INSTANCE.reportHandler().log(Log.ERROR,TAG,buildMessage(format, args),null);
     }
 
     public static void e(Throwable tr, String format, Object... args) {
-        if (Thresh.get().platform().reporterListener != null){
-            Thresh.get().platform().reporterListener.log(Log.ERROR,TAG,buildMessage(format, args),tr);
-            Thresh.get().platform().reporterListener.reportException(buildMessage(format, args),tr);
-        }else {
-            Log.e(TAG, buildMessage(format, args), tr);
-        }
+        ThreshHandlerManager.INSTANCE.reportHandler().log(Log.ERROR,TAG,buildMessage(format, args),null);
+        ThreshHandlerManager.INSTANCE.reportHandler().reportException(buildMessage(format, args),tr);
     }
 
     /**

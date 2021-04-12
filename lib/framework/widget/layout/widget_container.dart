@@ -1,5 +1,5 @@
 /// MIT License
-/// 
+///
 /// Copyright (c) 2020 ManBang Group
 /// Permission is hereby granted, free of charge, to any person obtaining a copy
 /// of this software and associated documentation files (the "Software"), to deal
@@ -7,10 +7,10 @@
 /// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 /// copies of the Software, and to permit persons to whom the Software is
 /// furnished to do so, subject to the following conditions:
-/// 
+///
 /// The above copyright notice and this permission notice shall be included in all
 /// copies or substantial portions of the Software.
-/// 
+///
 /// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 /// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 /// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -27,13 +27,15 @@ import 'package:thresh/framework/core/dynamic_proxy.dart';
 import 'package:thresh/framework/widget/widget_basic.dart';
 import 'package:thresh/framework/widget/layout/widget_scroll_view.dart';
 import 'package:thresh/framework/widget/layout/widget_list_view.dart';
+import 'package:thresh/framework/widget/layout/widget_dragable_scroll_view/index.dart';
 
 /// 基础组件 DFContainer
 /// 组件内部嵌套结构如下
 /// GestureDetector => Opacity => ClipRRect => Stack/Positioned => Column/Row/Wrap => Expanded => Container
 /// 以上除最后一级 Container 外，其余所有层级会根据条件判断是否需要，以保证达到层级嵌套最浅
 class DFContainer extends DFBasicWidget {
-  DFContainer(DynamicModel model, {
+  DFContainer(
+    DynamicModel model, {
     Key key,
     this.row = false,
     // this.parentContainerIsRow = false,
@@ -88,26 +90,35 @@ class DFContainer extends DFBasicWidget {
   }
 
   Widget buildDirectionWidget(List<Widget> widgets) {
-    if (widgets.length == 1 && (DFScrollView.isScrollView(widgets.first) || DFListView.isListView(widgets.first))) {
+    if (widgets.length == 1 &&
+        (DFScrollView.isScrollView(widgets.first) ||
+            DFListView.isListView(widgets.first))) {
       return widgets.first;
     }
     return Container(
-      constraints: widgets.length != children.length ? BoxConstraints.expand() : null,
       child: !wrap
-        ? !row
-          ? Column(
-              mainAxisSize: height == null && flex == null ? MainAxisSize.min : MainAxisSize.max,
-              mainAxisAlignment: Util.getMainAxisAlignment(mainAxisAlignment),
-              crossAxisAlignment: Util.getCrossAxisAlignment(crossAxisAlignment),
-              children: widgets,
-            )
-          : Row(
-              mainAxisSize: width == null && flex == null ? MainAxisSize.min : MainAxisSize.max,
-              mainAxisAlignment: Util.getMainAxisAlignment(mainAxisAlignment),
-              crossAxisAlignment: Util.getCrossAxisAlignment(crossAxisAlignment),
-              children: widgets,
-            )
-        : buildWrapWidget(widgets),
+          ? !row
+              ? Column(
+                  mainAxisSize: height == null && flex == null
+                      ? MainAxisSize.min
+                      : MainAxisSize.max,
+                  mainAxisAlignment:
+                      Util.getMainAxisAlignment(mainAxisAlignment),
+                  crossAxisAlignment:
+                      Util.getCrossAxisAlignment(crossAxisAlignment),
+                  children: widgets,
+                )
+              : Row(
+                  mainAxisSize: width == null && flex == null
+                      ? MainAxisSize.min
+                      : MainAxisSize.max,
+                  mainAxisAlignment:
+                      Util.getMainAxisAlignment(mainAxisAlignment),
+                  crossAxisAlignment:
+                      Util.getCrossAxisAlignment(crossAxisAlignment),
+                  children: widgets,
+                )
+          : buildWrapWidget(widgets),
     );
   }
 
@@ -127,13 +138,16 @@ class DFContainer extends DFBasicWidget {
     List<Widget> directionWidgets = [];
     List<Widget> absoluteWidgets = [];
     children.map((child) {
-      bool isAbsolute = (
-        (child is DynamicWidget)
-          ? (child.model.dynamicWidget.widgetInstance as DFBasicWidget)
-          : (child as DFBasicWidget)
-      )?.isAbsolute() ?? false;
-      if (!isAbsolute) directionWidgets.add(child);
-      else absoluteWidgets.add(child);
+      bool isAbsolute = ((child is DynamicWidget)
+                  ? (child.model.dynamicWidget.widgetInstance as DFBasicWidget)
+                  : (child as DFBasicWidget))
+              ?.isAbsolute ??
+          false;
+      // if (isDragableScrollView) widgetInstance = Positioned.fill(child: widgetInstance);
+      if (!isAbsolute)
+        directionWidgets.add(child);
+      else
+        absoluteWidgets.add(child);
     }).toList();
     stackInnerWidgets.add(buildDirectionWidget(directionWidgets));
     stackInnerWidgets.addAll(absoluteWidgets);
@@ -168,8 +182,10 @@ class ProxyDFContainer extends ProxyBase {
       bottom: Util.getDouble(props['bottom']),
       left: Util.getDouble(props['left']),
       right: Util.getDouble(props['right']),
-      mainAxisAlignment: Util.getString(props['justifyContent'] ?? props['mainAxisAlignment']),
-      crossAxisAlignment: Util.getString(props['alignItems'] ?? props['crossAxisAlignment']),
+      mainAxisAlignment:
+          Util.getString(props['justifyContent'] ?? props['mainAxisAlignment']),
+      crossAxisAlignment:
+          Util.getString(props['alignItems'] ?? props['crossAxisAlignment']),
       runAlignment: Util.getString(props['alignContent']),
       children: Util.getWidgetList(buildProps['children']),
     );

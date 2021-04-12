@@ -22,51 +22,67 @@
  *
  */
 
+import { FlutterMethodChannelType, NativeMethodChannelType, MethodChannelReceiveType } from "../channel/MethodChannel"
+
 export interface RenderData {
-  name: string,
-  widgetId: string,
-  isStateful: boolean,
-  pageName: string,
-  props: object,
+  name: string
+  widgetId: string
+  isStateful: boolean
+  pageName: string
+  props: Object
   key: number | string | void
 }
 
 export interface PageInfo {
-  pageName: string,
+  pageName: string
   pageData: any
 }
 
 export interface PageRoute {
-  pageName: string,
+  pageName: string
   params?: any
 }
 
 export interface RouteConfig {
-  isDefault?: boolean,
+  isDefault?: boolean
   isNotFound?: boolean
 }
 
-export interface FuncCache {
-  [propName: string]: Function,
-  [propName: number]: Function
-}
-
 export interface BridgeParams {
-  module: string,
-  business?: string,
-  method: string,
+  module: string
+  business?: string
+  method: string
   params?: any
 }
 
 export interface RequestParams {
-  url: string,
-  method?: 'POST' | 'GET' | 'DELETE' | 'PUT',
-  headers?: object,
-  data?: object,
+  url: string
+  method?: 'POST' | 'GET' | 'DELETE' | 'PUT'
+  headers?: object
+  data?: object
   querys?: object
 }
 
 export interface ChannelParams {
-  method: string,
+  contextId?: string | void
+  method: FlutterMethodChannelType | NativeMethodChannelType | MethodChannelReceiveType
   params?: any
+  chunkInfo?: ChannelParamsChunkInfo
+}
+
+export interface ChannelParamsChunkInfo {
+  // 分块id
+  chunkId: string
+  // 分块index
+  chunkIndex: number
+  // 分块数量
+  chunkCount: number
+}
+
+export interface ThreshProvider {
+  propsProvider?(props: Object) : Object
+}
+
+export interface ThreshProvidersConfig {
+  propsProvider?: ThreshProvider[]
 }

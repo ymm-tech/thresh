@@ -24,18 +24,19 @@
 
 import MethodChannel from '../channel/MethodChannel'
 import RenderManager from '../manager/RenderManager'
-import UtilManager from '../manager/UtilManager'
 import createElement from './createElement'
 import Widget from './Widget'
 import VNode from './VNode'
-import appContainer, { MODAL_TAG } from './AppContainer'
-import { PageRoute, PageInfo, RouteConfig } from '../types/type'
+import appContainer from './AppContainer'
+import { PageRoute, PageInfo, RouteConfig, ThreshProvidersConfig } from '../types/type'
 import { ToastInfo } from '../types/widget'
-import initGlobal from '../shared/initGlobal'
+import threshAppContext from './ThreshAppContext'
 import Util from '../shared/Util'
+import bus from '../shared/bus'
+import eventManager from '../manager/EventManager'
 
 /**
- * 对外暴露所有接口的ThreshApp主类
+ * 对外暴露所有接口的threshApp主类
  */
 export class ThreshApp {
   // 代码中配置的默认展示页面
@@ -43,32 +44,30 @@ export class ThreshApp {
   // 代码中配置的404页面
   private _notFoundPageName: string
   // 是否正在关闭 modal
-  private _modalOnHiding: boolean = false
-  // 应用是否存活
-  _alive: boolean = true
+  // 如果正在关闭中，将阻止新的 modal 创建
+  private _modalIsHiding: boolean = false
   // flutter version
   flutterVersion: string
   // js version
   get jsVersion (): string {
-    return '1.0.0'
+    return '1.3.0'
   }
-  // 是否具有根flutter页面
-  hasRootFlutterPage: boolean = true
-  // debugMode
+  // 是否调试模式
   debugMode: boolean = false
-  // platform
+  // 平台类型
   platform: 'Android' | 'iOS' | void
   // 外部环境是否准备完成
   envReady: boolean = false
-  // 是否已经 run app
-  hasRunApp: boolean = false
-  // 第三方注入的路由信息
+  // 三方注入的路由信息
   injectRouteInfo: PageRoute
+  // 三方插件
+  providers: ThreshProvidersConfig = {}
 
-  // 持有 injectRoute
+  // 持有注入的路由信息
   injectRoute = injectRoute
   createElement: Function = createElement
   Widget = Widget
+
   get pageName (): string {
     return appContainer.currentPageName || (threshApp.injectRouteInfo || { pageName: '' }).pageName
   }
@@ -77,7 +76,13 @@ export class ThreshApp {
   }
 
   constructor () {
-    initGlobal(this)
+    threshAppContext.initGlobal(threshApp)
+  }
+
+  clear () {
+    appContainer.clear()
+    bus.clear()
+    eventManager.resetAndRegisterBuiltInEvents()
   }
 
   // 上报异常到 flutter
@@ -116,8 +121,6 @@ export class ThreshApp {
    * 都不存在时不显示
    */
   runApp () {
-    if (!MethodChannel.jsRunAppTime) MethodChannel.jsRunAppTime = Date.now()
-    if (!this._alive) return
     this.pushPage()
   }
   /**
@@ -126,44 +129,25 @@ export class ThreshApp {
    * @param {Object} params 页面参数
    */
   pushPage (pageName?: string, params: object = {}) {
-    if (!this._alive) return
+    const pageCreateTimestamp = Date.now()
     const pageRes: PageInfo = this._findPage(pageName || '', params)
     if (pageRes.pageData) {
-      RenderManager.pushPage(pageRes.pageData, pageRes.pageName)
-    }
-  }
-  /**
-   * 通知 flutter 替换当前显示的threshApp页面
-   * @param {String} pageName
-   * @param {Object} params 页面参数
-   */
-  replacePage (pageName, params: object = {}) {
-    if (!this._alive) return
-    if (!pageName) {
-      UtilManager.error(new Error('invoke relpacePage() must have the pageName parameter'))
-    }
-    if (appContainer.isEmpty) {
-      this.pushPage(pageName, params)
-      return
-    }
-    const pageRes: PageInfo = this._findPage(pageName, params)
-    if (pageRes.pageData) {
-      RenderManager.replacePage(pageRes.pageData, pageRes.pageName)
+      RenderManager.pushPage(pageRes.pageData, pageRes.pageName, pageCreateTimestamp)
+      Util.log('Push page: ' + pageRes.pageName)
     }
   }
   /**
    * 推出页面或关闭当前窗口
    */
   async popPage () {
-    if (!this._alive) return
+    if (appContainer.isEmpty) return
     return await RenderManager.popPage()
   }
   /**
    * 当前页面是否可以pop
    */
   canPop (): boolean {
-    if (!this._alive) return false
-    return RenderManager.canPop()
+    return appContainer.canPop
   }
   /**
    * 显示模态框
@@ -178,20 +162,17 @@ export class ThreshApp {
     title?: string,
     popup?: boolean
   } = {}) {
-    if (!this._alive) return
-    title = `${MODAL_TAG}${(title || Date.now().toString())}`
-    if (!this._modalOnHiding) {
-      RenderManager.showModal(modal, title, !!popup)
+    if (!this._modalIsHiding) {
+      RenderManager.showModal(modal, appContainer.formatModalName(title), !!popup)
     }
   }
   /**
    * 隐藏模态框
    */
   async hideModal () {
-    if (!this._alive) return
-    this._modalOnHiding = true
+    this._modalIsHiding = true
     await RenderManager.hideModal()
-    this._modalOnHiding = false
+    this._modalIsHiding = false
   }
   /**
    * 显示 toast
@@ -206,7 +187,6 @@ export class ThreshApp {
    * @param {double|Array<double>} opacity 动画透明度，可以是一个 double 也可以是包含两个 double 的数组（第一个元素是起始透明度，第二个是结束透明度），不设置默认为 [0.0, 1.0]
    */
   showToast (toast: VNode, info?: ToastInfo) {
-    if (!this._alive) return
     RenderManager.showToast(toast, info)
   }
   /**
@@ -214,7 +194,6 @@ export class ThreshApp {
    * @param {String} name
    */
   hideToast (name: string) {
-    if (!this._alive) return
     RenderManager.hideToast(name)
   }
   /**
@@ -227,11 +206,17 @@ export class ThreshApp {
     RenderManager.stopAlwaysRender()
   }
   /**
-   * 页面已显示并进行上报
-   * @param networkTime 接口耗时 
+   * 上报当前正在显示页面的数据
+   * @param networkTime 接口耗时
    */
   pageDidShow (networkTime: number = 0) {
     MethodChannel.pageDidShow(networkTime)
+  }
+  /**
+   * 加载 providers
+   */
+  useProviders (providers: ThreshProvidersConfig) {
+    this.providers = providers
   }
   /** 
    * native 打印方法
@@ -251,7 +236,7 @@ export class ThreshApp {
    * 1. 已指定页面则显示指定页面，不存在则显示404页面，未设置404页面则会向flutter发出pageNotFound的通知并执行flutter中的处理方法
    * 2. 未指定页面则按如下顺序显示：注入路由页面 > 默认页面 > 404页面 > flutter pageNotFound
    */
-  private _findPage (pageName: string, params: object = {}): PageInfo {
+  _findPage (pageName: string, params: object = {}): PageInfo {
     let pageBuilder: Function
     let pageData: any
     if (!pageName) {
@@ -296,6 +281,7 @@ export class ThreshApp {
 * @param {Object} params
 */
 export function injectRoute (route: PageRoute) {
+  if (!route.pageName) return
   threshApp.injectRouteInfo = route
 }
 

@@ -22,11 +22,11 @@
  *
  */
 
-import threshApp from '../..'
-import MethodChannel from '../channel/MethodChannel'
+import MethodChannel, { FlutterMethodChannelType } from '../channel/MethodChannel'
 import BridgeManager from './BridgeManager'
 import Util from '../shared/Util'
 import { BridgeParams } from '../types/type'
+import threshApp from '../core/ThreshApp'
 
 export enum InfoType {
   log = 'log',
@@ -37,41 +37,48 @@ export enum InfoType {
   event = 'event'
 }
 
-export const ShowDividerKey = '__showDivider__'
+export const SHOW_DIVIDER_KEY = '__showDivider__'
 
-export default class DevtoolsManager {
-  static pool: any = {}
+export class DevtoolsManager {
+  pool: any = {}
 
-  static show (type: InfoType, content: string, title?: string) {
+  show (type: InfoType, content: string, title?: string, contextId?: string | undefined) {
     if (!threshApp || !threshApp.debugMode) return
-    MethodChannel.call('devtools', {
-      type,
-      title,
-      content
+    MethodChannel.call({
+      contextId,
+      method: FlutterMethodChannelType.devtools,
+      params: {
+        type,
+        title,
+        content
+      },
     })
   }
 
-  static log (...args: any[]) {
-    DevtoolsManager.show(InfoType.log, Util.anyToRawString(...args))
+  log (...args: any[]) {
+    if (!threshApp || !threshApp.debugMode) return
+    this.show(InfoType.log, Util.anyToRawString(...args))
   }
 
-  static warn (...args: any[]) {
-    DevtoolsManager.show(InfoType.warn, Util.anyToRawString(...args))
+  warn (...args: any[]) {
+    if (!threshApp || !threshApp.debugMode) return
+    this.show(InfoType.warn, Util.anyToRawString(...args))
   }
 
-  static error (...args: any[]) {
-    DevtoolsManager.show(InfoType.error, Util.anyToRawString(...args))
+  error (...args: any[]) {
+    if (!threshApp || !threshApp.debugMode) return
+    this.show(InfoType.error, Util.anyToRawString(...args))
   }
 
-  static bridge (methodId: string, data: any, isRequest: boolean = false) {
+  bridge (methodId: string, data: any, isRequest: boolean = false) {
     if (!threshApp || !threshApp.debugMode) return
     let bridgeParams: BridgeParams
     if (isRequest) {
-      DevtoolsManager.pool[methodId] = data
+      this.pool[methodId] = data
       bridgeParams = data
     } else {
-      bridgeParams = DevtoolsManager.pool[methodId]
-      delete DevtoolsManager.pool[methodId]
+      bridgeParams = this.pool[methodId]
+      delete this.pool[methodId]
     }
 
     if (!bridgeParams) return
@@ -82,14 +89,14 @@ export default class DevtoolsManager {
       if (isRequest) {
         showInfo = {
           method: params.method,
-          [ ShowDividerKey ]: 'params',
+          [SHOW_DIVIDER_KEY]: 'params',
           ...(params.data || params.query || {})
         }
       } else {
         showInfo = {
           code: data.code,
           reason: data.reason,
-          [ ShowDividerKey ]: 'data',
+          [SHOW_DIVIDER_KEY]: 'data',
           ...(
             (Util.isString(data.data) || Util.isNil(data.data) || !Util.isObject(data.data))
             ? { data: data.data }
@@ -97,22 +104,28 @@ export default class DevtoolsManager {
           )
         }
       }
-      DevtoolsManager.network(params.url, showInfo, isRequest)
+      this.network(params.url, showInfo, isRequest)
       return
     }
+    if (!threshApp || !threshApp.debugMode) return
     let logInfos = [ isRequest ? 'Request' : 'Response', `Module: ${module}` ]
     if (business) logInfos.push(`Business: ${business}`)
     logInfos.push(`Method: ${method}`)
     logInfos.push(`MethodId: ${methodId}`)
-    DevtoolsManager.show(
+    this.show(
       InfoType.bridge, 
       Util.anyToRawString(data), 
       logInfos.join('\n')
     )
   }
 
-  static network (url: string, params: any, isRequest: boolean = false) {
-    DevtoolsManager.show(InfoType.network, Util.anyToRawString(params), `${isRequest ? 'Request' : 'Response'}\n${url}`)
+  network (url: string, params: any, isRequest: boolean = false) {
+    if (!threshApp || !threshApp.debugMode) return
+    this.show(InfoType.network, Util.anyToRawString(params), `${isRequest ? 'Request' : 'Response'}\n${url}`)
   }
 }
+
+const devtools: DevtoolsManager = new DevtoolsManager()
+
+export default devtools
 

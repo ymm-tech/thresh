@@ -28,9 +28,6 @@ import scheduleUpdate from './scheduleUpdate'
 import VNode from './VNode'
 import Util from '../shared/Util'
 
-type W = Widget<any, any>
-type BW = BasicWidget<any, any>
-
 /**
  * 校验object是否合法
  * @param {any} object 
@@ -55,6 +52,11 @@ function checkObjectValid (object: any, noFunc: boolean = false): boolean {
 /**
  * Widget
  */
+// interface WidgetProps {
+//   key?: any,
+//   ref?: RefCallback,
+//   children?: ThreshWidget[],
+// }
 export default class Widget <P = {}, S = {}> {
   props: P
   state?: S
@@ -62,9 +64,9 @@ export default class Widget <P = {}, S = {}> {
 
   static defaultProps: any = {}
 
-  widgetDidMount() { }
-  widgetDidUpdate() { }
-  widgetDidUnmount() { }
+  widgetDidMount() {}
+  widgetDidUpdate() {}
+  widgetDidUnmount() {}
 
   constructor (props: P) {
     if (checkObjectValid(props)) {

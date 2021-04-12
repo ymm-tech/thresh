@@ -35,7 +35,6 @@ class DFInput extends DFBasicWidget {
     this.autofocus = false,
     this.maxLines,
     this.maxLength,
-    this.lineHeight,
     this.height,
     this.padding,
     this.textAlign,
@@ -47,6 +46,7 @@ class DFInput extends DFBasicWidget {
     this.controller,
     this.focusNode,
     this.onChange,
+    this.onSubmitted,
   }) : super(
           model,
           key: key,
@@ -57,7 +57,6 @@ class DFInput extends DFBasicWidget {
   final int maxLines;
   final int maxLength;
   final double height;
-  final double lineHeight;
   final EdgeInsets padding;
   final TextAlign textAlign;
   final TextStyle textStyle;
@@ -68,23 +67,21 @@ class DFInput extends DFBasicWidget {
   final DFTextEditingController controller;
   final FocusNode focusNode;
   final ParamGlobalHandler onChange;
+  final ParamGlobalHandler onSubmitted;
 
   @override
   Widget buildMainWidget(BuildContext context) {
     final bool isPureNumberType = keyboardType == TextInputType.number;
 
-    return TextField(
+    final Widget $input = TextField(
       controller: controller,
       focusNode: focusNode,
       decoration: InputDecoration(
         hintText: placeholder,
         hintStyle: placeholderStyle,
-        counter: Container(
-          width: 0,
-          height: 0,
-        ),
-        contentPadding:
-            maxLines == 1 ? EdgeInsets.only(top: getPaddingTop()) : null,
+        counterText: '',
+        isDense: true,
+        contentPadding: EdgeInsets.all(0),
         enabledBorder: InputBorder.none,
         disabledBorder: InputBorder.none,
         errorBorder: InputBorder.none,
@@ -92,12 +89,8 @@ class DFInput extends DFBasicWidget {
       ),
       keyboardType: keyboardType,
       keyboardAppearance: Brightness.light,
-      // textInputAction: widget.textInputAction,
       textCapitalization: TextCapitalization.none,
       style: textStyle,
-      strutStyle: StrutStyle(
-        height: maxLines > 1 ? lineHeight : 1,
-      ),
       textAlign: textAlign,
       autofocus: autofocus,
       autocorrect: false,
@@ -119,30 +112,30 @@ class DFInput extends DFBasicWidget {
             return;
           }
         }
-
+        value = controller.adjustText(value);
+        if (controller.lastText == value) return;
         if (onChange != null) {
           onChange({'value': value});
         }
         controller.lastText = value;
       },
+      onSubmitted: (String value) {
+        onSubmitted({'value': value});
+      },
     );
-  }
 
-  double getPaddingTop() {
-    if (height == null || height == 0) return 0;
-    double inputHeight =
-        height - ((padding?.top) ?? 0) - ((padding?.bottom) ?? 0);
-    double paddingTop = inputHeight / 2 - (textStyle?.fontSize ?? 14) / 1.3;
-    return paddingTop > 0 ? paddingTop : 0;
+    return Align(child: $input);
   }
 }
 
 class ProxyDFInput extends ProxyBase {
+  int maxLength;
   DFTextEditingController controller;
   FocusNode focusNode;
   ParamGlobalHandler onFocus;
   ParamGlobalHandler onBlur;
   ParamGlobalHandler onChange;
+  ParamGlobalHandler onSubmitted;
 
   static void register() {
     ProxyDFInput instance = ProxyDFInput();
@@ -157,6 +150,7 @@ class ProxyDFInput extends ProxyBase {
 
     String text = Util.getString(props['value']) ?? '';
 
+    maxLength = Util.getInt(props['maxLength']);
     onChange = eventGlobalHandlerWithParam(
         pageName: model.pageName,
         widgetId: model.widgetId,
@@ -172,19 +166,29 @@ class ProxyDFInput extends ProxyBase {
         widgetId: model.widgetId,
         eventId: model.props['_onBlurId'],
         type: 'onBlur');
+    onSubmitted = eventGlobalHandlerWithParam(
+        pageName: model.pageName,
+        widgetId: model.widgetId,
+        eventId: model.props['_onSubmittedId'],
+        type: 'onSubmitted');
 
     if (model.controller != null &&
         model.controller is DFTextEditingController) {
       controller = model.controller;
       // Input value 不受 setState 控制，如果需要修改 value，需要通过 $input.setValue() 设置
       // controller.text = text;
+      controller.maxLength = maxLength;
       controller.onChange = onChange;
       focusNode = controller.focusNode;
     } else {
       focusNode = FocusNode();
-      controller = DFTextEditingController(
-          text: text, onChange: onChange, focusNode: focusNode);
       focusNode.addListener(focusNodeListener);
+      controller = DFTextEditingController(
+        text: text,
+        maxLength: maxLength,
+        onChange: onChange,
+        focusNode: focusNode,
+      );
       model.controller = controller;
     }
 
@@ -193,8 +197,7 @@ class ProxyDFInput extends ProxyBase {
       disabled: Util.getBoolean(props['disabled']),
       autofocus: Util.getBoolean(props['autofocus']),
       maxLines: Util.getInt(props['maxLines']) ?? 1,
-      maxLength: Util.getInt(props['maxLength']),
-      lineHeight: Util.getDouble(props['lineHeight']) ?? 1,
+      maxLength: maxLength,
       textAlign: Util.getTextAlign(props['textAlign']),
       textStyle: Util.getTextStyle(props['textStyle']),
       placeholder: Util.getString(props['placeholder']) ?? '',
@@ -204,6 +207,7 @@ class ProxyDFInput extends ProxyBase {
       controller: controller,
       focusNode: focusNode,
       onChange: onChange,
+      onSubmitted: onSubmitted,
       height: Util.getDouble(props['height'] ?? props['minHeight']),
       padding: Util.getEdgeInsets(props['padding']),
     );
@@ -247,14 +251,20 @@ class ProxyDFInput extends ProxyBase {
 
 class DFTextEditingController extends TextEditingController {
   String lastText;
+  int maxLength;
   ParamGlobalHandler onChange;
   FocusNode focusNode;
 
-  DFTextEditingController({String text, this.onChange, this.focusNode})
-      : lastText = text,
+  DFTextEditingController({
+    String text,
+    this.maxLength,
+    this.onChange,
+    this.focusNode,
+  })  : lastText = text,
         super(text: text);
 
   set text(String newText) {
+    newText = adjustText(newText);
     final bool shouldTriggetOnChange = newText != lastText;
     lastText = text;
     value = value.copyWith(
@@ -263,6 +273,16 @@ class DFTextEditingController extends TextEditingController {
       selection: TextSelection.collapsed(offset: newText.length),
       composing: TextRange.empty,
     );
-    if (onChange != null && shouldTriggetOnChange) onChange({'value': newText});
+    if (onChange != null && shouldTriggetOnChange) {
+      onChange({'value': newText});
+    }
+  }
+
+  String adjustText(String text) {
+    if (text == null || maxLength == null) return text;
+    if (text.length > maxLength) {
+      return text.substring(0, maxLength);
+    }
+    return text;
   }
 }

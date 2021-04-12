@@ -6,6 +6,9 @@ import Center from '../../widgets/Center'
 const { Page, AppBar, Container, Text, Icon } = basicWidgets
 
 export default class PageAppBar extends Thresh.Widget <any, any> {
+  widgetDidMount () {
+    Thresh.pageDidShow()
+  }
   render () {
     return (
       <Page
@@ -19,7 +22,7 @@ export default class PageAppBar extends Thresh.Widget <any, any> {
             leading={
               <Center>
                 <Center width={30} height={30} borderRadius={15} backgroundColor={Colors.White} onTap={() => { Thresh.popPage() }}>
-                  <Icon type="arrow_back_ios" color={Colors.Primary} />
+                  <Icon type="arrow_back" color={Colors.Primary} />
                 </Center>
               </Center>
             }

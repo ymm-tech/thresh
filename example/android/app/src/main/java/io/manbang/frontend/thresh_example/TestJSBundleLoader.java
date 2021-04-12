@@ -44,7 +44,7 @@ public class TestJSBundleLoader extends JSBundleLoader {
     }
 
     @Override
-    public void loadScript(JSExecutor executor, BundleOptions bundleOptions, BundleCallback bundleCallback) {
+    public void loadScript(JSExecutor executor,BundleOptions bundleOptions, BundleCallback bundleCallback) {
         mainHandler.post(new Runnable() {
             @Override
             public void run() {

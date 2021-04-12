@@ -10,25 +10,25 @@ const {
   Text
 } = basicWidgets
 
-export default class Timer extends Widget <any, any> {
+export default class TimerDemo extends Widget <any, any> {
   state = {
     timeoutUpdated: false,
     intervalCount: 0
   }
 
-  timeout: string
-  interval: string
+  timeout
+  interval
 
   constructor (props) {
     super(props)
-    this.timeout = Util.setTimeout(() => {
+    this.timeout = setTimeout(() => {
       this.setState({
         timeoutUpdated: true
       })
     }, 5000)
-    this.interval = Util.setInterval(() => {
+    this.interval = setInterval(() => {
       if (this.state.intervalCount >= 10) {
-        Util.clearTimer(this.interval)
+        clearInterval(this.interval)
         return
       }
       this.setState({
@@ -38,8 +38,8 @@ export default class Timer extends Widget <any, any> {
   }
 
   widgetDidUnmount () {
-    Util.clearTimer(this.timeout)
-    Util.clearTimer(this.interval)
+    clearTimeout(this.timeout)
+    clearInterval(this.interval)
   }
 
   render () {

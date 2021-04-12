@@ -39,7 +39,8 @@ public interface JSBundleLoaderDelegate {
     /**
      * Load a JS bundle from the filesystem.
      */
-    void loadScriptFromFile(JSExecutor executor, String bundlePath, String bundleName, BundleCallback callback);
+    void loadScriptFromFile(JSExecutor executor, String bundlePath, String bundleName,
+                            BundleCallback callback);
 
     /**
      * Load a JS bundle from the remote debugger server.

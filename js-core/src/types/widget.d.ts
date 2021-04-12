@@ -35,7 +35,7 @@ type AsyncEventCallback = (e?: any) => Promise<void>
 type BorderStyle = 'solid'
 type BorderSide = 'top' | 'bottom' | 'left' | 'right'
 type JustifyContent = 'flex-start' | 'flex-end' | 'center' | 'spaceBetween' | 'spaceAround' | 'start' | 'end'
-type AlignItems = 'flex-start' | 'flex-end' | 'center' | 'stretch' |'baseline' | 'start' | 'end'
+type AlignItems = 'flex-start' | 'flex-end' | 'center' | 'stretch' | 'baseline' | 'start' | 'end'
 type AlignContent = 'flex-start' | 'flex-end' | 'center' | 'spaceBetween' | 'spaceAround'
 type TextWeight = 'normal' | 'light' | 'bold' | 'bolder'
 type TextAlign = 'left' | 'right' | 'center'
@@ -121,7 +121,8 @@ export interface Transition {
 
 interface Gradient {
   type?: 'linear' | 'radial',
-  colors: number[]
+  colors: number[],
+  stops?: number[]
 }
 export interface LinearGradient extends Gradient {
   begin?: Alignment,
@@ -132,9 +133,14 @@ export interface RadialGradient extends Gradient {
   radius?: number
 }
 
-export interface BasicWidgetNormalProps {
+export interface BasicProps {
   key?: any,
   ref?: RefCallback,
+  children?: ThreshWidget[],
+  [extendKeys: string]: any
+}
+
+export interface BasicWidgetNormalProps extends BasicProps {
   width?: number,
   height?: number,
   minWidth?: number,
@@ -144,6 +150,7 @@ export interface BasicWidgetNormalProps {
   padding?: number | EdgeInset,
   margin?: number | EdgeInset,
   backgroundColor?: number,
+  tintColor?: number,
   backgroundGradient?: LinearGradient | RadialGradient,
   border?: Border,
   borderRadius?: number | BorderRadius,
@@ -158,10 +165,9 @@ export interface BasicWidgetNormalProps {
   onLongTap?: EventCallback,
   onPan?: EventCallback,
   onLayout?: EventCallback,
-  children?: ThreshWidget[],
 }
 
-export interface PageProps {
+export interface PageProps extends BasicProps {
   appBar?: AppBar,
   backgroundColor?: number,
   children?: ThreshWidget[],
@@ -170,8 +176,7 @@ export interface PageProps {
   beforePop?: EventCallback,
 }
 
-export interface AppBarProps {
-  ref?: RefCallback,
+export interface AppBarProps extends BasicProps {
   title?: string,
   titleView?: ThreshWidget,
   titleColor?: number,
@@ -199,10 +204,12 @@ export interface ContainerProps extends BasicWidgetNormalProps {
 }
 
 export interface ScrollViewProps extends BasicWidgetNormalProps {
+  scrollable?: boolean,
   direction?: Direction,
   onScroll?: EventCallback
 }
 export interface ListViewProps extends ScrollViewProps {
+  scrollable?: boolean,
   refreshColor?: number,
   refreshBackgroundColor?: number,
   onRefresh?: AsyncEventCallback,
@@ -216,6 +223,24 @@ export interface NestScrollViewProps extends BasicWidgetNormalProps {
   fixedBottomView?: ThreshWidget,
   onScroll?: EventCallback,
   onDragStatusChange?: EventCallback,
+}
+export interface DrawerScrollViewProps extends BasicWidgetNormalProps {
+  backgroundView?: ThreshWidget,
+  drawerHeight?: number,
+  handlebarHeight?: number,
+  open?: boolean,
+  closeByScroll?: boolean,
+  onOpen?: EventCallback,
+}
+export interface DragableScrollViewProps extends BasicProps {
+  initialSize: number,
+  maxSize?: number,
+  minSize?: number,
+  backgroundColor?: number,
+  borderRadius?: BorderRadius,
+  headerView?: ThreshWidget,
+  onScroll?: EventCallback,
+  onDragPositionChange?: EventCallback,
 }
 
 export interface SwipeActionsViewProps extends BasicWidgetNormalProps {
@@ -257,11 +282,18 @@ export interface IconProps extends BasicWidgetNormalProps {
 }
 
 export interface ImageProps extends BasicWidgetNormalProps {
-  src: string,
+  src?: string,
   placeholder?: string,
   fit?: ImageFit,
   fadeIn?: boolean,
   onLoad?: EventCallback
+}
+
+export interface QrImageProps extends BasicWidgetNormalProps {
+  text: string,
+  size?: number,
+  gapless?: boolean,
+  foregroundColor?: number
 }
 
 export interface SpinProps extends BasicWidgetNormalProps {
@@ -315,5 +347,24 @@ export interface InputProps extends BasicWidgetNormalProps {
   keyboardType?: KeyboardType,
   onChange?: EventCallback,
   onFocus?: EventCallback,
-  onBlur?: EventCallback
+  onBlur?: EventCallback,
+  onSubmitted?:EventCallback,
+}
+
+export interface SwitchProps extends BasicWidgetNormalProps {
+  value: boolean,
+  activeColor?: number,
+  isAndroidStyle?: boolean,
+  activeTrackColor?: number,
+  inactiveThumbColor?: number,
+  inactiveTrackColor?: number,
+  onChange: EventCallback
+}
+
+export interface PickerProps extends BasicWidgetNormalProps {
+  value?:number,
+  height: number,
+  looping?: boolean,
+  itemHeight: number,
+  onChange: EventCallback,
 }

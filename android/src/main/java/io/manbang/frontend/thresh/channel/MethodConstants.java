@@ -70,5 +70,7 @@ public final class MethodConstants {
      */
     public static final String callNative = "callNative";
 
+    //定时器
+    public static final String CALL_TIMER_OPERATOR = "call_timer_operator";
 }
 

@@ -25,32 +25,26 @@ package io.manbang.frontend.thresh_example;
 
 import android.os.Bundle;
 
-import io.flutter.plugin.common.StandardMessageCodec;
-import io.flutter.plugins.GeneratedPluginRegistrant;
-import io.manbang.frontend.thresh.containers.ThreshFragment;
-import io.manbang.frontend.thresh.runtime.ThreshEngine;
-import io.manbang.frontend.thresh.runtime.ThreshEngineOptions;
 import io.manbang.frontend.thresh.runtime.jscore.bundle.BundleOptions;
 import io.manbang.frontend.thresh.runtime.jscore.bundle.BundleType;
 import io.manbang.frontend.thresh.runtime.jscore.bundle.ContainerType;
-import io.manbang.frontend.thresh.view.platformview.ThreshNativeViewRegistrant;
-import io.manbang.frontend.thresh_example.nativeview.NativeTextView;
-import io.manbang.frontend.thresh_example.nativeview.NativeViewFactory;
+import io.manbang.frontend.thresh.containers.ThreshFragment;
+import io.manbang.frontend.thresh.runtime.ThreshEngine;
+import io.manbang.frontend.thresh.runtime.ThreshEngineOptions;
 
 public class ThreshDemoFragment extends ThreshFragment {
 
     private ThreshEngine engine;
-
     private long startTime;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         startTime = System.currentTimeMillis();
-        initEngine();
+        initThreshEngine();
     }
 
-    private void initEngine(){
+    private void initThreshEngine(){
         int loadMode = getActivity().getIntent().getIntExtra("load_mode", BundleType.ASSETS_FILE.getType());
         BundleType bundleType;
         if (loadMode == BundleType.ASSETS_FILE.getType()){
@@ -69,27 +63,12 @@ public class ThreshDemoFragment extends ThreshFragment {
         ThreshEngineOptions.Builder builder = new ThreshEngineOptions.Builder(bundleBuilder.build());
         builder.moduleName("test-fragment-business-module");
         builder.setPageStartTime(startTime);
-        builder.setRootId(getRootId());
-        engine = new ThreshEngine(builder.build());
-        engine.bindThreshMethodCall(new ThreshDemoMethodChannel(getThreshRootView(),engine));
+        engine = new ThreshEngine(builder.build(),getContextId());
+        engine.bindThreshMethodCall(new ThreshDemoMethodChannel(getFlutterEngine(),engine));
         engine.bindNativeModule(new ThreshDemoBridge(getActivity()));
         engine.bindBundleLoader( new TestJSBundleLoader(getActivity()));
         engine.loadScript();
     }
-
-    @Override
-    public ThreshEngine getThreshEngine() {
-        return engine;
-    }
-
-    @Override
-    public void registerPluginRegistry() {
-        GeneratedPluginRegistrant.registerWith(getThreshRootView().getPluginRegistry());
-        ThreshNativeViewRegistrant registrant = new ThreshNativeViewRegistrant();
-        NativeViewFactory nativeViewFactory = new NativeViewFactory(getActivity(), StandardMessageCodec.INSTANCE, NativeTextView.NATIVE_TEXT_VIEW);
-        registrant.registerWith(NativeTextView.NATIVE_TEXT_VIEW, getThreshRootView().getPluginRegistry(), nativeViewFactory);
-    }
-
 
     @Override
     public void onDestroy() {

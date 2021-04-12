@@ -23,66 +23,62 @@ import 'package:flutter/material.dart';
 import 'package:thresh/basic/global_def.dart';
 import 'package:thresh/basic/util.dart';
 import 'package:thresh/basic/bus.dart';
+import 'package:thresh/framework/channel/basic.dart';
 import 'package:thresh/framework/core/dynamic_app.dart';
 import 'package:thresh/framework/core/dynamic_model.dart';
 import 'package:thresh/devtools/dev_tools.dart';
 
-bool _devtoolsNearFooter = true;
-
 /// 每个页面的根widget
 /// 便于需要整个页面更新时重建page
 class DynamicPage extends StatefulWidget {
-  final Map<String, dynamic> modelData;
+  final Map<String, dynamic> pageData;
+  final String pageName;
+  final bool isModal;
 
-  DynamicPage([this.modelData]);
+  DynamicPage({this.pageData, this.pageName, this.isModal = false});
 
   @override
   DynamicPageState createState() => DynamicPageState();
 }
 
 class DynamicPageState extends State<DynamicPage> {
-  // Key key = UniqueKey();
-  Map<String, dynamic> dynamicModelData;
-  Widget widgetInstance;
   int stackIndex;
-  bool didFirstBuild = false;
-  bool devtoolsNearFooter = true;
+  String pageName;
+  Map<String, dynamic> dynamicPageData;
+  Widget widgetInstance;
 
   @override
   void initState() {
     if (dynamicApp == null) {
-      devtools.debug('initState', 'dynamic_page.dart', 'return',
-          'dynamicApp is null: ${dynamicApp == null}');
+      devtools.debug(
+        'initState',
+        'dynamic_page.dart',
+        'return',
+        'dynamicApp is null: ${dynamicApp == null}',
+      );
       return;
     }
     super.initState();
-    dynamicModelData = widget.modelData;
+    pageName = widget.pageName;
+    dynamicPageData = widget.pageData;
     // 记录当前页面state在state栈中所处的位置，并向栈中推入state
     stackIndex = dynamicApp.stateStack.length;
     dynamicApp.stateStack.push(this);
     dynamicApp.updateContext(context);
-    devtoolsNearFooter = _devtoolsNearFooter;
-    bus.fire('callAppStart');
-  }
-
-  @override
-  void didChangeDependencies() {
-    if (dynamicApp == null) {
-      devtools.debug('didChangeDependencies', 'dynamic_page.dart', 'return',
-          'dynamicApp is null: ${dynamicApp == null}');
-      return;
-    }
-    super.didChangeDependencies();
-    if (didFirstBuild) return;
-    didFirstBuild = true;
-    buildWidget();
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      buildWidget();
+    });
   }
 
   @override
   void didUpdateWidget(DynamicPage oldWidget) {
     if (dynamicApp == null) {
-      devtools.debug('didUpdateWidget', 'dynamic_page.dart', 'return',
-          'dynamicApp is null: ${dynamicApp == null}');
+      devtools.debug(
+        'didUpdateWidget',
+        'dynamic_page.dart',
+        'return',
+        'dynamicApp is null: ${dynamicApp == null}',
+      );
       return;
     }
 
@@ -94,8 +90,12 @@ class DynamicPageState extends State<DynamicPage> {
   @override
   void dispose() {
     if (dynamicApp == null) {
-      devtools.debug('dispose', 'dynamic_page.dart', 'return',
-          'dynamicApp is null: ${dynamicApp == null}');
+      devtools.debug(
+        'dispose',
+        'dynamic_page.dart',
+        'return',
+        'dynamicApp is null: ${dynamicApp == null}',
+      );
       return;
     }
     dynamicApp.popPage();
@@ -105,87 +105,18 @@ class DynamicPageState extends State<DynamicPage> {
   @override
   Widget build(BuildContext context) {
     if (dynamicApp == null) {
-      devtools.debug('build', 'dynamic_page.dart', 'return',
-          'dynamicApp is null: ${dynamicApp == null}');
+      devtools.debug(
+        'build',
+        'dynamic_page.dart',
+        'return',
+        'dynamicApp is null: ${dynamicApp == null}',
+      );
       return Container();
     }
     return Material(
-        // key: key,
-        color: Colors.transparent,
-        child: !dynamicApp.debugMode
-            ? widgetInstance ?? buildPlaceholder(context)
-            : Stack(
-                textDirection: TextDirection.ltr,
-                children: <Widget>[
-                  widgetInstance ?? buildPlaceholder(context),
-                  Positioned(
-                      right: 10,
-                      bottom: devtoolsNearFooter ? 15 : null,
-                      top: devtoolsNearFooter ? null : 40,
-                      child: Directionality(
-                          textDirection: TextDirection.ltr,
-                          child: Row(
-                            children: <Widget>[
-                              Container(
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(26),
-                                  color: Colors.blue,
-                                ),
-                                child: IconButton(
-                                  icon: Icon(
-                                    Icons.settings,
-                                    size: 24,
-                                    color: Colors.white,
-                                  ),
-                                  padding: EdgeInsets.all(1),
-                                  onPressed: () {
-                                    devtools.showDevtools();
-                                  },
-                                ),
-                              ),
-                              Container(
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(26),
-                                  color: Colors.cyan,
-                                ),
-                                margin: EdgeInsets.only(left: 5),
-                                child: IconButton(
-                                  icon: Icon(
-                                    Icons.refresh,
-                                    size: 24,
-                                    color: Colors.white,
-                                  ),
-                                  padding: EdgeInsets.all(1),
-                                  onPressed: () {
-                                    devtools.reloadThresh();
-                                  },
-                                ),
-                              ),
-                              Container(
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(26),
-                                  color: Colors.blueGrey,
-                                ),
-                                margin: EdgeInsets.only(left: 5),
-                                child: IconButton(
-                                  icon: Icon(
-                                    Icons.swap_vert,
-                                    size: 24,
-                                    color: Colors.white,
-                                  ),
-                                  padding: EdgeInsets.all(1),
-                                  onPressed: () {
-                                    setState(() {
-                                      devtoolsNearFooter = !devtoolsNearFooter;
-                                      _devtoolsNearFooter = devtoolsNearFooter;
-                                    });
-                                  },
-                                ),
-                              ),
-                            ],
-                          )))
-                ],
-              ));
+      color: Colors.transparent,
+      child: widgetInstance ?? buildPlaceholder(context),
+    );
   }
 
   Widget buildPlaceholder(BuildContext context) {
@@ -197,35 +128,44 @@ class DynamicPageState extends State<DynamicPage> {
   }
 
   /// 更新当前页面
-  void setModelData(Map<String, dynamic> modelData, [bool isReplace = false]) {
+  void setModelData(Map<String, dynamic> pageData, String pageName) {
     if (dynamicApp == null) {
-      devtools.debug('setModel', 'dynamic_page.dart', 'return',
-          'dynamicApp is null: ${dynamicApp == null}');
+      devtools.debug(
+        'setModel',
+        'dynamic_page.dart',
+        'return',
+        'dynamicApp is null: ${dynamicApp == null}',
+      );
       return;
     }
-    dynamicModelData = modelData;
-    buildWidget(isReplace);
+    this.pageName = pageName;
+    dynamicPageData = pageData;
+    buildWidget();
   }
 
   /// 直接设置页面内容
   void setPage(Widget pageContent) {
+    dynamicPageData = null;
     setState(() {
-      // key = UniqueKey();
       widgetInstance = pageContent;
     });
   }
 
-  void buildWidget([bool isReplace = false]) {
-    if (dynamicApp == null || dynamicModelData == null) {
-      devtools.debug('buildWidget', 'dynamic_page.dart', 'return',
-          'dynamicApp is null: ${dynamicApp == null}\nynamicModelData is null: ${dynamicModelData == null}');
+  void buildWidget() {
+    if (dynamicApp == null || dynamicPageData == null) {
+      devtools.debug(
+        'buildWidget',
+        'dynamic_page.dart',
+        'return',
+        'dynamicApp is null: ${dynamicApp == null}\nynamicModelData is null: ${dynamicPageData == null}',
+      );
       return;
     }
 
     DynamicModel dynamicModel;
     Widget whiteScreen;
     try {
-      dynamicModel = DynamicModel.create(dynamicModelData, context: context);
+      dynamicModel = DynamicModel.create(dynamicPageData, context: context);
     } catch (error, trace) {
       ThreshError dfe = ThreshError(error.toString(), trace: trace.toString());
       Util.onError(dfe);
@@ -234,14 +174,25 @@ class DynamicPageState extends State<DynamicPage> {
     if (dynamicModel != null) {
       dynamicModel.buildDynamicWidget();
       String pageName = dynamicModel.pageName;
-      !isReplace
-          ? dynamicApp.currentPageOrModalName = pageName
-          : dynamicApp.nameStack.last = pageName;
+      dynamicApp.currentPageOrModalName = pageName;
       dynamicApp.modelCache[pageName] = dynamicModel;
-      setState(() {
-        // key = UniqueKey();
-        widgetInstance = dynamicModel.dynamicWidget;
+      widgetInstance = dynamicModel.dynamicWidget;
+      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+        if (!widget.isModal) {
+          dynamicApp.call(
+            method: ChannelMethod.pageDidLoad,
+            params: {
+              'pageName': pageName,
+              'loadTimestamp': DateTime.now().millisecondsSinceEpoch,
+            },
+          );
+        }
+        dynamicApp.triggerLifeCycle(
+          LifeCycleStep.widgetDidMount,
+          pageName,
+        );
       });
+      setState(() {});
     } else {
       setPage(whiteScreen);
     }

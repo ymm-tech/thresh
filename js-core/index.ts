@@ -22,41 +22,32 @@
  *
  */
 
-import threshApp, { injectRoute } from './src/core/ThreshApp'
-import Widget from './src/core/Widget'
-import createElement from './src/core/createElement'
-import basicWidgets, { Page } from './src/core/basicWidget'
-import RenderManager from './src/manager/RenderManager'
-import UtilManager from './src/manager/UtilManager'
-import UIManager from './src/manager/UIManager'
-import BridgeManager from './src/manager/BridgeManager'
-import EventManager from './src/manager/EventManager'
-
-const Thresh = threshApp
-
-RenderManager.getMediaQuery(Thresh.jsVersion)
-
-// 注册事件 - 页面显示
-EventManager.register('pageOnShow', (fromPageName: string) => {
-  Page.invokePageOnShow(fromPageName)
-})
-// 注册事件 - 页面隐藏
-EventManager.register('pageOnHide', () => {
-  Page.invokePageOnHide()
-})
-// 注册事件 - 当 native(主要是安卓) 发生按键或手势返回事件时，native 会阻止返回并触发该事件，将返回操作交给 js 控制
-EventManager.register('nativePop', () => {
-  Thresh.popPage()
-})
-
-export default Thresh
-export {
-  Widget,
-  UtilManager as Util,
-  BridgeManager as Bridge,
-  EventManager as Event,
-  UIManager as ui,
-  createElement,
-  basicWidgets,
-  injectRoute
-}
+ import threshApp, { injectRoute } from './src/core/ThreshApp'
+ import Widget from './src/core/Widget'
+ import createElement from './src/core/createElement'
+ import basicWidgets, { Page } from './src/core/basicWidget'
+ import RenderManager from './src/manager/RenderManager'
+ import UtilManager from './src/manager/UtilManager'
+ import UIManager from './src/manager/UIManager'
+ import BridgeManager from './src/manager/BridgeManager'
+ import eventManager from './src/manager/EventManager'
+ import TimerManager from './src/manager/TimerManager'
+ 
+ const Thresh = threshApp
+ 
+ RenderManager.getMediaQuery(Thresh.jsVersion)
+ eventManager.registerBuiltInEvents()
+ 
+ export default Thresh
+ export {
+   Widget,
+   UtilManager as Util,
+   BridgeManager as Bridge,
+   UIManager as ui,
+   TimerManager as Timer,
+   eventManager as Event,
+   basicWidgets,
+   createElement,
+   injectRoute
+ }
+ 

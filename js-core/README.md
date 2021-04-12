@@ -8,7 +8,7 @@
 
 JS：VSCode + node + npm/yarn
 
-Flutter SDK：**flutter1.9.1-hotfix.6**
+Flutter SDK：**flutter1.22.5**
 
 ## JS 端
 
@@ -44,7 +44,7 @@ Flutter 端请在 pubspec.yaml 文件中添加依赖项：
 
 ```yaml
 dependencies:
-  thresh: ^0.0.3
+  thresh: ^0.0.6
 ```
 
 #### 本地调试模式

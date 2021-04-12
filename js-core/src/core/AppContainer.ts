@@ -23,70 +23,158 @@
  */
 
 import VNode from '../core/VNode'
-
-export const MODAL_TAG = 'modal#'
+import PageContainer, { PerformanceInfo } from './PageContainer'
 
 class AppContainer {
+  _pageId: number = 0
   // 路由
   routes: Map<string, Function> = new Map()
-  // 所有 page 与 modal name 的缓存
-  namesCache: string[] = []
-  // page names
-  pageNamesCache: string[] = []
-  // modal names
-  modalNamesCache: string[] = []
-  // 所有 page 与 modal 的节点树缓存
-  pageDataCache: Map<string, VNode> = new Map()
+  // 页面容器
+  // native 端每个 flutter vc 对应一个 pageContainer
+  // 由于每个 flutter vc 必然会调用一次 thresh.runApp()
+  // 因此在 runApp 时创建当前 flutter vc 对应的 pageContainer
+  // 在接收到 onDestroy 消息时销毁当前的 pageContainer
+  pageContainerContextIds: string[] = []
+  pageContainers: Map<string, PageContainer> = new Map()
 
-  // 路由操作
+  clear () {
+    this._pageId = 0
+    while (this.currentPageContainer) {
+      this.destroyPageContainer()
+    }
+  }
+
+  /**
+   * 添加路由
+   */
   addRoute (routeName: string, pageBuilder: Function) {
     if (this.routes.has(routeName)) throw new Error(`Route name "${routeName}" has already exist!`);
     this.routes.set(routeName, pageBuilder)
   }
+  /**
+   * 判断路由是否存在
+   */
   hasRoute (routeName: string): boolean {
     return this.routes.has(routeName)
   }
+  /**
+   * 获取路由
+   */
   getRoute (routeName: string): Function | void {
     if (!this.hasRoute(routeName)) return
     return this.routes.get(routeName)
   }
 
-  // 页面操作
-  
   /**
-   * 当前 container 是否不存在内容
+   * 获取当前显示页面的 contextId
+   */
+  get contextId (): string | void {
+    if (this.isEmpty) return
+    return this.currentPageContainer!.contextId
+  }
+  /**
+   * 获取 pageId
+   */
+  get pageId (): number {
+    return ++this._pageId
+  }
+  /**
+   * 当前容器是否无内容
    */
   get isEmpty (): boolean {
-    return this.pageNamesCache.length === 0
+    return this.pageContainerCount === 0
+  }
+  /**
+   * 当前容器是否可以执行 pop 操作
+   */
+  get canPop (): boolean {
+    if (this.isEmpty) return false
+    return this.currentPageContainer?.canPop || false
+  }
+  /**
+   * 当前页面容器数量
+   */
+  get pageContainerCount (): number {
+    return this.pageContainers.size
+  }
+  /**
+   * 获取当前页面容器
+   */
+  get currentPageContainer (): PageContainer | undefined {
+    if (this.isEmpty) return
+    const currentPageContainerContextId = this.pageContainerContextIds[this.pageContainerCount - 1]
+    return this.pageContainers.get(currentPageContainerContextId)
   }
   /**
    * 当前屏幕显示的内容是否为 modal
    */
   get currentShowIsModal (): boolean {
     if (this.isEmpty) return false
-    return this.namesCache[this.namesCache.length - 1].startsWith(MODAL_TAG)
+    return this.currentPageContainer!.currentShowIsModal
+  }
+  /**
+   * 当前显示视图的名称
+   * 可能是 page 也可能是 modal
+   */
+  get currentShowName (): string | void {
+    if (this.isEmpty) return
+    return this.currentPageContainer!.currentShowName
   }
   /**
    * 当前显示页面的名称
    */
   get currentPageName (): string | void {
     if (this.isEmpty) return
-    return this.pageNamesCache[this.pageNamesCache.length - 1]
+    return this.currentPageContainer!.currentPageName
   }
   /**
    * 当前显示页面的 vnode
    */
   get currentPageData (): VNode | void {
-    const pageName: string | void = this.currentPageName
-    if (!pageName) return
-    return this.pageDataCache.get(pageName)
+    if (this.isEmpty) return
+    return this.currentPageContainer!.currentPageData
   }
   /**
    * 当前显示页面的前一页面名称
    */
   get referPageName (): string | void {
-    if (this.pageNamesCache.length < 2) return
-    return this.pageNamesCache[this.pageNamesCache.length - 2]
+    if (this.isEmpty) return
+    let referPageName = this.currentPageContainer!.referPageName
+    if (referPageName || this.pageContainerCount === 1) return referPageName
+    const prevPageContainer: PageContainer = this.pageContainers[this.pageContainerCount - 2]
+    return prevPageContainer!.referPageName
+  }
+  /**
+   * 创建新的页面容器
+   */
+  createPageContainer (contextId: string) {
+    this.pageContainerContextIds.push(contextId)
+    this.pageContainers.set(contextId, new PageContainer(contextId))
+  }
+  /**
+   * 销毁页面容器
+   */
+  destroyPageContainer (contextId?: string) {
+    if (!contextId) contextId = this.currentPageContainer.contextId
+    const targetPageContainer: PageContainer = this.pageContainers.get(contextId)
+    if (targetPageContainer) {
+      targetPageContainer.destroy()
+      this.pageContainers.delete(contextId)
+    }
+    const index = this.pageContainerContextIds.indexOf(contextId)
+    if (index > -1) this.pageContainerContextIds.splice(index, 1)
+  }
+  /**
+   * 判断页面是否是 modal
+   */
+  pageIsModal (pageName: string): boolean {
+    return PageContainer.pageIsModal(pageName)
+  }
+  /**
+   * 格式化 modal name
+   */
+  formatModalName (modalName: string): string {
+    return PageContainer.formatModalName(modalName)
   }
   /**
    * 是否存在某一页面
@@ -94,53 +182,103 @@ class AppContainer {
    * @param withModal 是否同时在 modal 中查找，默认只在 page 中查找
    */
   hasPage (pageName: string, withModal: boolean = false): boolean {
-    if (!withModal) return this.pageNamesCache.indexOf(pageName) > -1
-    return this.namesCache.indexOf(pageName) > -1
+    if (this.isEmpty) return false
+    const containerCount = this.pageContainerCount
+    for (let i = containerCount - 1; i > -1; i--) {
+      const contextId = this.pageContainerContextIds[i]
+      const targetPageContainer: PageContainer = this.pageContainers.get(contextId)
+      const exist = targetPageContainer.hasPage(pageName, withModal)
+      if (exist) return true
+    }
+    return false
   }
   /**
    * 存入页面
    * @param pageName 页面名
    * @param vnodeTree 页面 vnode
-   * @param isModal 是否为 modal
    */
-  pushPage (pageName: string, vnodeTree: VNode, isModal: boolean = false) {
-    if (this.namesCache.includes(pageName)) throw new Error(`Route name "${pageName}" has already exist!`);
-    this.namesCache.push(pageName)
-    this.pageDataCache.set(pageName, vnodeTree)
-    if (!isModal) this.pageNamesCache.push(pageName)
-    else this.modalNamesCache.push(pageName)
+  pushPage (pageName: string, vnodeTree: VNode, createTimestamp: number) {
+    if (this.isEmpty) return
+    this.currentPageContainer.pushPage(pageName, vnodeTree, createTimestamp)
   }
   /**
-   * 替换当前显示的页面
-   * @param newPageName 新页面名
-   * @param newVNodeTree 新页面 vnode
+   * 存入 modal
+   * @param pageName 页面名
+   * @param vnodeTree 页面 vnode
+   * @param isModal 是否为 modal
    */
-  replacePage (newPageName: string, newVNodeTree: VNode) {
-    const oldPageName: string = this.pageNamesCache.pop()
-    const index: number = this.namesCache.indexOf(oldPageName)
-    this.namesCache.splice(index, 1, newPageName)
-    this.pageNamesCache.push(newPageName)
-    this.pageDataCache.set(newPageName, newVNodeTree)
-    this.pageDataCache.delete(oldPageName)
+  showModal (modalName: string, vnodeTree: VNode) {
+    if (this.isEmpty) return
+    this.currentPageContainer.showModal(modalName, vnodeTree)
   }
   /**
    * 移除当前显示的页面或 modal
    */
   removeCurrentShow () {
     if (this.isEmpty) return
-    const name: string = this.namesCache.pop()
-    if (!name.startsWith(MODAL_TAG)) this.pageNamesCache.pop()
-    else this.modalNamesCache.pop()
-    this.pageDataCache.delete(name)
+    this.currentPageContainer!.removeCurrentShow()
   }
   /**
-   * 获取页面或 modal 的 vnode 数据
-   * @param pageName 页面名称
+   * 通过名称获取页面或 modal 的 vnode 数据
    */
-  getPageData (pageName): VNode | void {
-    if (!pageName) return
-    if (this.pageDataCache.has(pageName)) return this.pageDataCache.get(pageName)
+  getPageDataWithPageName (pageName): VNode | void {
+    if (this.isEmpty) return
+    const containerCount = this.pageContainerCount
+    for (let i = containerCount - 1; i > -1; i--) {
+      const contextId = this.pageContainerContextIds[i]
+      const targetPageContainer: PageContainer = this.pageContainers.get(contextId)
+      const pageData: VNode | void = targetPageContainer.getPageData(pageName)
+      if (pageData) return pageData
+    }
+  }
+  /**
+   * 通过 contextId 判断 container 是否存在
+   */
+  pageContainerExisted (contextId: string): boolean {
+    return this.pageContainerContextIds.includes(contextId)
+  }
+  /**
+   * 通过 contextId 获取页面的 vnode 数据
+   */
+  getPageDataWithContextId (contextId: string): VNode | void {
+    if (this.isEmpty) return
+    const targetPageContainer: PageContainer = this.pageContainers.get(contextId)
+    if (!targetPageContainer) return
+    return  targetPageContainer.currentPageData
+  }
+  /**
+   * 通过页面名获取该页面所在的容器
+   */
+  getPageContainerWithPageName (pageName: string): PageContainer | undefined {
+    if (this.isEmpty) return
+    const containerCount = this.pageContainerCount
+    for (let i = containerCount - 1; i > -1; i--) {
+      const contextId = this.pageContainerContextIds[i]
+      const targetPageContainer: PageContainer = this.pageContainers.get(contextId)
+      const exist = targetPageContainer.hasPage(pageName)
+      if (exist) return targetPageContainer
+    }
+    return
+  }
+  /**
+   * 设置页面渲染数据
+   */
+  setPagePerformanceInfo (pageName: string, loadTimestamp: number) {
+    const targetPageContainer = this.getPageContainerWithPageName(pageName)
+    if (!targetPageContainer) return
+    targetPageContainer.setPagePerformanceInfo(pageName, loadTimestamp)
+  }
+  /**
+   * 获取页面渲染数据
+   */
+  getPagePerformanceInfo (pageName?: string): PerformanceInfo | undefined {
+    const targetPageContainer = pageName
+      ? this.getPageContainerWithPageName(pageName)
+      : this.currentPageContainer
+    if (!targetPageContainer) return
+    return targetPageContainer.getPagePerformanceInfo(pageName)
   }
 }
 
-export default new AppContainer()
+const appContainer = new AppContainer()
+export default appContainer

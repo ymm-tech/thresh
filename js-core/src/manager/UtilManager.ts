@@ -22,57 +22,29 @@
  *
  */
 
-import MethodChannel from '../channel/MethodChannel'
+import MethodChannel, { FlutterMethodChannelType } from '../channel/MethodChannel'
 import BridgeManager from './BridgeManager'
-import bus from '../shared/bus'
 import Util from '../shared/Util'
 import { RequestParams } from '../types/type'
-import DevtoolsManager from './DevtoolsManager'
+import devtools from './DevtoolsManager'
 
 /**
  * 工具方法管理器
  */
 export default class UtilManager {
   /**
-   * 定时执行器
-   */
-  static setTimeout (callback: Function, duration: number = 16): string {
-    return UtilManager.registerTimer('setTimeout', callback, duration)
-  }
-  /**
-   * 循环定时执行器
-   */
-  static setInterval (callback: Function, duration: number = 16): string {
-    return UtilManager.registerTimer('setInterval', callback, duration)
-  }
-  /**
-   * 清除定时器
-   */
-  static clearTimer (timerId: string) {
-    if (!timerId) return
-    if (!bus.has(timerId)) return
-    bus.remove(timerId)
-    MethodChannel.call('clearTimer', { timerId })
-  }
-  /**
-   * 注册定时器
-   */
-  private static registerTimer (type: string, callback: Function, duration: number): string {
-    if (!Util.isFunc(callback)) return
-    const timerId = bus.register(callback)
-    MethodChannel.call(type, {
-      timerId,
-      duration
-    })
-    return timerId
-  }
-  /**
    * 发起网络请求
+   * debugMode状态下会通过flutter发起请求
+   * 否则通过native bridge发起请求
    */
-  static async request (params: RequestParams): Promise<any> {
+  static async request (params: RequestParams, module: string = 'base', method: string = 'request'): Promise<any> {
+    if (process.env.NODE_ENV !== 'production') {
+      if (!BridgeManager.networkModuleNames.includes(module)) BridgeManager.networkModuleNames.push(module)
+      if (!BridgeManager.networkModuleNames.includes(method)) BridgeManager.networkModuleNames.push(method)
+    }
     return BridgeManager.invoke({
-      module: BridgeManager.THRESH_BUILT_IN_BRIDGE,
-      method: BridgeManager.BRIDGE_METHOD_NET_REQUEST,
+      module,
+      method,
       params: params
     })
   }
@@ -81,9 +53,20 @@ export default class UtilManager {
    * @param {any} data
    */
   static copy (data: any, showSuccess: boolean = true) {
-    MethodChannel.call('copy', {
-      data: Util.toString(data),
-      showSuccess
+    MethodChannel.call({
+      method: FlutterMethodChannelType.copy,
+      params: {
+        data: Util.toString(data),
+        showSuccess
+      },
+    })
+  }
+  /**
+   * 收起键盘
+   */
+  static blur () {
+    MethodChannel.call({
+      method: FlutterMethodChannelType.blur
     })
   }
 
@@ -91,18 +74,18 @@ export default class UtilManager {
     if (console && console.log) {
       console.log(...args)
     }
-    DevtoolsManager.log(...args)
+    devtools.log(...args)
   }
   static warn (...args: any[]) {
     if (console && console.warn) {
       console.warn(...args)
     }
-    DevtoolsManager.warn(...args)
+    devtools.warn(...args)
   }
   static error (...args: any[]) {
     if (console && console.error) {
       console.error(...args)
     }
-    DevtoolsManager.error(...args)
+    devtools.error(...args)
   }
 }

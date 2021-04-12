@@ -22,6 +22,8 @@
 import 'dart:ui';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:thresh/basic/util.dart';
+import 'package:thresh/devtools/dev_buttons.dart';
 import 'package:thresh/framework/channel/basic.dart';
 import 'package:thresh/framework/channel/render.dart';
 import 'package:thresh/framework/channel/controller.dart';
@@ -35,6 +37,8 @@ import 'package:thresh/framework/widget/data/widget_toast.dart';
 import 'package:thresh/basic/bus.dart';
 import 'package:thresh/basic/global_def.dart';
 import 'package:thresh/devtools/dev_tools.dart';
+
+const String _appStartEventName = 'callAppStart';
 
 _DynamicApp dynamicApp = _DynamicApp();
 
@@ -50,20 +54,20 @@ class _DynamicApp {
   /// js 环境
   String jsEnv = 'production';
 
-  /// js context id
-  String jsContextId;
-
   /// js 版本
   String jsVersion = '';
 
   /// df 版本
-  String flutterVersion = '1.2.2';
+  String flutterVersion = '1.3.0';
 
   /// 需要显示的 flutter app
   Widget mainApp;
 
   /// app name
   String appName;
+
+  /// js context id
+  String jsContextId;
 
   /// js bundle path
   String jsBundlePath;
@@ -79,11 +83,9 @@ class _DynamicApp {
 
   /// 白屏处理方法
   OnWhiteScreen onWhiteScreen;
-  // 在显示 df page 之前显示的占位页面构造器
-  PlaceholderBuilder placeholderPageBuilder;
 
-  /// modal 计数
-  int modalCount = 0;
+  /// 在显示 df page 之前显示的占位页面构造器
+  PlaceholderBuilder placeholderPageBuilder;
 
   /// app是否已被创建
   bool hasSetup = false;
@@ -94,14 +96,8 @@ class _DynamicApp {
   /// 初始页面数据是否已经传输到 flutter
   bool firstPageDidSend = false;
 
-  /// 初始页面是否已经加载完毕
-  bool firstPageDidLoad = false;
-
   /// 初始页面加载是否超时
   bool firstPageOverTime = false;
-
-  /// 首次通信耗时
-  int firstChannelSpendTime = 0;
 
   /// appBar高度
   double appBarHeight = kToolbarHeight;
@@ -120,6 +116,9 @@ class _DynamicApp {
 
   /// 被构建的 Thresh root context
   BuildContext rootContext;
+
+  /// 用来请求 mediaQueryData 的 context
+  BuildContext mediaQueryContext;
 
   /// app 被销毁时需要停止渲染的 controllers
   List<DFStopAlwaysRenderController> stopAlwaysRenderControllers = [];
@@ -227,28 +226,24 @@ class _DynamicApp {
     if (isAppInit) runApp(_rootApp);
 
     bus.register(() {
-      bus.remove('callAppStart');
+      bus.remove(_appStartEventName);
       if (mainApp == null) {
         ready();
       } else {
         flutterSetup();
       }
-    }, 'callAppStart');
-    if (!stateStack.isEmpty) bus.fire('callAppStart');
-
+    }, _appStartEventName);
+    if (!stateStack.isEmpty) bus.fire(_appStartEventName);
     return _rootApp;
   }
 
   /// 重置 df app
   void reset() {
     _flutterPageContext = null;
-    jsContextId = null;
     modelCache = {};
     hasSetup = false;
     firstPageDidSend = false;
-    firstPageDidLoad = false;
     firstPageOverTime = false;
-    firstChannelSpendTime = 0;
     nameStack = StackList();
     stateStack = StackList();
     contextStack = StackList();
@@ -275,76 +270,89 @@ class _DynamicApp {
 
   /// method channel 通知处理逻辑
   /// 显示 js 页面
-  void pushPage(
-      {@required String pageName,
-      @required Map<String, dynamic> pageData,
-      bool isModal = false,
-      bool popup = false}) {
+  void pushPage({
+    @required String pageName,
+    @required Map<String, dynamic> pageData,
+  }) {
     if (firstPageOverTime) return;
     if (!firstPageDidSend) firstPageDidSend = true;
-
     if (hasSetup) {
-      if (!isModal) {
-        Navigator.push(context, MaterialPageRoute(
-          builder: (context) {
-            return DynamicPage(pageData);
-          },
-        ));
-      } else {
-        modalCount++;
-        !popup
-            ? showGeneralDialog(
-                context: context,
-                barrierDismissible: false,
-                transitionDuration: const Duration(milliseconds: 150),
-                pageBuilder: (BuildContext buildContext,
-                    Animation<double> animation,
-                    Animation<double> secondaryAnimation) {
-                  return Material(
-                    color: Colors.transparent,
-                    child: DynamicPage(pageData),
-                  );
-                })
-            : showDynamicModalBottomSheet(
-                context: context,
-                builder: (BuildContext buildContext) {
-                  return Material(
-                    color: Colors.transparent,
-                    child: DynamicPage(pageData),
-                  );
-                });
-      }
+      Navigator.push(context, DynamicPageRoute(
+        builder: (context) {
+          return DynamicPage(
+            pageData: pageData,
+            pageName: pageName,
+          );
+        },
+      ));
     } else {
       if (stateStack.first == null) {
-        devtools.debug('pushPage', 'dynamic_app.dart', 'return', '''stateStack:
-[length] - ${stateStack.length}
-[first] - ${stateStack.first}
-''');
+        devtools.debug(
+          'pushPage',
+          'dynamic_app.dart',
+          'return',
+          Util.formatMutipulLineText([
+            'stateStack:',
+            '[length] - ${stateStack.length}',
+            '[first] - ${stateStack.first}',
+          ]),
+        );
         return;
       }
       flutterSetup();
-      stateStack.first.setModelData(pageData);
+      stateStack.first.setModelData(pageData, pageName);
     }
-    dynamicApp.triggerLifeCycle(LifeCycleStep.widgetDidMount, pageName);
   }
 
   /// method channel 通知处理逻辑
-  /// 替换当前显示的页面
-  void replacePage(
-      {@required String pageName, @required Map<String, dynamic> pageData}) {
-    modelCache.remove(currentPageOrModalName);
-    stateStack.last.setModelData(pageData, true);
-    dynamicApp.triggerLifeCycle(LifeCycleStep.widgetDidMount, pageName);
+  /// 显示 js modal
+  void showModal({
+    @required String modalName,
+    @required Map<String, dynamic> modalData,
+    bool popup = false,
+  }) {
+    !popup
+        ? showGeneralDialog(
+            context: context,
+            barrierDismissible: false,
+            transitionDuration: const Duration(milliseconds: 150),
+            pageBuilder: (BuildContext buildContext,
+                Animation<double> animation,
+                Animation<double> secondaryAnimation) {
+              return Material(
+                color: Colors.transparent,
+                child: DynamicPage(
+                  pageData: modalData,
+                  pageName: modalName,
+                  isModal: true,
+                ),
+              );
+            },
+          )
+        : showDynamicModalBottomSheet(
+            context: context,
+            builder: (BuildContext buildContext) {
+              return Material(
+                color: Colors.transparent,
+                child: DynamicPage(
+                  pageData: modalData,
+                  pageName: modalName,
+                  isModal: true,
+                ),
+              );
+            },
+          );
   }
 
   /// method channel通知处理逻辑
   /// 更新组件
   /// 通过需要被更新的 widgetId 和 updateData 更新 widgetModel 与 widgetTree
-  void updateWidget(
-      {@required String pageName,
-      @required String needUpdateWidgetId,
-      @required String invokeDidUpdateWidgetId,
-      @required Map<String, dynamic> updateData}) {
+  void updateWidget({
+    @required String pageName,
+    @required String needUpdateWidgetId,
+    @required String invokeDidUpdateWidgetId,
+    @required Map<String, dynamic> updateData,
+  }) {
     if (updateData == null) return;
     DynamicModel pageModel = modelCache[pageName];
     if (pageModel == null) {
@@ -356,71 +364,68 @@ class _DynamicApp {
     if (newModel == null) return;
     newModel.buildDynamicWidget();
     DynamicModel.findTargetModels(
-        aimModel: pageModel,
-        aimWidgetId: needUpdateWidgetId,
-        findCallback: (DynamicModel model) {
-          model.merge(newModel);
-          return model;
-        });
+      aimModel: pageModel,
+      aimWidgetId: needUpdateWidgetId,
+      findCallback: (DynamicModel model) {
+        model.merge(newModel);
+        return model;
+      },
+    );
     triggerLifeCycle(
-        LifeCycleStep.widgetDidUpdate, pageName, invokeDidUpdateWidgetId);
+      LifeCycleStep.widgetDidUpdate,
+      pageName,
+      invokeDidUpdateWidgetId,
+    );
   }
 
   /// 调用 method channel 方法
   /// 将设备信息发送给 js
   void sendMediaQuery() {
-    void sendToJs() {
-      MediaQueryData data = MediaQueryData.fromWindow(window);
-      call(method: ChannelMethod.mediaQuery, params: {
-        'width': data.size.width,
-        'height': data.size.height,
-        'statusBarHeight': data.padding.top,
-        'bottomBarHeight': data.padding.bottom,
-        'appBarHeight': dynamicApp.appBarHeight,
-        'devicePixelRatio': data.devicePixelRatio,
-        'debugMode': debugMode,
-        'platform': Platform.isIOS ? 'iOS' : 'Android',
-        'flutterVersion': flutterVersion,
-        // flutter 接收到首次通信的耗时
-        // sendMediaQuery 是 df 第一个调用的 channel
-        'flutterFirstChannelSpend': firstChannelSpendTime,
-        // 是否需要通过 js 获取 bundlePath
-        // 存在 jsBundlePath 时则不需要通过 js 获取
-        'needJsBundlePath': jsBundlePath == null,
-        'packageTag': 1,
-      });
-    }
-
-    MediaQueryData data = MediaQueryData.fromWindow(window);
-    double width = data.size.width;
-    if (width == 0) {
-      window.onMetricsChanged = () {
-        sendToJs();
-        start();
-      };
-    } else
-      sendToJs();
+    MediaQueryData data = MediaQuery.of(mediaQueryContext);
+    call(method: ChannelMethod.mediaQuery, params: {
+      'width': data.size.width,
+      'height': data.size.height,
+      'statusBarHeight': data.padding.top,
+      'bottomBarHeight': data.padding.bottom,
+      'appBarHeight': dynamicApp.appBarHeight,
+      'devicePixelRatio': data.devicePixelRatio,
+      'debugMode': debugMode,
+      'platform': Platform.isIOS ? 'iOS' : 'Android',
+      'flutterVersion': flutterVersion,
+      // 是否需要通过 js 获取 bundlePath
+      // 存在 jsBundlePath 时则不需要通过 js 获取
+      'needJsBundlePath': jsBundlePath == null,
+      'packageTag': '0401 12:00',
+    });
   }
 
   /// 调用 method channel 方法
   /// df app 建立时通知 js
   /// 不可在框架外调用
   void ready() {
-    Map<String, dynamic> params = defaultRoute?.getInfo();
-    String devContent = '';
-    if (debugMode && params != null) {
-      devContent = 'Init Page Name: ${params['pageName']}';
+    Map<String, dynamic> params = defaultRoute?.getInfo() ?? {};
+    params['jsContextId'] = jsContextId;
+
+    if (debugMode) {
+      List<String> devContent = [];
+      devContent.add('Page Name: ${params['pageName'] ?? 'None'}');
       if (params['params'] == null)
-        devContent += '\nParams: None';
+        devContent.add('Page Params: None');
       else {
         Map<String, dynamic> subParams = params['params'];
         for (String key in subParams.keys) {
-          devContent += '\nParams: [ $key = ${subParams[key]} ]';
+          devContent.add('Params: [ $key = ${subParams[key]} ]');
         }
       }
+      devtools.insert(
+        InfoType.event,
+        DevInfo(
+          title: 'App Ready',
+          content: Util.formatMutipulLineText(devContent),
+        ),
+      );
     }
-    devtools.insert(
-        InfoType.event, DevInfo(title: 'App Ready', content: devContent));
+
     call(
       method: ChannelMethod.ready,
       params: params,
@@ -447,21 +452,35 @@ class _DynamicApp {
   /// 退出当前页面
   void popPage({bool isRootPage: false}) {
     if (currentPageOrModalName == null) {
-      devtools.debug('popPage', 'dynamic_app.dart', 'return',
-          'currentPageOrModalName is null: ${currentPageOrModalName == null}');
+      devtools.debug(
+        'popPage',
+        'dynamic_app.dart',
+        'return',
+        'currentPageOrModalName is null: ${currentPageOrModalName == null}',
+      );
       return;
     }
     // 退出页面时清空 controllers & modelTree
     DynamicModel.controllers.remove(currentPageOrModalName);
     modelCache.remove(currentPageOrModalName);
     call(
-        method: ChannelMethod.popPage,
-        params: {'pageName': currentPageOrModalName});
+      method: ChannelMethod.hasPopPage,
+      params: {'pageName': currentPageOrModalName},
+    );
     nameStack.pop();
     stateStack.pop();
     if (!isRootPage) {
       contextStack.pop();
     }
+  }
+
+  /// 调用method channel方法
+  /// 通知 js 执行 popPage
+  void needPopPage() {
+    call(
+      method: ChannelMethod.needPopPage,
+      params: {'pageName': currentPageOrModalName},
+    );
   }
 
   /// 调用method channel 方法
@@ -477,12 +496,13 @@ class _DynamicApp {
 
   /// 调用method channel方法
   /// 事件触发回调
-  void eventHandler(
-      {@required String pageName,
-      @required String widgetId,
-      @required String eventId,
-      @required String eventType,
-      dynamic args}) {
+  void eventHandler({
+    @required String pageName,
+    @required String widgetId,
+    @required String eventId,
+    @required String eventType,
+    dynamic args,
+  }) {
     if (pageName == null || widgetId == null || eventId == null) return;
     call(method: ChannelMethod.triggerEvent, params: {
       'pageName': pageName,
@@ -519,14 +539,12 @@ class DynamicAppRoot extends StatefulWidget {
   }
 
   static restart(BuildContext context) {
-    final _DynamicAppRootState state =
-        context?.ancestorStateOfType(const TypeMatcher<_DynamicAppRootState>());
+    final _DynamicAppRootState state = context?.findAncestorStateOfType();
     state?.rebuild();
   }
 
   static destroy(BuildContext context) {
-    final _DynamicAppRootState state =
-        context?.ancestorStateOfType(const TypeMatcher<_DynamicAppRootState>());
+    final _DynamicAppRootState state = context?.findAncestorStateOfType();
     state?.dispose();
   }
 }
@@ -541,21 +559,34 @@ class _DynamicAppRootState extends State<DynamicAppRoot> {
   }
 
   Widget get mainApp => MaterialApp(
+        color: Colors.white,
         title: dynamicApp?.appName ?? '',
         theme: ThemeData(
           primarySwatch: Colors.blue,
         ),
-        home: dynamicApp?.mainApp ?? DynamicPage(),
         debugShowCheckedModeBanner: false,
+        home: DynamicMainApp(),
       );
 
   @override
   Widget build(BuildContext context) {
     return Material(
       key: key,
-      child: Stack(
-        textDirection: TextDirection.ltr,
-        children: <Widget>[mainApp, DFToastWrap()],
+      child: WillPopScope(
+        child: Stack(
+          textDirection: TextDirection.ltr,
+          children: <Widget>[
+            mainApp,
+            DFToastWrap(),
+            dynamicApp?.debugMode == true
+              ? DevButtons()
+              : Container(),
+          ],
+        ),
+        onWillPop: () {
+          dynamicApp?.needPopPage();
+          return Future.value(false);
+        },
       ),
     );
   }
@@ -570,4 +601,52 @@ class _DynamicAppRootState extends State<DynamicAppRoot> {
   void dispose() {
     super.dispose();
   }
+}
+
+class DynamicMainApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    if (dynamicApp == null) return Container();
+
+    // TODO - DynamicMainApp 改为 StatefulWidget
+    // initState 中添加以下回调
+    // 防止native弹窗引起rebuild导致消息重复发送
+    dynamicApp.mediaQueryContext = context;
+    Future.microtask(() {
+      dynamicApp.sendMediaQuery();
+      if (bus.has(_appStartEventName))
+        bus.fire(_appStartEventName);
+      else
+        dynamicApp.ready();
+    });
+
+    return dynamicApp.mainApp ?? DynamicPage();
+  }
+}
+
+class DynamicPageRoute<T> extends PageRoute<T>
+    with MaterialRouteTransitionMixin<T> {
+  DynamicPageRoute({
+    @required this.builder,
+    RouteSettings settings,
+    this.maintainState = true,
+    bool fullscreenDialog = false,
+  })  : assert(builder != null),
+        assert(maintainState != null),
+        assert(fullscreenDialog != null),
+        super(settings: settings, fullscreenDialog: fullscreenDialog);
+
+  final WidgetBuilder builder;
+
+  @override
+  Widget buildContent(BuildContext context) => builder(context);
+
+  @override
+  final bool maintainState;
+
+  @override
+  String get debugLabel => '${super.debugLabel}(${settings.name})';
+
+  // @override
+  // bool get opaque => false;
 }

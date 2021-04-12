@@ -2,6 +2,7 @@ import Thresh, {
   Widget,
   basicWidgets,
   ui,
+  Bridge,
 } from 'thresh-lib'
 import { Colors, widgetList, apiList } from '../config'
 import Box from '../widgets/Box'
@@ -17,17 +18,17 @@ const {
   ScrollView,
 } = basicWidgets
 
-export default class HomePage extends Widget <any, any> {
-  tapListItem (pageName) {
-    Thresh.pushPage(pageName)
-  }
-  widgetDidMount () {
+export default class HomePage extends Widget<any, any> {
+  widgetDidMount() {
     Thresh.pageDidShow()
   }
-  render () {
+  tapListItem(pageName) {
+    Thresh.pushPage(pageName)
+  }
+  render() {
     return (
       <Page
-        appBar={<AppBar title={this.props.title || 'Thresh Demos'} />}
+        appBar={<AppBar title={this.props.title || 'Thresh Demos'} backgroundColor={Colors.White} elevation />}
         backgroundColor={Colors.Pagebg}
       >
         <ScrollView>

@@ -22,13 +22,16 @@
  *
  */
 
-import VNode, { PropChildrenVNodeType } from './VNode'
-import UtilManager from '../manager/UtilManager'
+import VNode, { PropChildrenVNodeType, PropChildrenVNode } from './VNode'
 import RenderManager from '../manager/RenderManager'
 import Util from '../shared/Util'
+import TimerManager from '../manager/TimerManager'
 
 // 更新队列
 class UpdateQueue {
+  static lastPrecommitTime: number = Date.now()
+  static commitPendingTime: number = 16
+
   private queue: VNode[] = []
   get isEmpty (): boolean {
     return !this.queue.length
@@ -49,9 +52,10 @@ class UpdateQueue {
   // 规则：遍历所有节点，每一个节点向上获取其所有父元素，如果其父元素已经存在于队列中，则忽略该节点
   unique (): VNode[] {
     const uniqued: VNode[] = this.queue.filter((node: VNode, index: number, source: VNode[]) => {
+      if (!node.isMount) return false
       let parent: VNode | void = node.parent
       while (parent) {
-        if (source.includes(parent)) return false
+        if (source.includes(parent) || !parent.isMount) return false
         parent = parent.parent
       }
       return true
@@ -69,10 +73,12 @@ const shouldUpdateQueue: UpdateQueue = new UpdateQueue()
 // 计划更新
 // 收集 16ms 内产生的所有更新节点后再更新
 export default function scheduleUpdate (vNode: VNode) {
-  if (pendingUpdateQueue.isEmpty) {
-    UtilManager.setTimeout(() => {
+  const now = Date.now()
+  if (pendingUpdateQueue.isEmpty || now - UpdateQueue.lastPrecommitTime >= UpdateQueue.commitPendingTime) {
+    UpdateQueue.lastPrecommitTime = now
+    TimerManager.setTimeout(() => {
       prepareCommit(pendingUpdateQueue.unique())
-    }, 16)
+    }, UpdateQueue.commitPendingTime)
   }
   pendingUpdateQueue.add(vNode)
 }
@@ -119,6 +125,7 @@ function compareAndMergeNode (
   oldNode: VNode
 ): boolean {
   if (!newNode || !oldNode) return
+  if (!(newNode instanceof VNode) || !(oldNode instanceof VNode)) return
   if (newNode === oldNode) return
   if (!newNode.isSameAs(oldNode)) return
 
@@ -139,6 +146,7 @@ function compareAndMergeNode (
   // 对新旧节点内部的各节点进行 compare and merge
   if (newNodeIsBasic && oldNodeIsBasic) {
     // 对 children 进行比较
+    compareNodeInProps(newNode.basicWidgetPropChildren, oldNode.basicWidgetPropChildren)
     compareNodeArray(newNode.children, oldNode.children)
     // 对 props 中的节点进行比较
     const newKeys: string[] = Object.keys(newNode.basicWidgetPropChildren)
@@ -169,8 +177,8 @@ function compareAndMergeNode (
 
 // 比较两个节点数组
 function compareNodeArray (newNodeArray: VNode[], oldNodeArray: VNode[]) {
-  const newLength: number = newNodeArray.length
-  const oldLength: number = oldNodeArray.length
+  const newLength: number = (newNodeArray || []).length
+  const oldLength: number = (oldNodeArray || []).length
   if (!newLength || !oldLength) return
 
   let indexInNew: number = 0
@@ -194,5 +202,17 @@ function compareNodeArray (newNodeArray: VNode[], oldNodeArray: VNode[]) {
       compareAndMergeNode(newNode, oldNode)
     }
     indexInNew++
+  }
+}
+
+// 比较属性上的节点
+function compareNodeInProps (newPropNodes: PropChildrenVNode, oldPropsNodes: PropChildrenVNode) {
+  for (let key in newPropNodes) {
+    if (newPropNodes[key]) {
+      compareAndMergeNode(newPropNodes[key] as VNode, oldPropsNodes[key] as VNode)
+    }
+    if (newPropNodes[key] instanceof Array) {
+      compareNodeArray(newPropNodes[key] as VNode[], oldPropsNodes[key] as VNode[])
+    }
   }
 }

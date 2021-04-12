@@ -1,5 +1,5 @@
 /// MIT License
-/// 
+///
 /// Copyright (c) 2020 ManBang Group
 /// Permission is hereby granted, free of charge, to any person obtaining a copy
 /// of this software and associated documentation files (the "Software"), to deal
@@ -7,10 +7,10 @@
 /// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 /// copies of the Software, and to permit persons to whom the Software is
 /// furnished to do so, subject to the following conditions:
-/// 
+///
 /// The above copyright notice and this permission notice shall be included in all
 /// copies or substantial portions of the Software.
-/// 
+///
 /// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 /// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 /// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -29,10 +29,12 @@ import 'package:thresh/basic/util.dart';
 import 'package:thresh/framework/widget/data/widget_text.dart';
 
 class DFAppBar extends DFBasicWidget implements PreferredSizeWidget {
-  DFAppBar(this.model, {
+  DFAppBar(
+    this.model, {
     Key key,
     this.elevation = false,
     this.isLight = true,
+    this.backgroundColor,
     this.centerTitle = true,
     this.title,
     this.leading,
@@ -42,6 +44,7 @@ class DFAppBar extends DFBasicWidget implements PreferredSizeWidget {
   final DynamicModel model;
   final bool elevation;
   final bool isLight;
+  final Color backgroundColor;
   final bool centerTitle;
   final Widget title;
   final Widget leading;
@@ -56,7 +59,7 @@ class DFAppBar extends DFBasicWidget implements PreferredSizeWidget {
         automaticallyImplyLeading: false,
         elevation: elevation ? 1 : 0,
         centerTitle: centerTitle,
-        backgroundColor: Colors.transparent,
+        backgroundColor: backgroundColor,
         brightness: isLight ? Brightness.dark : Brightness.light,
         leading: leading,
         actions: actions,
@@ -67,7 +70,8 @@ class DFAppBar extends DFBasicWidget implements PreferredSizeWidget {
   }
 
   @override
-  Size get preferredSize => Size.fromHeight(dynamicApp?.appBarHeight ?? kToolbarHeight);
+  Size get preferredSize =>
+      Size.fromHeight(dynamicApp?.appBarHeight ?? kToolbarHeight);
 }
 
 /// 基础组件 DFAppBar
@@ -93,9 +97,11 @@ class ProxyDFAppBar extends ProxyBase {
     }
 
     bool isLight = Util.getBoolean(props['statusTextLight']);
-    Color themeColor = Util.getColor(props['titleColor']) ?? (isLight ? Colors.white : Colors.black);
+    Color themeColor = Util.getColor(props['titleColor']) ??
+        (isLight ? Colors.white : Colors.black);
     final ModalRoute<dynamic> parentRoute = ModalRoute.of(context);
-    final bool useCloseButton = parentRoute is PageRoute<dynamic> && parentRoute.fullscreenDialog;
+    final bool useCloseButton =
+        parentRoute is PageRoute<dynamic> && parentRoute.fullscreenDialog;
     final List<Widget> actions = Util.getWidgetList(buildProps['buttons']);
 
     return DFAppBar(
@@ -103,34 +109,39 @@ class ProxyDFAppBar extends ProxyBase {
       key: model.key,
       elevation: Util.getBoolean(props['elevation']),
       isLight: isLight,
-      leading: buildProps['leading'] ?? (
-        !Util.getBoolean(props['showLeadingButton'], nullIsTrue: true)
-          ? null
-          : !useCloseButton
-            ? AppBarBackButton(color: themeColor)
-            : AppBarCloseButton(color: themeColor)
-      ),
+      backgroundColor: Util.getColor(props['backgroundColor']) ?? Colors.white,
+      leading: buildProps['leading'] ??
+          (!Util.getBoolean(props['showLeadingButton'], nullIsTrue: true)
+              ? null
+              : !useCloseButton
+                  ? AppBarBackButton(color: themeColor)
+                  : AppBarCloseButton(color: themeColor)),
       centerTitle: Util.getBoolean(props['centerTitle'], nullIsTrue: true),
-      actions: actions.isEmpty ? null : [ Row(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: actions,
-      ) ],
-      title: buildProps['titleView'] ?? AppBarText(
-        props['title'] ?? '',
-        style: TextStyle(
-          color: themeColor,
-          fontSize: Util.getDouble(props['titleSize']),
-          fontWeight: Util.getTextWeight(props['titleWeight']),
-        ),
-        controller: controller,
-      ),
+      actions: actions.isEmpty
+          ? null
+          : [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: actions,
+              )
+            ],
+      title: buildProps['titleView'] ??
+          AppBarText(
+            props['title'] ?? '',
+            style: TextStyle(
+              color: themeColor,
+              fontSize: Util.getDouble(props['titleSize']),
+              fontWeight: Util.getTextWeight(props['titleWeight']),
+            ),
+            controller: controller,
+          ),
     );
   }
 }
 
 class AppBarBackButton extends StatelessWidget {
-  const AppBarBackButton({ Key key, this.color }) : super(key: key);
+  const AppBarBackButton({Key key, this.color}) : super(key: key);
   final Color color;
 
   @override
@@ -152,7 +163,7 @@ class AppBarBackButton extends StatelessWidget {
 }
 
 class AppBarCloseButton extends StatelessWidget {
-  const AppBarCloseButton({ Key key, this.color }) : super(key: key);
+  const AppBarCloseButton({Key key, this.color}) : super(key: key);
   final Color color;
 
   @override
@@ -174,36 +185,17 @@ class AppBarCloseButton extends StatelessWidget {
 }
 
 void _appBarPop(BuildContext context) {
-  // 通知 js 执行 popPage
-  dynamicApp?.call(
-    method: ChannelMethod.needPopPage,
-    params: {
-      'pageName': dynamicApp.currentPageOrModalName
-    }
-  );
-  // if (Navigator.canPop(context)) {
-  //   devtools.insert(InfoType.event, DevInfo(
-  //     title: 'Pop Page',
-  //     content: 'PageName: ${dynamicApp.nameStack.last}'
-  //   ));
-  //   Navigator.pop(context);
-  // }
-  // else {
-  //   if (!dynamicApp.jsEnvIsProd && dynamicApp.debugMode) {
-  //     Util.showToast('debug模式页面已关闭\n请刷新后重新进入');
-  //   }
-  //   dynamicApp.popPage(isRootPage: true);
-  // }
+  dynamicApp?.needPopPage();
 }
 
 class AppBarText extends StatefulWidget {
-  AppBarText(this.text, { this.style, this.controller });
+  AppBarText(this.text, {this.style, this.controller});
 
   @override
   State<StatefulWidget> createState() {
     return AppBarTextState();
   }
-  
+
   final String text;
   final TextStyle style;
   final AppBarController controller;
@@ -228,7 +220,7 @@ class AppBarTextState extends State<AppBarText> {
 
   @override
   void dispose() {
-  widget.controller.holdState(null);
+    widget.controller.holdState(null);
     super.dispose();
   }
 

@@ -21,9 +21,9 @@
 
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:thresh/basic/util.dart';
 import 'package:thresh/framework/core/dynamic_app.dart';
 import 'package:thresh/framework/widget/data/widget_toast.dart';
-import 'package:thresh/basic/global_def.dart';
 import 'package:thresh/devtools/dev_panel.dart';
 import 'package:thresh/devtools/panel_content.dart';
 
@@ -32,28 +32,34 @@ _Devtools devtools = _Devtools();
 class _Devtools {
   int lastPanelIndex = 0;
   bool panelIsShow = false;
+  BuildContext panelContext;
   DevPanelState panelState;
   List<InfoType> panels;
   Map<InfoType, PanelHolder> _panelHolders = {};
 
   showDevtools() {
+    if (panelIsShow) {
+      Navigator.maybePop(panelContext);
+      return;
+    }
     showGeneralDialog(
-        context: dynamicApp.context,
-        barrierDismissible: false,
-        transitionDuration: const Duration(milliseconds: 100),
-        pageBuilder: (BuildContext buildContext, Animation<double> animation,
-            Animation<double> secondaryAnimation) {
-          panelIsShow = true;
-          return Material(
-            color: Colors.transparent,
-            child: DevPanel(),
-          );
-        });
+      context: dynamicApp.context,
+      barrierDismissible: false,
+      transitionDuration: const Duration(milliseconds: 100),
+      pageBuilder: (BuildContext context, Animation<double> animation,
+          Animation<double> secondaryAnimation) {
+        panelIsShow = true;
+        panelContext = context;
+        return Material(
+          color: Colors.transparent,
+          child: DevPanel(),
+        );
+      },
+    );
   }
 
   void reloadThresh({BuildContext reloadContext}) async {
     BuildContext currentContext = dynamicApp.context;
-    TimerForJs.clearAll();
     DFToastManager.removeAll();
     dynamicApp.reset();
     dynamicApp.reloadJS();
@@ -62,8 +68,10 @@ class _Devtools {
         ? DynamicAppRoot.restart(currentContext)
         : Navigator.of(reloadContext).pushAndRemoveUntil(
             MaterialPageRoute(
-                builder: (BuildContext context) => DynamicAppRoot()),
-            (route) => route == null);
+              builder: (BuildContext context) => DynamicAppRoot(),
+            ),
+            (route) => route == null,
+          );
   }
 
   registePanel(List<InfoType> showPanels) {
@@ -122,17 +130,23 @@ class _Devtools {
 
   debug(String methodName, String fileName, String debugType,
       [String otherInfos]) {
-    insert(InfoType.debug, DevInfo(title: '''Method: $methodName
-File: $fileName
-Type: $debugType
-''', content: otherInfos));
+    insert(
+      InfoType.debug,
+      DevInfo(
+        title: Util.formatMutipulLineText([
+          'Method: $methodName',
+          'File: $fileName',
+          'Type: $debugType',
+        ]),
+        content: otherInfos,
+      ),
+    );
   }
 }
 
 class DevInfo {
   final String title;
   final String content;
-  final String contextId = dynamicApp?.jsContextId;
 
   DevInfo({this.title, this.content});
 

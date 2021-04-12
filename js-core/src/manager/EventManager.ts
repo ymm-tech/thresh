@@ -24,21 +24,55 @@
 
 import bus from '../shared/bus'
 import Util from '../shared/Util'
-import DevtoolsManager, { InfoType } from './DevtoolsManager'
+import devtools, { InfoType } from './DevtoolsManager'
+import { Page } from '../core/basicWidget'
+
+// thresh 内建事件
+export enum BuiltInEventType {
+  pageOnShow = 'pageOnShow',
+  pageOnHide = 'pageOnHide',
+}
 
 /**
  * 事件管理器
  * 暴露给外部使用，可以与 native 之间进行事件通信
+ * TODO - 支持单事件多次注册，使用三方库
  */
-export default class EventManager {
+class EventManager {
+  private _hasRegisterBuiltInEvents: boolean = false
+
+  /**
+   * 注册内建事件
+   * 内建事件回调的第一个参数是 contextId
+   * contextId 来自 native 触发
+   * 如果是内部调用则不存在该参数
+   */
+  registerBuiltInEvents () {
+    if (this._hasRegisterBuiltInEvents) return
+
+    // 注册事件 - 页面显示
+    this.register(BuiltInEventType.pageOnShow, (contextId: string) => {
+      Page.invokePageOnShow(contextId)
+    })
+    // 注册事件 - 页面隐藏
+    this.register(BuiltInEventType.pageOnHide, (contextId: string) => {
+      Page.invokePageOnHide(contextId)
+    })
+
+    this._hasRegisterBuiltInEvents = true
+  }
+  resetAndRegisterBuiltInEvents () {
+    this._hasRegisterBuiltInEvents = false
+    this.registerBuiltInEvents()
+  }
   /**
    * 注册事件
    * native 可以通过 methodChannel_register_js_event 注册一个 js 事件
    */
-  static register (name: string, callback: Function) {
+  register (name: string, callback: Function) {
     if (!Util.isFunc(callback)) return
     bus.register(callback, name)
-    DevtoolsManager.show(InfoType.event, Util.anyToRawString({
+    devtools.show(InfoType.event, Util.anyToRawString({
       type: 'register',
       name
     }), `注册事件：${name}`)
@@ -50,7 +84,10 @@ export default class EventManager {
    * 1. 执行事件是会先查询是否已注册
    * 2. 当未在 js 中查询到注册的事件时，会向 native 发送执行事件的通知
    */
-  static fire (name: string | any[], ...args: any[]) {
+  fire (name: string | any[], ...args: any[]) {
+    this.fireWithContextId(name, undefined, ...args)
+  }
+  fireWithContextId (name: string | any[], contextId: string | undefined, ...args: any[]) {
     if (typeof name !== 'string') {
       if (!Array.isArray(name)) return
       if (!name.length) return
@@ -61,45 +98,66 @@ export default class EventManager {
     if (typeof name !== 'string') return
 
     if (bus.has(name)) {
-      bus.fire(name, ...args)
-      DevtoolsManager.show(InfoType.event, Util.anyToRawString({
+      devtools.show(InfoType.event, Util.anyToRawString({
         type: 'fire',
+        contextId,
         name,
         args
-      }), `触发JS注册事件：${name}`)
+      }), `触发JS注册事件：${name}`, contextId)
+      return contextId
+        ? bus.fire(name, contextId, ...args)
+        : bus.fire(name, ...args)
     } else {
       // TODO - call native method
-      DevtoolsManager.show(InfoType.event, Util.anyToRawString({
-        type: 'fire',
-        name,
-        args
-      }), `触发Native注册事件：${name}`)
+      // devtools.show(InfoType.event, Util.anyToRawString({
+      //   type: 'fire',
+      //   name,
+      //   args
+      // }), `触发Native注册事件：${name}`)
     }
   }
   /**
    * 查询某个事件是否已注册在 js 中
    * 无法查询是否在 native 中注册
    */
-  static has (name: string): boolean {
-    return bus.has(name)
+  has (name: string, callback?: Function): boolean {
+    return bus.has(name, callback)
   }
   /**
    * 从已注册在 js 的事件中移除某个事件
    * 无法移除 native 中注册的事件
    * @param name 
    */
-  static remove (name: string) {
-    bus.remove(name)
-    DevtoolsManager.show(InfoType.event, Util.anyToRawString({
+  remove (name: string, callback?: Function) {
+    bus.remove(name, callback)
+    devtools.show(InfoType.event, Util.anyToRawString({
       type: 'remove',
       name
     }), `移除注册事件：${name}`)
   }
+  /**
+   * 判断是否内置事件
+   */
+  isBuiltInEvent (name: string) {
+    return BuiltInEventType[name] !== undefined
+  }
 }
 
-export function methodChannel_fire_js_event (name: string, ...args: any[]) {
-  EventManager.fire(name, ...args)
+const eventManager: EventManager = new EventManager()
+export default eventManager
+
+export function methodChannel_fire_js_event (name: string, contextId: string, ...args: any[]) {
+  devtools.show(InfoType.event, Util.anyToRawString({
+    type: 'fire event from native',
+    contextId,
+    name,
+    args
+  }), `来自Native的事件触发：${name}`, contextId)
+
+  if (!eventManager.isBuiltInEvent(name)) return eventManager.fire(name, ...args)
+  else return eventManager.fireWithContextId(name, contextId, ...args)
 }
-export function methodChannel_register_js_event (name: string, callback: Function) {
-  EventManager.register(name, callback)
+
+export function methodChannel_register_js_event (name: string, contextId: string, callback: Function) {
+  eventManager.register(name, callback)
 }

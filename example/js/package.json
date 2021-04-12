@@ -34,6 +34,6 @@
     "webpack-replace-loader": "^1.3.0"
   },
   "dependencies": {
-    "thresh-lib": "^1.0.1"
+    "thresh-lib": "^1.2.0"
   }
 }

@@ -1,5 +1,5 @@
 /// MIT License
-/// 
+///
 /// Copyright (c) 2020 ManBang Group
 /// Permission is hereby granted, free of charge, to any person obtaining a copy
 /// of this software and associated documentation files (the "Software"), to deal
@@ -7,10 +7,10 @@
 /// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 /// copies of the Software, and to permit persons to whom the Software is
 /// furnished to do so, subject to the following conditions:
-/// 
+///
 /// The above copyright notice and this permission notice shall be included in all
 /// copies or substantial portions of the Software.
-/// 
+///
 /// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 /// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 /// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -30,7 +30,8 @@ import 'package:thresh/basic/global_def.dart';
 import 'package:thresh/devtools/dev_tools.dart';
 
 class DFNativeView extends DFBasicWidget {
-  DFNativeView(DynamicModel model, {
+  DFNativeView(
+    DynamicModel model, {
     Key key,
     @required this.type,
     this.params,
@@ -70,7 +71,6 @@ class _DFNativeViewWidget extends StatefulWidget {
 class _DFNativeViewWidgetState extends State<_DFNativeViewWidget> {
   String type;
   Map<String, dynamic> params;
-  DFBasicWidget _basicWidget;
   bool isInit = false;
 
   @override
@@ -93,43 +93,45 @@ class _DFNativeViewWidgetState extends State<_DFNativeViewWidget> {
 
   @override
   Widget build(BuildContext context) {
+    Widget $nativeView;
     if (Platform.isAndroid) {
       // 解决androidView黑屏问题
-      return Opacity(
-        opacity: isInit ? 1: 0,
+      $nativeView = Opacity(
+        opacity: isInit ? 1 : 0,
         child: AndroidView(
           viewType: type,
           onPlatformViewCreated: onViewCreated,
           creationParams: params,
-          creationParamsCodec: StandardMessageCodec(),),
+          creationParamsCodec: StandardMessageCodec(),
+        ),
       );
     } else {
-      return UiKitView(
+      $nativeView = UiKitView(
         viewType: type,
         onPlatformViewCreated: onViewCreated,
         creationParams: params,
         creationParamsCodec: StandardMessageCodec(),
       );
     }
+    return $nativeView;
   }
 
   onViewCreated(int id) {
-    devtools.insert(InfoType.event, DevInfo(
-        title: 'Load Native View: ${widget.type}',
-        content: 'View Type: ${widget.type}'
-    ));
-    if(Platform.isAndroid){
+    devtools.insert(
+        InfoType.event,
+        DevInfo(
+            title: 'Load Native View: ${widget.type}',
+            content: 'View Type: ${widget.type}'));
+    if (Platform.isAndroid) {
       new Future.delayed(new Duration(milliseconds: 500), () {
         setState(() {
           isInit = true;
         });
-      } );
+      });
     }
     if (widget.onLoad == null) return;
     widget.onLoad();
   }
-
-  bool isAbsolute() => _basicWidget == null ? false : _basicWidget.isAbsolute();
 }
 
 class ProxyDFNativeView extends ProxyBase {
@@ -144,14 +146,13 @@ class ProxyDFNativeView extends ProxyBase {
   DFNativeView constructor(DynamicModel model, BuildContext context) {
     Map<String, dynamic> props = model.props;
 
-    return DFNativeView(
-        model,
+    return DFNativeView(model,
         type: Util.getString(props['type']),
         params: props['params'],
-        onLoad: eventGlobalVoidHandler(pageName: model.pageName,
+        onLoad: eventGlobalVoidHandler(
+            pageName: model.pageName,
             widgetId: model.widgetId,
             eventId: model.props['_onLoadId'],
-            type: 'onLoad')
-    );
+            type: 'onLoad'));
   }
 }

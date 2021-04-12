@@ -22,6 +22,7 @@
 import 'package:flutter/material.dart';
 import 'package:thresh/basic/util.dart';
 import 'package:thresh/devtools/dev_tools.dart';
+import 'package:thresh/framework/core/dynamic_app.dart';
 
 class PanelContentItem extends StatelessWidget {
   PanelContentItem(this.info);
@@ -64,9 +65,9 @@ class PanelContentItem extends StatelessWidget {
                     ),
                   ),
             Text(
-              'contextId: ${info.contextId ?? 'not set'}',
+              '[jsContextId] - ${dynamicApp.jsContextId}',
               style: TextStyle(
-                fontSize: 12,
+                fontSize: 10,
                 color: Colors.grey,
               ),
             ),

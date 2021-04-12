@@ -23,6 +23,9 @@
  */
 package io.manbang.frontend.thresh.runtime;
 
+import android.os.Handler;
+import android.os.Looper;
+
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -30,6 +33,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 import io.manbang.frontend.thresh.Thresh;
+import io.manbang.frontend.thresh.manager.config.ThreshConfigManager;
 import io.manbang.frontend.thresh.util.ThreshLogger;
 
 /**
@@ -44,7 +48,7 @@ public class JSThread {
     private ScheduledExecutorService executorService;
 
     public JSThread(final String moduleName) {
-        runUi = Thresh.get().platform().isJSThreadRunUI();
+        runUi = ThreshConfigManager.Companion.config().isJSThreadRunUI();
         executorService = Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
             @Override
             public Thread newThread(Runnable runnable) {
@@ -56,7 +60,7 @@ public class JSThread {
 
     public ScheduledFuture<?> schedule(ThreshJSTask command, long delay) {
         if (runUi) {
-            Thresh.get().getMainHandler().postDelayed(command, delay);
+            new Handler(Looper.getMainLooper()).postDelayed(command, delay);
             return null;
         } else {
             return executorService.schedule(command, delay, TimeUnit.MILLISECONDS);

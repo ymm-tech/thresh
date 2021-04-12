@@ -36,82 +36,49 @@ public class ThreshReporter {
             return null;
         }
         Map params = new HashMap();
-        long pageDidLoad ;
-        if ( objectMap.get("pageDidLoad") instanceof Integer ){
-            pageDidLoad =  objectMap.containsKey("pageDidLoad") ? ((Integer)objectMap.get("pageDidLoad")).intValue(): 0;
-        } else if ( objectMap.get("pageDidLoad") instanceof Long ){
-            pageDidLoad =  objectMap.containsKey("pageDidLoad") ? ((Long)objectMap.get("pageDidLoad")).longValue(): 0;
-        } else {
-            pageDidLoad = 0L;
-        }
-
-        long networkTime ;
-        if ( objectMap.get("networkTime") instanceof Integer ){
-            networkTime =  objectMap.containsKey("networkTime") ? ((Integer)objectMap.get("networkTime")).intValue(): 0;
-        } else if ( objectMap.get("networkTime") instanceof Long ){
-            networkTime =  objectMap.containsKey("networkTime") ? ((Long)objectMap.get("networkTime")).longValue(): 0;
-        } else {
-            networkTime = 0L;
-        }
-        long pageDidShowTime ;
-        if ( objectMap.get("pageDidShowTime") instanceof Integer ){
-            pageDidShowTime =  objectMap.containsKey("pageDidShowTime") ? ((Integer)objectMap.get("pageDidShowTime")).intValue(): 0;
-        } else if ( objectMap.get("pageDidShowTime") instanceof Long ){
-            pageDidShowTime =  objectMap.containsKey("pageDidShowTime") ? ((Long)objectMap.get("pageDidShowTime")).longValue(): 0;
-        } else {
-            pageDidShowTime = 0L;
-        }
-
-        long jsStartTime ;
-        if ( objectMap.get("jsStartTime") instanceof Integer ){
-            jsStartTime =  objectMap.containsKey("jsStartTime") ? ((Integer)objectMap.get("jsStartTime")).intValue(): 0;
-        } else if ( objectMap.get("jsStartTime") instanceof Long ){
-            jsStartTime =  objectMap.containsKey("jsStartTime") ? ((Long)objectMap.get("jsStartTime")).longValue(): 0;
-        } else {
-            jsStartTime = 0L;
-        }
-
-        long jsRunAppTime ;
-        if ( objectMap.get("jsRunAppTime") instanceof Integer ){
-            jsRunAppTime =  objectMap.containsKey("jsRunAppTime") ? ((Integer)objectMap.get("jsRunAppTime")).intValue(): 0;
-        } else if ( objectMap.get("jsRunAppTime") instanceof Long ){
-            jsRunAppTime =  objectMap.containsKey("jsRunAppTime") ? ((Long)objectMap.get("jsRunAppTime")).longValue(): 0;
-        } else {
-            jsRunAppTime = 0L;
-        }
-
-        long channelFirstSpendTime ;
-        if ( objectMap.get("channelFirstSpendTime") instanceof Integer ){
-            channelFirstSpendTime =  objectMap.containsKey("channelFirstSpendTime") ? ((Integer)objectMap.get("channelFirstSpendTime")).intValue(): 0;
-        } else if ( objectMap.get("channelFirstSpendTime") instanceof Long ){
-            channelFirstSpendTime =  objectMap.containsKey("channelFirstSpendTime") ? ((Long)objectMap.get("channelFirstSpendTime")).longValue(): 0;
-        } else {
-            channelFirstSpendTime = 0L;
-        }
-
+        // 首屏主要接口的网络请求耗时，可能为0
+        long networkTime = getTime(objectMap,"networkTime");
+        // 页面创建时间戳
+        long pageCreateTimestamp = getTime(objectMap,"pageCreateTimestamp");
+        // 页面首帧加载完成时间戳
+        long pageLoadTimestamp = getTime(objectMap,"pageLoadTimestamp");
+        // 页面显示内容时间戳
+        long pageShowTimestamp = getTime(objectMap,"pageShowTimestamp");
+        // Thresh flutter 端版本号
         String flutterVersion =  objectMap.containsKey("flutterVersion") ? (String)objectMap.get("flutterVersion") : "";
-
+        // Thresh js 端版本号
         String jsVersion =  objectMap.containsKey("jsVersion") ? (String)objectMap.get("jsVersion") : "";
         long currentTime = System.currentTimeMillis();
-        long rendTime = pageDidLoad - startTime;
+        long rendTime = pageLoadTimestamp - pageCreateTimestamp;
 
-        ThreshLogger.v("thresh-time :"
+        ThreshLogger.v("thresh-info :"
+                               + " \nflutterVersion =" + flutterVersion
+                               + " \njsVersion =" + jsVersion
                                + " \ncurrentRealTime =" + (currentTime - startTime)
-                               + " \nall_load_time =" + (rendTime + networkTime)
+                               + " \nall_load_time =" + (pageShowTimestamp - pageCreateTimestamp)
                                + " \nrender_time =" + rendTime
-                               + " \nnetwork_time =" + networkTime
-                               + " \njsStartTime =" + (pageDidShowTime - jsStartTime)
-                               + " \njsRunAppTime =" + (pageDidShowTime - jsRunAppTime)
-                               + " \nchannelFirstSpendTime =" + channelFirstSpendTime);
+                               + " \nnetwork_time =" + networkTime);
+
         params.put("currentRealTime",currentTime - startTime);
-        params.put("all_load_time",rendTime + networkTime);
+        params.put("all_load_time",pageShowTimestamp - pageCreateTimestamp);
         params.put("render_time",rendTime);
         params.put("network_time",networkTime);
-        params.put("jsStartTime",pageDidShowTime - jsStartTime);
-        params.put("jsRunAppTime",pageDidShowTime - jsRunAppTime);
-        params.put("channelFirstSpendTime",channelFirstSpendTime);
         params.put("flutterVersion",flutterVersion);
         params.put("jsVersion",jsVersion);
         return params;
+    }
+
+    private static long getTime(Map<String,Object> objectMap,String key){
+
+        long cntTime;
+
+        if ( objectMap.get(key) instanceof Integer ){
+            cntTime =  objectMap.containsKey(key) ? ((Integer)objectMap.get(key)).intValue(): 0;
+        } else if ( objectMap.get(key) instanceof Long ){
+            cntTime =  objectMap.containsKey(key) ? ((Long)objectMap.get(key)).longValue(): 0;
+        } else {
+            cntTime = 0L;
+        }
+        return cntTime;
     }
 }

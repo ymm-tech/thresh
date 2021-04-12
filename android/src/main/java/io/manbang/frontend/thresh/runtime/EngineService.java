@@ -25,21 +25,49 @@ package io.manbang.frontend.thresh.runtime;
 
 import java.util.Map;
 
-import io.manbang.frontend.thresh.channel.BridgeCallback;
+import io.manbang.frontend.thresh.runtime.jscore.bundle.BundleCallback;
 import io.manbang.frontend.thresh.runtime.jscore.runtime.JSCallback;
+import io.manbang.frontend.thresh.channel.BridgeCallback;
 
 public interface EngineService {
 
     /**
-     * load bundle
+     * load bundle & execute script
      */
     void loadScript();
 
+
+    void forceLoadScript();
+
     /**
-     * load bundle
+     * load bundle & execute script
+     *
      * @param callback
      */
     void loadScript(final JSCallback callback);
+
+    /**
+     * load bundle
+     *
+     * @param callback
+     */
+    void loadBundleScript(final BundleCallback callback);
+
+    /**
+     * execute script
+     *
+     * @param script
+     * @param callback
+     */
+    void executeScript(final String script, final JSCallback callback);
+
+    /**
+     * Execute js message method
+     *
+     * @param method
+     * @param params
+     */
+    void execMessage(final String method, final Object params);
 
     /**
      * exec js function

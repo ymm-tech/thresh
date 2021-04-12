@@ -2,6 +2,7 @@ import PageAppBar from './pages/basic/PageAppBar'
 import ContainerDemo from './pages/basic/ContainerDemo'
 import TextDemo from './pages/basic/TextDemo'
 import ImageDemo from './pages/basic/ImageDemo'
+import QrImageDemo from './pages/basic/QrImageDemo'
 import IconDemo from './pages/basic/IconDemo'
 import ScrollViewDemo from './pages/basic/ScrollViewDemo'
 import ListViewDemo from './pages/basic/ListViewDemo'
@@ -18,10 +19,16 @@ import ToastActions from './pages/apis/ToastActions'
 import RefreshDemo from './pages/basic/RefreshDemo'
 import NestScrollViewDemo from './pages/basic/NestScrollViewDemo'
 import NoticeBarDemo from './pages/basic/NoticeBarDemo'
+import ThemeProviderActions from './pages/apis/ThemeProviderActions'
+import SwitchDemo from './pages/basic/SwitchDemo'
+import PickerDemo from './pages/basic/PickerDemo'
+import TimerDemo from './pages/examples/timer'
+import DrawerScrollViewDemo from './pages/basic/DragableScrollViewDemo'
 
 interface IPageConfig {
   title?: string,
   desc?: string,
+  useInject?: boolean,
   pageName: string,
   pageBuilder: Function
 }
@@ -62,6 +69,12 @@ export const widgetList: IPageConfig[] = [
     pageBuilder: () => ImageDemo
   },
   {
+      title: 'QrImage',
+      desc: '二维码组件',
+      pageName: 'widget-qrimage',
+      pageBuilder: () => QrImageDemo
+    },
+  {
     title: 'Icon',
     desc: '图标组件',
     pageName: 'widget-icon',
@@ -98,6 +111,13 @@ export const widgetList: IPageConfig[] = [
     pageBuilder: () => NestScrollViewDemo
   },
   {
+    title: 'DragableScrollView',
+    desc: '底部拖拽滚动视图组件',
+    // useInject: true,
+    pageName: 'widget-dragableScrollview',
+    pageBuilder: () => DrawerScrollViewDemo
+  },
+  {
     title: 'SwiperActionsView',
     desc: '侧滑显示按钮组件',
     pageName: 'widget- swiperActionsview',
@@ -114,6 +134,13 @@ export const widgetList: IPageConfig[] = [
     desc: '原生视图组件',
     pageName: 'widget-nativeview',
     pageBuilder: () => NativeViewDemo
+  },
+  {
+    title: 'Input',
+    desc: '输入框组件',
+    // useInject: true,
+    pageName: 'widget-input',
+    pageBuilder: () => InputDemo
   },
   {
     title: 'Button',
@@ -134,11 +161,17 @@ export const widgetList: IPageConfig[] = [
     pageBuilder: () => CheckboxDemo
   },
   {
-    title: 'Input',
-    desc: '输入框组件',
-    pageName: 'widget-input',
-    pageBuilder: () => InputDemo
+    title: 'Switch',
+    desc: '开关组件',
+    pageName: 'widget-switch',
+    pageBuilder: () => SwitchDemo
   },
+  {
+    title: 'Picker',
+    desc: '选择组件',
+    pageName: 'widget-picker',
+    pageBuilder: () => PickerDemo
+  }
 ]
 
 export const apiList: IPageConfig[] = [
@@ -151,6 +184,7 @@ export const apiList: IPageConfig[] = [
   {
     title: 'Modal Actions',
     desc: '模态页面操作',
+    useInject: false,
     pageName: 'api-modal-actions',
     pageBuilder: () => ModalActions
   },
@@ -159,6 +193,18 @@ export const apiList: IPageConfig[] = [
     desc: '提示框操作',
     pageName: 'api-toast-actions',
     pageBuilder: () => ToastActions
+  },
+  {
+    title: 'Theme Provider',
+    desc: '主题换肤',
+    pageName: 'api-theme-provider',
+    pageBuilder: () => ThemeProviderActions
+  },
+  {
+    title: 'Timer Apis',
+    desc: '定时器操作',
+    pageName: 'api-timers',
+    pageBuilder: () => TimerDemo
   }
 ]
 

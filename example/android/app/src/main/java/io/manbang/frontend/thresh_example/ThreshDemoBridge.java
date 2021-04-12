@@ -26,16 +26,17 @@ package io.manbang.frontend.thresh_example;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Handler;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import io.manbang.frontend.thresh.channel.BridgeCallback;
-import io.manbang.frontend.thresh.channel.NativeModule;
-import io.manbang.frontend.thresh.containers.ThreshActivity;
-import io.manbang.frontend.thresh.containers.ThreshDelegate;
 import io.manbang.frontend.thresh.runtime.jscore.bundle.BundleType;
+import io.manbang.frontend.thresh.channel.BridgeCallback;
+import io.manbang.frontend.thresh.channel.nativemodule.NativeModule;
+import io.manbang.frontend.thresh.containers.ThreshActivity;
+import io.manbang.frontend.thresh.containers.ThreshFlutterActivityLaunchConfigs;
 import io.manbang.frontend.thresh.util.ThreshLogger;
 
 public class ThreshDemoBridge extends NativeModule {
@@ -74,11 +75,18 @@ public class ThreshDemoBridge extends NativeModule {
                     ((Activity) context).finish();
                 }
             } else if ("openSchema".equals(method) && params.get("params") != null){
-                Intent intent = new Intent(context, ThreshActivity.class);
-                intent.putExtra("load_mode", BundleType.ASSETS_FILE.getType());
-                intent.putExtra(ThreshDelegate.KEY_ROUTER_NAME,"thresh/thresh-page?page=homePage");
+
+                SharedPreferences sp = context.getSharedPreferences("thresh_data", Context.MODE_PRIVATE);
+                String debug_local_ip = sp.getString("debug_local_ip","");
+
+                Intent intent = new Intent(context, ThreshDemoActivity.class);
+                intent.putExtra("load_mode", BundleType.JS_SERVER.getType())
+                        .putExtra("debug_local_port", "12345")
+                        .putExtra("debug_local_ip", debug_local_ip)
+                        .putExtra(ThreshFlutterActivityLaunchConfigs.EXTRA_INITIAL_ROUTE, "thresh/thresh-page?page=homePage")
+                        .putExtra(ThreshFlutterActivityLaunchConfigs.EXTRA_DESTROY_ENGINE_WITH_ACTIVITY, true);
                 context.startActivity(intent);
-                ThreshLogger.v(params.get("params").toString());
+
             }else if ("log".equals(method) && params.get("params") != null){
                 ThreshLogger.v(params.get("params").toString());
             }

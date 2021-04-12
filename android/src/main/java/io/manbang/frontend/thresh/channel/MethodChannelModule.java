@@ -23,6 +23,7 @@
  */
 package io.manbang.frontend.thresh.channel;
 
+import io.flutter.embedding.engine.FlutterEngine;
 import io.manbang.frontend.thresh.runtime.EngineService;
 import io.manbang.frontend.thresh.util.ThreshLogger;
 
@@ -31,7 +32,6 @@ import java.util.Map;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.PluginRegistry;
-import io.flutter.view.FlutterView;
 
 /**
  * thresh flutter methodChannel
@@ -54,10 +54,10 @@ public abstract class MethodChannelModule implements MethodChannel.MethodCallHan
     private final EngineService engineService;
     /**
      * flutterView mode
-     * @param flutterView
+     * @param engine
      */
-    public MethodChannelModule(FlutterView flutterView,EngineService engineService) {
-        this.channel = new MethodChannel(flutterView, CHANNEL_TYPE);
+    public MethodChannelModule(FlutterEngine engine, EngineService engineService) {
+        this.channel = new MethodChannel(engine.getDartExecutor(), CHANNEL_TYPE);
         this.channel.setMethodCallHandler(this);
         this.engineService = engineService;
     }
@@ -110,7 +110,7 @@ public abstract class MethodChannelModule implements MethodChannel.MethodCallHan
             // flutter call native
             if (MethodConstants.RELOAD.equals(method)) {
                 if (engineService != null){
-                    engineService.loadScript();
+                    engineService.forceLoadScript();
                 }
             }else if (MethodConstants.callNative.equals(method)){
                 if (engineService != null){

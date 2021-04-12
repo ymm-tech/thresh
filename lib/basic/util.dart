@@ -1,5 +1,5 @@
 /// MIT License
-/// 
+///
 /// Copyright (c) 2020 ManBang Group
 /// Permission is hereby granted, free of charge, to any person obtaining a copy
 /// of this software and associated documentation files (the "Software"), to deal
@@ -7,10 +7,10 @@
 /// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 /// copies of the Software, and to permit persons to whom the Software is
 /// furnished to do so, subject to the following conditions:
-/// 
+///
 /// The above copyright notice and this permission notice shall be included in all
 /// copies or substantial portions of the Software.
-/// 
+///
 /// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 /// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 /// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -33,10 +33,10 @@ import 'package:thresh/basic/global_def.dart';
 import 'package:thresh/framework/widget/data/widget_toast.dart';
 import 'package:thresh/framework/core/dynamic_model.dart';
 
-const List<String> DIRECTIONS = const [ 'horizontal', 'vertical' ];
-const List<String> POSITIONS = const [ 'relative', 'absolute' ];
-const List<String> BORDER_STYLES = const [ 'solid' ];
-const List<String> TRANSFORM_TYPES = const [ 'rotation', 'transition' ];
+const List<String> DIRECTIONS = const ['horizontal', 'vertical'];
+const List<String> POSITIONS = const ['relative', 'absolute'];
+const List<String> BORDER_STYLES = const ['solid'];
+const List<String> TRANSFORM_TYPES = const ['rotation', 'transition'];
 const int BLACK = 0xFF000000;
 
 class Util {
@@ -46,8 +46,11 @@ class Util {
 
   /// 将 value 转换为 boolean
   /// [nullIsTrue] 当 value 为 null 时是否返回 true
-  static bool getBoolean(dynamic value, { bool nullIsTrue = false }) {
-    if ((value == null && !nullIsTrue) || value == '' || value == 0 || value == false) return false;
+  static bool getBoolean(dynamic value, {bool nullIsTrue = false}) {
+    if ((value == null && !nullIsTrue) ||
+        value == '' ||
+        value == 0 ||
+        value == false) return false;
     return true;
   }
 
@@ -55,8 +58,11 @@ class Util {
     return (value is num) ? value.toInt() : null;
   }
 
-  static double getDouble(dynamic value, { Range range }) {
-    if (value is num) return range == null ? value.toDouble() : range.convertNumber(value).toDouble();
+  static double getDouble(dynamic value, {Range range}) {
+    if (value is num)
+      return range == null
+          ? value.toDouble()
+          : range.convertNumber(value).toDouble();
     return null;
   }
 
@@ -82,7 +88,7 @@ class Util {
 
   static List getList(dynamic value) {
     if (value == null || value is List) return value;
-    return [ value ];
+    return [value];
   }
 
   static dynamic getListLast(List list) {
@@ -93,7 +99,8 @@ class Util {
     return list.length > 0 ? list.first : null;
   }
 
-  static List<double> getDoubleList(dynamic value, { int length: 4, double defaultValue: 0 }) {
+  static List<double> getDoubleList(dynamic value,
+      {int length: 4, double defaultValue: 0}) {
     if (value == null) return null;
     if (value is num) return List.filled(length, value.toDouble());
     if (!(value is List)) return null;
@@ -145,10 +152,18 @@ class Util {
     }
     if (value is Map)
       return {
-        'top': (value['top'] != null && value['top'] is num) ? value['top'].toDouble() : null,
-        'bottom': (value['bottom'] != null && value['bottom'] is num) ? value['bottom'].toDouble() : null,
-        'left': (value['left'] != null && value['left'] is num) ? value['left'].toDouble() : null,
-        'right': (value['right'] != null && value['right'] is num) ? value['right'].toDouble() : null,
+        'top': (value['top'] != null && value['top'] is num)
+            ? value['top'].toDouble()
+            : null,
+        'bottom': (value['bottom'] != null && value['bottom'] is num)
+            ? value['bottom'].toDouble()
+            : null,
+        'left': (value['left'] != null && value['left'] is num)
+            ? value['left'].toDouble()
+            : null,
+        'right': (value['right'] != null && value['right'] is num)
+            ? value['right'].toDouble()
+            : null,
       };
     return null;
   }
@@ -157,29 +172,31 @@ class Util {
     if (!(value is Map)) return null;
     String type = value['type'];
     dynamic v = value['value'];
-    if (type == TRANSFORM_TYPES[0]) { // rotate
+    if (type == TRANSFORM_TYPES[0]) {
+      // rotate
       double r = Util.degreeToRadians(v);
       if (r != null) return Matrix4.rotationZ(r);
       return null;
-    } else if (type == TRANSFORM_TYPES[1]) { // 位移
+    } else if (type == TRANSFORM_TYPES[1]) {
+      // 位移
       if (!(v is Map)) return null;
       double x = Util.getDouble(v['x']);
       double y = Util.getDouble(v['y']);
       double z = Util.getDouble(v['z']);
       if (x == null && y == null && z == null) return null;
       return Matrix4.translationValues(x ?? 0, y ?? 0, z ?? 0);
-    } else return null;
+    } else
+      return null;
   }
 
   static EdgeInsets getEdgeInsets(dynamic value) {
     if (value is num) return EdgeInsets.all(value.toDouble());
     if (!(value is Map)) return null;
     return EdgeInsets.fromLTRB(
-      value['left']?.toDouble() ?? 0,
-      value['top']?.toDouble() ?? 0,
-      value['right']?.toDouble() ?? 0,
-      value['bottom']?.toDouble() ?? 0
-    );
+        value['left']?.toDouble() ?? 0,
+        value['top']?.toDouble() ?? 0,
+        value['right']?.toDouble() ?? 0,
+        value['bottom']?.toDouble() ?? 0);
   }
 
   static Border getBorder(dynamic border) {
@@ -188,7 +205,7 @@ class Util {
     dynamic style = border['style'] ?? 'solid';
     dynamic width = border['width'] ?? 1.0;
     dynamic color = border['color'];
-    dynamic side  = border['side'];
+    dynamic side = border['side'];
 
     if (style != 'solid' || (side != null && !(side is List))) return null;
 
@@ -212,14 +229,23 @@ class Util {
     if (value is num) return BorderRadius.circular(value.toDouble());
     if (!(value is Map)) return null;
     return BorderRadius.only(
-      topLeft: Radius.circular(value['topLeft']?.toDouble() ?? 0,),
-      topRight: Radius.circular(value['topRight']?.toDouble() ?? 0,),
-      bottomRight: Radius.circular(value['bottomRight']?.toDouble() ?? 0,),
-      bottomLeft: Radius.circular(value['bottomLeft']?.toDouble() ?? 0,),
+      topLeft: Radius.circular(
+        value['topLeft']?.toDouble() ?? 0,
+      ),
+      topRight: Radius.circular(
+        value['topRight']?.toDouble() ?? 0,
+      ),
+      bottomRight: Radius.circular(
+        value['bottomRight']?.toDouble() ?? 0,
+      ),
+      bottomLeft: Radius.circular(
+        value['bottomLeft']?.toDouble() ?? 0,
+      ),
     );
   }
 
-  static Alignment getAlignment(dynamic value, [ Alignment defaultValue = Alignment.topLeft ]) {
+  static Alignment getAlignment(dynamic value,
+      [Alignment defaultValue = Alignment.topLeft]) {
     if (!(value is String)) return defaultValue;
     switch (value as String) {
       case 'topLeft':
@@ -306,10 +332,12 @@ class Util {
   }
 
   static Color getColor(dynamic value) {
-    return (value is int) && value >= 0x00000000 && value <= 0xffffffff ? Color(value) : null;
+    return (value is int) && value >= 0x00000000 && value <= 0xffffffff
+        ? Color(value)
+        : null;
   }
 
-  static List<String> _gradientTypes = [ 'linear', 'radial' ]; // 'sweep' 扇形渐变暂不考虑
+  static List<String> _gradientTypes = ['linear', 'radial']; // 'sweep' 扇形渐变暂不考虑
   static Gradient getGradient(dynamic value) {
     if (value == null || !(value is Map)) return null;
     if (value['colors'] == null || !(value['colors'] is List)) return null;
@@ -320,17 +348,28 @@ class Util {
       final Color color = Util.getColor(colorValue);
       if (color != null) colors.add(color);
     }
+    List<double> stops = [];
+    for (dynamic stop in value['stops'] ?? []) {
+      final double stopValue = Util.getDouble(stop,range: Range(min:0.0,max:1.0));
+      if (stopValue != null) stops.add(stopValue);
+    }
     if (colors.isEmpty) return null;
     switch (type) {
       case 'linear':
         return LinearGradient(
           colors: colors,
+          stops: colors.length == stops.length
+              ? stops
+              : null, // If [stops] is non-null, it must  have the same length as [colors].
           begin: Util.getAlignment(value['begin'], Alignment.centerLeft),
           end: Util.getAlignment(value['end'], Alignment.centerRight),
         );
       case 'radial':
         return RadialGradient(
           colors: colors,
+          stops: colors.length == stops.length
+              ? stops
+              : null, // If [stops] is non-null, it must  have the same length as [colors].
           center: Util.getAlignment(value['center'], Alignment.center),
           radius: Util.getDouble(value['radius']),
         );
@@ -400,7 +439,7 @@ class Util {
     }
   }
 
-  static TextStyle getTextStyle(dynamic value, [ bool useDefaultLineHeight = true ]) {
+  static TextStyle getTextStyle(dynamic value) {
     if (!(value is Map)) return null;
     double size = Util.getDouble(value['size']);
     FontWeight weight = Util.getTextWeight(value['weight']);
@@ -411,8 +450,6 @@ class Util {
     double letterSpacing = Util.getDouble(value['letterSpacing']);
     double wordSpacing = Util.getDouble(value['wordSpacing']);
     double lineHeight = Util.getDouble(value['lineHeight']);
-    // 手动校正安卓 ios 行高不一致问题
-    if (lineHeight == null && Util.isAndroid && useDefaultLineHeight) lineHeight = 1;
 
     return TextStyle(
       fontSize: size,
@@ -432,9 +469,8 @@ class Util {
     if (!(value is Map)) return null;
     if (value['text'] == null) return null;
     return TextSpan(
-      text: Util.getSafeString(value['text']),
-      style: Util.getTextStyle(value, false)
-    );
+        text: Util.getSafeString(value['text']),
+        style: Util.getTextStyle(value));
   }
 
   static BoxFit getBoxFit(dynamic value) {
@@ -461,44 +497,47 @@ class Util {
 
   static List<BoxShadow> getBoxShadow(dynamic value) {
     if (!Util._isShadowMap(value)) return null;
-    return [ BoxShadow(
-      color: Util.getColor(value['color']) ?? Colors.black,
-      offset: Offset(
-        Util.getDouble(value['offsetX']) ?? 0,
-        Util.getDouble(value['offsetY']) ?? 0,
-      ),
-      blurRadius: Util.getDouble(value['blur']) ?? 0,
-      spreadRadius: Util.getDouble(value['spread']) ?? 0,
-    ) ];
+    return [
+      BoxShadow(
+        color: Util.getColor(value['color']) ?? Colors.black,
+        offset: Offset(
+          Util.getDouble(value['offsetX']) ?? 0,
+          Util.getDouble(value['offsetY']) ?? 0,
+        ),
+        blurRadius: Util.getDouble(value['blur']) ?? 0,
+        spreadRadius: Util.getDouble(value['spread']) ?? 0,
+      )
+    ];
   }
 
   static List<Shadow> getTextShadow(dynamic value) {
     if (!Util._isShadowMap(value)) return null;
-    return [ Shadow(
-      color: Util.getColor(value['color']) ?? Colors.black,
-      offset: Offset(
-        Util.getDouble(value['offsetX']) ?? 0,
-        Util.getDouble(value['offsetY']) ?? 0,
-      ),
-      blurRadius: Util.getDouble(value['blur']) ?? 0,
-    ) ];
+    return [
+      Shadow(
+        color: Util.getColor(value['color']) ?? Colors.black,
+        offset: Offset(
+          Util.getDouble(value['offsetX']) ?? 0,
+          Util.getDouble(value['offsetY']) ?? 0,
+        ),
+        blurRadius: Util.getDouble(value['blur']) ?? 0,
+      )
+    ];
   }
 
   static bool _isShadowMap(dynamic value) {
     if (!(value is Map)) return false;
-    if (
-      value['color'] != null ||
-      value['offsetX'] != null ||
-      value['offsetY'] != null ||
-      value['blur'] != null
-    ) return true;
+    if (value['color'] != null ||
+        value['offsetX'] != null ||
+        value['offsetY'] != null ||
+        value['blur'] != null) return true;
     return false;
   }
 
   static String _bundleDirectory;
-  static set bundleDirectory (String dir) {
+  static set bundleDirectory(String dir) {
     Util._bundleDirectory = dir;
   }
+
   static String getBundleFilePath(filePathInBundle) {
     if (Util._bundleDirectory == null) {
       Util.onError(ThreshError('bundle directory is not exist'));
@@ -508,7 +547,7 @@ class Util {
     }
   }
 
-  static Future<void> copyData(String data, [ bool showSuccess = true ]) async {
+  static Future<void> copyData(String data, [bool showSuccess = true]) async {
     await Clipboard.setData(ClipboardData(text: data));
     if (showSuccess) {
       Util.showToast('复制成功');
@@ -517,34 +556,28 @@ class Util {
 
   static void showToast(String content) {
     DFToastManager.show(
-      toastBody: Container(
-        padding: EdgeInsets.all(5),
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(4),
-          color: Colors.black87,
-        ),
-        child: Text(
-          content,
-          style: TextStyle(
-            color: Colors.white,
+        toastBody: Container(
+          padding: EdgeInsets.all(5),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(4),
+            color: Colors.black87,
           ),
-          textAlign: TextAlign.center,
+          child: Text(
+            content,
+            style: TextStyle(
+              color: Colors.white,
+            ),
+            textAlign: TextAlign.center,
+          ),
         ),
-      ),
-      toastInfo: DFToastInfo(
-        showDevInfo: false,
-        startPosition: Position(
-          bottom: 50,
-          left: 50,
-          right: 50
-        )
-      )
-    );
+        toastInfo: DFToastInfo(
+            showDevInfo: false,
+            startPosition: Position(bottom: 50, left: 50, right: 50)));
   }
 
   /// 节流函数，默认 32ms
-  static Function throttle(Function callback, [ int delay = 16 ]) {
+  static Function throttle(Function callback, [int delay = 16]) {
     bool canInvoke = true;
     return (dynamic args) {
       if (!canInvoke) return;
@@ -584,8 +617,10 @@ class Util {
       });
       queryUrl = queryList.join("&");
     }
-    if (url.indexOf('?') == -1) url = '$url?$queryUrl';
-    else url = '$url&$queryUrl';
+    if (url.indexOf('?') == -1)
+      url = '$url?$queryUrl';
+    else
+      url = '$url&$queryUrl';
 
     Response data;
     try {
@@ -605,25 +640,44 @@ class Util {
 
     /// 模拟 native bridge request 的返回格式
     return {
-      'data': {
-        'data': data.data,
-        'code': data.statusCode,
-        'reason': ''
-      },
+      'data': {'data': data.data, 'code': data.statusCode, 'reason': ''},
       'code': 0,
       'reason': '',
     };
   }
 
+  static String formatMutipulLineText(List<String> textList) {
+    return textList.join('\n');
+  }
+
+  static String _alphabet =
+      '0123456789qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM';
+
+  /// 生成指定长度随机字符串
+  /// [length] 字符串长度
+  /// [withTimestamp] 字符串结尾是否需要携带当前时间戳
+  static String randomString({int length = 10, bool withTimestamp = false}) {
+    String random = '';
+    for (int i = 0; i < length; i++) {
+      random += _alphabet[Random().nextInt(_alphabet.length)];
+    }
+    if (withTimestamp) random += '.${DateTime.now().millisecondsSinceEpoch}';
+    return random;
+  }
+
   // 处理 df 异常
   static void onError(ThreshError error) {
-    devtools.insert(InfoType.error, DevInfo(
-      title: error.message.toString(),
-      content: (error.trace ?? error.stackTrace)?.toString() ?? ''
-    ));
-    if (dynamicApp?.errorHandler != null) dynamicApp.errorHandler(error);
-    else throw error;
+    devtools.insert(
+        InfoType.error,
+        DevInfo(
+            title: error.message.toString(),
+            content: (error.trace ?? error.stackTrace)?.toString() ?? ''));
+    if (dynamicApp?.errorHandler != null)
+      dynamicApp.errorHandler(error);
+    else
+      throw error;
   }
+
   static dynamic filterBridgeResponse(dynamic res) {
     if (!(res is Map)) return {};
     dynamic result;
@@ -633,37 +687,42 @@ class Util {
     return result;
   }
 
-
-
   /// 白屏触发
-  static Widget onWhiteScreen(dynamic reason, [ BuildContext context ]) {
-    return dynamicApp?.onWhiteScreen?.call(reason) ?? Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: Text('Error', style: TextStyle(color: Colors.white),),
-        leading: AppBarBackButton(),
-        actions: dynamicApp?.canReload == true ? <Widget>[
-          IconButton(
-            icon: Icon(
-              Icons.refresh,
-              size: 24,
-              color: const Color(0xffffffff),
+  static Widget onWhiteScreen(dynamic reason, [BuildContext context]) {
+    return dynamicApp?.onWhiteScreen?.call(reason) ??
+        Scaffold(
+          backgroundColor: Colors.white,
+          appBar: AppBar(
+            title: Text(
+              'Error',
+              style: TextStyle(color: Colors.white),
             ),
-            onPressed: () async {
-              context == null
-                ? dynamicApp.reload()
-                : dynamicApp.reload(context);
-            },
-          )
-        ] : null,
-        centerTitle: true,
-        backgroundColor: Colors.blue,
-      ),
-      body: Container(
-        child: Center(
-          child: Text('Dynamic flutter app has an error!\nMore details have print below.\n\n${reason.toString()}'),
-        ),
-      ),
-    );
+            leading: AppBarBackButton(),
+            actions: dynamicApp?.canReload == true
+                ? <Widget>[
+                    IconButton(
+                      icon: Icon(
+                        Icons.refresh,
+                        size: 24,
+                        color: const Color(0xffffffff),
+                      ),
+                      onPressed: () async {
+                        context == null
+                            ? dynamicApp.reload()
+                            : dynamicApp.reload(context);
+                      },
+                    )
+                  ]
+                : null,
+            centerTitle: true,
+            backgroundColor: Colors.blue,
+          ),
+          body: Container(
+            child: Center(
+              child: Text(
+                  'Dynamic flutter app has an error!\nMore details have print below.\n\n${reason.toString()}'),
+            ),
+          ),
+        );
   }
 }

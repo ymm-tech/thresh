@@ -36,61 +36,62 @@ import io.manbang.frontend.thresh.util.ThreshLogger;
  */
 public class JSManager {
 
-    private HashMap<String, WeakReference<JSModule>> jsModules;
+    private static JSManager manager = new JSManager();
 
-    public JSManager() {
+    public static JSManager getInstance() {
+        return manager;
+    }
+
+    private HashMap<String, JSModule> jsModules;
+
+    private JSManager() {
         jsModules = new HashMap<>();
     }
+
     /**
      * get js module
-     *
      */
-    public JSModule getJSModule(String moduleName){
-        if (TextUtils.isEmpty(moduleName)){
+    public JSModule getJSModule(String moduleName) {
+        if (TextUtils.isEmpty(moduleName)) {
             ThreshLogger.e("Module name is empty exception");
             throw new ThreshException("Module name cannot null.");
         }
-        if (jsModules == null){
+        if (jsModules == null) {
             jsModules = new HashMap<>();
         }
         if (jsModules.containsKey(moduleName)
-                && jsModules.get(moduleName).get() != null
-                && jsModules.get(moduleName).get().getExecutor() != null){
-            return jsModules.get(moduleName).get();
+                && jsModules.get(moduleName) != null
+                && jsModules.get(moduleName).getExecutor() != null) {
+            return jsModules.get(moduleName);
         }
         return null;
     }
 
     /**
      * register js module
-     *
-     * @param module
      */
-    public void registerJSModule(WeakReference<JSModule> module){
-        if (module == null || module.get() == null){
+    public void registerJSModule(JSModule module) {
+        if (module == null) {
             return;
         }
-        if (jsModules == null){
+        if (jsModules == null) {
             jsModules = new HashMap<>();
         }
-        if (jsModules.containsKey(module.get().getModuleName()) && jsModules.get(module.get().getModuleName()).get().getExecutor() != null){
+        if (jsModules.get(module.getModuleName()) != null) {
             return;
         }
-        jsModules.put(module.get().getModuleName(),module);
-        ThreshLogger.v("register JS Module : " + module.get().getModuleName() + "[Finish]");
+        jsModules.put(module.getModuleName(), module);
+        ThreshLogger.v("register JS Module : " + module.getModuleName() + "[Finish]");
     }
 
-    public void destroy(){
+    public void destroy() {
 
-        if (jsModules != null){
-            for (Map.Entry<String, WeakReference<JSModule>> module : jsModules.entrySet()){
-                if (module == null || module.getValue() == null){
+        if (jsModules != null) {
+            for (Map.Entry<String, JSModule> module : jsModules.entrySet()) {
+                if (module == null || module.getValue() == null) {
                     continue;
                 }
-                if (module.getValue().get() == null){
-                    continue;
-                }
-                module.getValue().get().destroy();
+                module.getValue().destroy();
             }
         }
     }

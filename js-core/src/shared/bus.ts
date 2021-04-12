@@ -22,41 +22,61 @@
  *
  */
 
-import Util from "./Util"
-import { FuncCache } from '../types/type'
+import Util from './Util'
+
+export interface BusCache {
+  [busName: string]: Function[]
+}
 
 /**
  * 简易实现的事件触发器
  * 仅框架内部使用
- * 一个name仅对应一个回调事件
  * 未传入name时默认会有自增id作为name
  * 主要为 定时器 bridge 等服务
  */
 class Bus {
   private _busId: number = 0
-  private _pool: FuncCache = {}
+  private _pool: BusCache = {}
 
   register (callback: Function, name?: string): string {
     if (!Util.isFunc(callback)) return
     let busName: string = name ? name.toString() : (++this._busId).toString()
-    this._pool[busName] = callback
+    if (!this._pool[busName]) this._pool[busName] = []
+    this._pool[busName].push(callback)
     return busName
   }
 
   fire (name: string, ...args: any[]) {
     if (!name) return
-    const cb = this._pool[name]
-    cb && cb(...args)
+    const callbacks = this._pool[name]
+    if (!callbacks || !callbacks.length) return
+    return callbacks.map(callback => callback(...args))
   }
 
-  has (name: string): boolean {
-    return !!(name && this._pool[name])
+  has (name: string, callback?: Function): boolean {
+    if (!name || !this._pool[name]) return false
+    if (!callback) return true
+    const callbacks = this._pool[name]
+    const index = callbacks.indexOf(callback)
+    return index > -1
   }
 
-  remove (name: string) {
-    if (!name) return
-    if (this._pool[name]) delete this._pool[name]
+  remove (name: string, callback?: Function) {
+    if (!name || !this._pool[name]) return
+    if (!callback) {
+      delete this._pool[name]
+      return
+    }
+    const callbacks = this._pool[name]
+    const index = callbacks.indexOf(callback)
+    if (index > -1) callbacks.splice(index, 1)
+  }
+
+  clear () {
+    this._busId = 0
+    this._pool = {}
   }
 }
 
-export default new Bus()
+const bus: Bus = new Bus()
+export default bus

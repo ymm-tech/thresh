@@ -27,6 +27,8 @@ import 'package:thresh/framework/core/dynamic_app.dart';
 import 'package:thresh/devtools/dev_tools.dart';
 import 'package:thresh/basic/util.dart';
 
+import '../../basic/util.dart';
+
 typedef void DynamicChannelFn(dynamic params);
 
 DynamicChannel dynamicChannel = DynamicChannel();
@@ -86,39 +88,24 @@ class DynamicChannel {
     _channel.setMethodCallHandler((MethodCall call) async {
       if (dynamicApp == null) return;
 
+      final String jsContextId = call.arguments['contextId'];
+      if (jsContextId != null && dynamicApp.jsContextId != jsContextId) return;
+
       if (call.method == 'methodChannel_js_call_flutter') {
-        final String contextId = call.arguments['contextId'];
         final String method = call.arguments['method'];
         final dynamic params = call.arguments['params'];
 
-        if (dynamicApp.jsContextId != null &&
-            dynamicApp.jsContextId != contextId) return;
-        if (_shouldResetContextIdChannelMethodHandler.contains(method)) {
-          devtools.debug('updateContextId', 'channel.basic.dart', 'info',
-              'update from: $method');
-          dynamicApp.jsContextId = contextId;
-        }
-
-        if (dynamicApp.debugMode || dynamicApp.firstChannelSpendTime == 0) {
-          int threshChannelTime;
-          if (params != null && params['__channelStartTime__'] != null) {
-            int channelStartTime =
-                Util.getInt(params.remove('__channelStartTime__'));
-            threshChannelTime =
-                DateTime.now().millisecondsSinceEpoch - channelStartTime;
-            if (dynamicApp.firstChannelSpendTime == 0)
-              dynamicApp.firstChannelSpendTime = threshChannelTime;
-          }
+        if (dynamicApp.debugMode) {
           if (!_notPrintChannelMethodHandler.contains(method)) {
             devtools.insert(
-                InfoType.channel,
-                DevInfo(
-                  title:
-                      'Method Channel Handler\nMethod: $method\nSpend: ${threshChannelTime}ms',
-                  content: _simplyPrintChannelMethodHandler.contains(method)
-                      ? null
-                      : 'Params: $params',
-                ));
+              InfoType.channel,
+              DevInfo(
+                title: 'Method Channel Handler\nMethod: $method',
+                content: _simplyPrintChannelMethodHandler.contains(method)
+                    ? null
+                    : 'Params: $params',
+              ),
+            );
           }
         }
         Function func = _channelFuncs[method];
@@ -127,8 +114,10 @@ class DynamicChannel {
     });
   }
 
-  Future<dynamic> call(
-      {ChannelMethod channelMethod, Map<String, dynamic> params}) async {
+  Future<dynamic> call({
+    ChannelMethod channelMethod,
+    Map<String, dynamic> params,
+  }) async {
     if (dynamicApp == null) return null;
     String callType = 'methodChannel_flutter_call_js';
     bool needEncode = true;
@@ -138,24 +127,29 @@ class DynamicChannel {
     }
     if (!_notPrintChannelMethodInvoke.contains(channelMethod.method)) {
       devtools.insert(
-          InfoType.channel,
-          DevInfo(
-              title: 'Method Channel Invoke\nMethod: ${channelMethod.method}',
-              content: 'Method: ${channelMethod.method}\nParams: $params'));
+        InfoType.channel,
+        DevInfo(
+          title: Util.formatMutipulLineText(
+              ['Method Channel Invoke', 'Method: ${channelMethod.method}']),
+          content: Util.formatMutipulLineText(
+              ['Method: ${channelMethod.method}', 'Params: $params']),
+        ),
+      );
     }
     // 由于 channel 传输数据偶现丢失的情况，因此在 flutterCallJs 时对数据进行序列化
     return _channel.invokeMethod(callType, {
-      'contextId': dynamicApp.jsContextId ?? '',
+      'contextId': dynamicApp.jsContextId,
       'method': channelMethod.method,
-      'params': needEncode ? jsonEncode(params) : params
+      'params': needEncode ? jsonEncode(params) : params,
     });
   }
 
-  Future<dynamic> callNative(
-      {@required String module, // 模块名
-      String business, // 业务名
-      @required String method,
-      Map<String, dynamic> params}) async {
+  Future<dynamic> callNative({
+    @required String module, // 模块名
+    String business, // 业务名
+    @required String method,
+    Map<String, dynamic> params,
+  }) async {
     if (dynamicApp == null) return null;
     Map<String, dynamic> bridgeParams = {
       'module': module,
@@ -163,8 +157,11 @@ class DynamicChannel {
       'params': params ?? {}
     };
     if (business != null) bridgeParams['business'] = business;
-    return _channel.invokeMethod('methodChannel_flutter_call_native',
-        {'method': ChannelMethod.callNative.method, 'params': bridgeParams});
+    return _channel.invokeMethod('methodChannel_flutter_call_native', {
+      'contextId': dynamicApp.jsContextId,
+      'method': ChannelMethod.callNative.method,
+      'params': bridgeParams,
+    });
   }
 }
 
@@ -184,9 +181,9 @@ class ChannelMethod {
   static const ChannelMethod needPopPage =
       ChannelMethod('needPopPage', CallType.callJs);
 
-  /// 推出当前页面
-  static const ChannelMethod popPage =
-      ChannelMethod('popPage', CallType.callJs);
+  /// 通知 js 当前页面已推出
+  static const ChannelMethod hasPopPage =
+      ChannelMethod('hasPopPage', CallType.callJs);
 
   /// 触发 js 事件
   static const ChannelMethod triggerEvent =

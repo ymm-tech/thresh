@@ -26,16 +26,13 @@ import MethodChannel from '../channel/MethodChannel'
 import Util from '../shared/Util'
 import bus from '../shared/bus'
 import { BridgeParams } from '../types/type'
-import DevtoolsManager from './DevtoolsManager'
-import UtilManager from './UtilManager'
+import devtools from './DevtoolsManager'
+import TimerManager from './TimerManager'
 
 /**
  * Bridge管理器
  */
 export default class BridgeManager {
-  static THRESH_BUILT_IN_BRIDGE = 'THRESH_BUILT_IN_BRIDGE'
-  static BRIDGE_METHOD_NET_REQUEST = 'BRIDGE_METHOD_NET_REQUEST'
-
   static async invoke (params: BridgeParams): Promise<any> {
     return new Promise(resolve => {
       BridgeManager.request(params, res => {
@@ -52,10 +49,10 @@ export default class BridgeManager {
     if (!Util.isObject(params.params)) params.params = {}
     else params = Util.filterAllNilProps(params)
     MethodChannel.bridge(methodId, params)
-    DevtoolsManager.bridge(methodId, params, true)
+    if (!BridgeManager.isLogRequest(params)) devtools.bridge(methodId, params, true)
     if (!Util.isProd && !BridgeManager.isNetworkRequest(params)) {
-      // 开发模式下，如果长时间未响应某个bridge，则主动mock响应，防止阻塞进程
-      UtilManager.setTimeout(() => {
+      // 开发模式下，如果宿主包中长时间未响应某个bridge，则主动mock响应，防止阻塞进程
+      TimerManager.setTimeout(() => {
         BridgeManager.response(methodId, {
           code: 0,
           reason: '[Mock] - 请注意：由于Bridge未在500ms内响应，JS主动模拟bridge响应！该模拟仅在开发模式中有效！',
@@ -67,12 +64,16 @@ export default class BridgeManager {
 
   static response (methodId: string, response: any) {
     if (!bus.has(methodId)) return
-    DevtoolsManager.bridge(methodId, response, false)
+    devtools.bridge(methodId, response, false)
     bus.fire(methodId, response)
     bus.remove(methodId)
   }
 
+  static networkModuleNames = [ 'base', 'network', 'netbase', 'request' ]
   static isNetworkRequest (params: BridgeParams): boolean {
-    return params.module === BridgeManager.THRESH_BUILT_IN_BRIDGE && params.method === BridgeManager.BRIDGE_METHOD_NET_REQUEST
+    return BridgeManager.networkModuleNames.includes(params.module) && BridgeManager.networkModuleNames.includes(params.method)
+  }
+  static isLogRequest (params: BridgeParams): boolean {
+    return params.module === 'base' && params.method === 'log'
   }
 }
