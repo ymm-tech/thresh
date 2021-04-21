@@ -23,6 +23,7 @@
  */
 package io.manbang.frontend.thresh_example;
 
+import android.net.Uri;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -34,7 +35,6 @@ import io.manbang.frontend.thresh.runtime.jscore.bundle.BundleType;
 import io.manbang.frontend.thresh.runtime.jscore.bundle.ContainerType;
 import io.manbang.frontend.thresh.runtime.jscore.runtime.JSCallback;
 import io.manbang.frontend.thresh.containers.ThreshActivity;
-import io.manbang.frontend.thresh.manager.ContextIdManager;
 import io.manbang.frontend.thresh.runtime.ThreshEngine;
 import io.manbang.frontend.thresh.runtime.ThreshEngineOptions;
 import io.manbang.frontend.thresh_example.nativeview.NativeTextView;
@@ -69,10 +69,17 @@ public class ThreshDemoActivity extends ThreshActivity {
         }else {
             bundleType = BundleType.ASSETS_FILE;
         }
+        Uri uri = Uri.parse("thresh://" + getInitialRoute());
+        String bundlePath = uri.getQueryParameter("jsBundlePath");
+        if (bundlePath != null && bundlePath.startsWith("assets://")){
+            bundlePath = bundlePath.substring("assets://".length());
+        }
         BundleOptions.Builder bundleBuilder = new BundleOptions.Builder(ContainerType.Thresh);
         bundleBuilder.withDebugServerIp(getIntent().getStringExtra("debug_local_ip"));
         bundleBuilder.withDebugServerPort(getIntent().getStringExtra("debug_local_port"));
         bundleBuilder.withBundleType(bundleType);
+        // 指定的bundle目录
+        bundleBuilder.withBundlePath(bundlePath);
         ThreshEngineOptions.Builder builder = new ThreshEngineOptions.Builder(bundleBuilder.build());
         builder.moduleName("test-activity-business-module");
         builder.setPageStartTime(startTime);

@@ -23,6 +23,7 @@
  */
 package io.manbang.frontend.thresh_example;
 
+import android.net.Uri;
 import android.os.Bundle;
 
 import io.manbang.frontend.thresh.runtime.jscore.bundle.BundleOptions;
@@ -56,10 +57,17 @@ public class ThreshDemoFragment extends ThreshFragment {
         }else {
             bundleType = BundleType.ASSETS_FILE;
         }
+        Uri uri = Uri.parse("thresh://" + getInitialRoute());
+        String bundlePath = uri.getQueryParameter("jsBundlePath");
+        if (bundlePath != null && bundlePath.startsWith("assets://")){
+            bundlePath = bundlePath.substring("assets://".length());
+        }
         BundleOptions.Builder bundleBuilder = new BundleOptions.Builder(ContainerType.Thresh);
         bundleBuilder.withDebugServerIp(getActivity().getIntent().getStringExtra("debug_local_ip"));
         bundleBuilder.withDebugServerPort(getActivity().getIntent().getStringExtra("debug_local_port"));
         bundleBuilder.withBundleType(bundleType);
+        // 指定的bundle目录
+        bundleBuilder.withBundlePath(bundlePath);
         ThreshEngineOptions.Builder builder = new ThreshEngineOptions.Builder(bundleBuilder.build());
         builder.moduleName("test-fragment-business-module");
         builder.setPageStartTime(startTime);

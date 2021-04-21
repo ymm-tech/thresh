@@ -29,14 +29,17 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Handler;
 import android.text.TextUtils;
+import android.util.Log;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
 import io.manbang.frontend.thresh.runtime.jscore.bundle.BundleType;
 import io.manbang.frontend.thresh.channel.BridgeCallback;
 import io.manbang.frontend.thresh.channel.nativemodule.NativeModule;
-import io.manbang.frontend.thresh.containers.ThreshActivity;
 import io.manbang.frontend.thresh.containers.ThreshFlutterActivityLaunchConfigs;
 import io.manbang.frontend.thresh.util.ThreshLogger;
 
@@ -61,6 +64,7 @@ public class ThreshDemoBridge extends NativeModule {
         if (params == null){
             return;
         }
+        ThreshLogger.v("invokeNativeModule","module =" + module + " , method= " + method);
         //封装返回数据
         Map response = new HashMap();
         Map data = new HashMap();
@@ -83,25 +87,54 @@ public class ThreshDemoBridge extends NativeModule {
                 if(TextUtils.isEmpty(debug_local_ip)){
                     Intent intent = new Intent(context, ThreshDemoFragmentActivity.class);
                     intent.putExtra("load_mode", BundleType.ASSETS_FILE.getType());
-                    intent.putExtra(ThreshFlutterActivityLaunchConfigs.EXTRA_INITIAL_ROUTE, "thresh/thresh-page?page=homePage");
+                    intent.putExtra(ThreshFlutterActivityLaunchConfigs.EXTRA_INITIAL_ROUTE,
+                                    "home/thresh-page?page=homePage");
                     context.startActivity(intent);
                 }else{
                     Intent intent = new Intent(context, ThreshDemoActivity.class);
                     intent.putExtra("load_mode", BundleType.JS_SERVER.getType())
                             .putExtra("debug_local_port", "12345")
                             .putExtra("debug_local_ip", debug_local_ip)
-                            .putExtra(ThreshFlutterActivityLaunchConfigs.EXTRA_INITIAL_ROUTE, "thresh/thresh-page?page=homePage")
+                            .putExtra(ThreshFlutterActivityLaunchConfigs.EXTRA_INITIAL_ROUTE,
+                                      "home/thresh-page?page=homePage")
                             .putExtra(ThreshFlutterActivityLaunchConfigs.EXTRA_DESTROY_ENGINE_WITH_ACTIVITY, true);
                     context.startActivity(intent);
                 }
             }else if ("log".equals(method) && params.get("params") != null){
                 ThreshLogger.v(params.get("params").toString());
             }
-        }else if ("thresh".equals(module)){
+        }else if ("dynamicFlutter".equals(module)){
             // thresh业务
             if ("jsbundlePath".equals(method)){
-                // 测试方法
-                data.put("data","/sdcard/data");
+                // 获取本地Bundle路径的Bridge方法，指定对应的Bundle固定路径
+                data.put("data","assets://home");
+            } else if ("getNativeImage".equals(method)) {
+                // 获取本地图片流的方法
+                HashMap map1 = (HashMap) params.get("params");
+                if (map1 != null) {
+                    String imagePath = (String) map1.get("imagePath");
+                    InputStream input;
+                    try {
+                        input = context.getAssets().open(imagePath.substring("assets://".length()));
+                        ByteArrayOutputStream output = new ByteArrayOutputStream();
+                        byte[] buffer = new byte[1024*8];
+                        int len;
+                        while ((len = input.read(buffer)) != -1) {
+                            output.write(buffer, 0, len);
+                        }
+                        output.close();
+                        input.close();
+                        data.put("data",output.toByteArray());
+                        if (callback != null){
+                            callback.onResult(0,"",response);
+                        }
+                    } catch (IOException e) {
+                        if (callback != null){
+                            callback.onResult(-1,e.getMessage(),response);
+                        }
+                    }
+                    return;
+                }
             }
         }else {
             // 其他业务
