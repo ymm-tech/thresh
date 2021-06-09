@@ -2,7 +2,7 @@
 
 > Thresh提供了简单、高效的应用跨平台动态化开发框架和丰富的组件，帮助开发者能快速、友好的接入。如果你要在项目中使用 Thresh 提供的 flutter 动态化能力，可以参考以下步骤快速创建一个Thresh 项目，主要分环境准备、快速接入、创建项目工程、工程调试几个方面来介绍。
 
-一个 Thresh项目由 几个部分构成，分别是：业务代码、thresh插件、thresh-js库、与 Native宿主集成。本文将会对代码库、环境接入以及调试一一做出说明。
+一个 Thresh项目由 几个部分构成，分别是：业务代码、thresh插件、thresh-lib库、与 Native宿主集成。本文将会对代码库、环境接入以及调试一一做出说明。
 
 ### 1、环境准备
 
@@ -104,11 +104,11 @@ Entrypoint main = bundle.js
  [51] ./node_modules/core-js-pure/stable/instance/for-each.js 529 bytes {0} [built]
  [89] ./node_modules/@babel/runtime-corejs3/core-js-stable/object/define-property.js 71 bytes {0} [built]
  [90] ./node_modules/core-js-pure/stable/object/define-property.js 83 bytes {0} [built]
- [93] ./node_modules/thresh-js/index.ts 2.49 KiB {0} [built]
- [94] ./node_modules/thresh-js/src/core/dynamicFlutter.ts 19.6 KiB {0} [built]
-[164] ./node_modules/thresh-js/src/manager/BridgeManager.ts 9.83 KiB {0} [built]
-[202] ./node_modules/thresh-js/src/manager/UtilManager.ts 11 KiB {0} [built]
-[203] ./node_modules/thresh-js/src/manager/RenderManager.ts 18.8 KiB {0} [built]
+ [93] ./node_modules/thresh-lib/index.ts 2.49 KiB {0} [built]
+ [94] ./node_modules/thresh-lib/src/core/dynamicFlutter.ts 19.6 KiB {0} [built]
+[164] ./node_modules/thresh-lib/src/manager/BridgeManager.ts 9.83 KiB {0} [built]
+[202] ./node_modules/thresh-lib/src/manager/UtilManager.ts 11 KiB {0} [built]
+[203] ./node_modules/thresh-lib/src/manager/RenderManager.ts 18.8 KiB {0} [built]
 [268] ./src/config.ts 7.24 KiB {0} [built]
 [315] ./src/pages/homePage.tsx 7.1 KiB {0} [built]
     + 301 hidden modules
@@ -129,16 +129,16 @@ Entrypoint main = bundle.js
 
 ##### 3.1.1、全局安装脚手架工具
 
-`yarn global add thresh-js-cli`
+`sudo yarn global add thresh-lib-cli`
 
 ```
-ManbangMacBook-Pro:thresh_test_demo Manbang$ yarn global add thresh-js-cli
+ManbangMacBook-Pro:thresh_test_demo Manbang$ sudo yarn global add thresh-lib-cli
 yarn global v1.22.4
 [1/4] 🔍  Resolving packages...
 [2/4] 🚚  Fetching packages...
 [3/4] 🔗  Linking dependencies...
 [4/4] 🔨  Building fresh packages...
-success Installed "thresh-js-cli@1.0.0" with binaries:
+success Installed "thresh-lib-cli@1.0.1" with binaries:
       - thresh-cli
 ✨  Done in 1.34s.
 ```
