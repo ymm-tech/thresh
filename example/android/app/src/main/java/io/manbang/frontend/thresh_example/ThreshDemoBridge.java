@@ -33,11 +33,10 @@ import android.text.TextUtils;
 import java.util.HashMap;
 import java.util.Map;
 
-import io.manbang.frontend.jscore.bundle.BundleType;
 import io.manbang.frontend.thresh.channel.BridgeCallback;
 import io.manbang.frontend.thresh.channel.nativemodule.NativeModule;
-import io.manbang.frontend.thresh.containers.ThreshActivity;
 import io.manbang.frontend.thresh.containers.ThreshFlutterActivityLaunchConfigs;
+import io.manbang.frontend.thresh.runtime.jscore.bundle.BundleType;
 import io.manbang.frontend.thresh.util.ThreshLogger;
 
 public class ThreshDemoBridge extends NativeModule {

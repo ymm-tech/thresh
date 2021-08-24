@@ -26,11 +26,11 @@ package io.manbang.frontend.thresh_example;
 import android.content.Context;
 import android.os.Handler;
 
-import io.manbang.frontend.jscore.bundle.BundleCallback;
-import io.manbang.frontend.jscore.bundle.BundleOptions;
-import io.manbang.frontend.jscore.bundle.BundleType;
-import io.manbang.frontend.jscore.bundle.JSBundleLoader;
-import io.manbang.frontend.jscore.runtime.JSExecutor;
+import io.manbang.frontend.thresh.runtime.jscore.bundle.BundleCallback;
+import io.manbang.frontend.thresh.runtime.jscore.bundle.BundleOptions;
+import io.manbang.frontend.thresh.runtime.jscore.bundle.BundleType;
+import io.manbang.frontend.thresh.runtime.jscore.bundle.JSBundleLoader;
+import io.manbang.frontend.thresh.runtime.jscore.runtime.JSExecutor;
 import io.manbang.frontend.thresh.util.ThreshToast;
 
 public class TestJSBundleLoader extends JSBundleLoader {
@@ -44,7 +44,7 @@ public class TestJSBundleLoader extends JSBundleLoader {
     }
 
     @Override
-    public void loadScript(JSExecutor executor,BundleOptions bundleOptions, BundleCallback bundleCallback) {
+    public void loadScript(JSExecutor executor, BundleOptions bundleOptions, BundleCallback bundleCallback) {
         mainHandler.post(new Runnable() {
             @Override
             public void run() {

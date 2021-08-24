@@ -33,10 +33,10 @@ import com.eclipsesource.v8.V8Object;
 
 import androidx.annotation.Nullable;
 
-import io.manbang.frontend.jscore.bundle.BundleCallback;
-import io.manbang.frontend.jscore.bundle.JSBundleLoader;
-import io.manbang.frontend.jscore.runtime.JSCallback;
-import io.manbang.frontend.jscore.util.V8Util;
+import io.manbang.frontend.thresh.runtime.jscore.bundle.BundleCallback;
+import io.manbang.frontend.thresh.runtime.jscore.bundle.JSBundleLoader;
+import io.manbang.frontend.thresh.runtime.jscore.runtime.JSCallback;
+import io.manbang.frontend.thresh.runtime.jscore.util.V8Util;
 import io.manbang.frontend.thresh.channel.BridgeCallback;
 import io.manbang.frontend.thresh.channel.MethodConstants;
 import io.manbang.frontend.thresh.channel.nativemodule.NativeModule;

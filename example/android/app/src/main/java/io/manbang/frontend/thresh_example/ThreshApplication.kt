@@ -25,7 +25,6 @@ package io.manbang.frontend.thresh_example
 
 import android.app.Application
 import android.util.Log
-import io.manbang.frontend.jscore.util.JSCLogger
 import io.manbang.frontend.thresh.Thresh
 import io.manbang.frontend.thresh.manager.config.ThreshConfig
 import io.manbang.frontend.thresh.manager.handler.interfaces.IReportHandler
@@ -62,7 +61,5 @@ class ThreshApplication : Application() {
         })
         ThreshLogger.DEBUG = true
         ThreshLogger.setTag("Thresh#")
-        JSCLogger.DEBUG = true
-        JSCLogger.setTag("Thresh#")
     }
 }

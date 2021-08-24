@@ -39,10 +39,10 @@ import java.util.Map;
 
 import androidx.annotation.NonNull;
 
-import io.manbang.frontend.jscore.MBJSExecutor;
-import io.manbang.frontend.jscore.bundle.BundleOptions;
-import io.manbang.frontend.jscore.runtime.JSCallback;
-import io.manbang.frontend.jscore.util.V8Util;
+import io.manbang.frontend.thresh.runtime.jscore.MBJSExecutor;
+import io.manbang.frontend.thresh.runtime.jscore.bundle.BundleOptions;
+import io.manbang.frontend.thresh.runtime.jscore.runtime.JSCallback;
+import io.manbang.frontend.thresh.runtime.jscore.util.V8Util;
 import io.manbang.frontend.thresh.manager.config.ThreshConfigManager;
 import io.manbang.frontend.thresh.util.ThreshLogger;
 
