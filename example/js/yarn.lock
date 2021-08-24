@@ -4832,10 +4832,15 @@ terser@^4.1.2:
     source-map "~0.6.1"
     source-map-support "~0.5.12"
 
-thresh-lib@^1.2.102, thresh-lib@^1.3.53:
+thresh-lib@^1.2.102:
   version "1.3.53"
   resolved "http://npm.amh-group.com/thresh-lib/-/thresh-lib-1.3.53.tgz#c8392614d388e396bee74d12360007a1a90efdab"
   integrity sha512-M0q4j3yWFYfnco5NtgdWTL/aRANABJ4fxmZyqYIQpM+f6S56xKh9dB2uKT8mQXP2eGQa/dVvpmRWjtelAWOsDg==
+
+thresh-lib@^1.3.55:
+  version "1.3.55"
+  resolved "http://npm.amh-group.com/thresh-lib/-/thresh-lib-1.3.55.tgz#f92a9c6a34d7a414062a1fdaa099da0bc8b2827f"
+  integrity sha512-rIgtB6xL64u5DcgWdqUbeQ813Au1okXd1PPYCb4uOF/V/0j7ELZOZ7YAWY/0paMPPGZpE6LhgD487ExIFvIsVA==
 
 thresh-theme-provider@^1.0.5:
   version "1.0.6"

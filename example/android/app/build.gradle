@@ -40,6 +40,9 @@ android {
         targetSdkVersion 28
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
+        ndk {
+            abiFilters 'arm64-v8a'
+        }
         javaCompileOptions {
             annotationProcessorOptions {
                 includeCompileClasspath true
@@ -74,6 +77,5 @@ ext{
 }
 dependencies {
     implementation 'androidx.appcompat:appcompat:1.1.0'
-    implementation "io.manbang.frontend:jscore:${v_lib_jscore}"
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 }

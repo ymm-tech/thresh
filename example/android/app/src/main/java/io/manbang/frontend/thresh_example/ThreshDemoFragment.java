@@ -24,13 +24,12 @@
 package io.manbang.frontend.thresh_example;
 
 import android.os.Bundle;
-
-import io.manbang.frontend.jscore.bundle.BundleOptions;
-import io.manbang.frontend.jscore.bundle.BundleType;
-import io.manbang.frontend.jscore.bundle.ContainerType;
 import io.manbang.frontend.thresh.containers.ThreshFragment;
 import io.manbang.frontend.thresh.runtime.ThreshEngine;
 import io.manbang.frontend.thresh.runtime.ThreshEngineOptions;
+import io.manbang.frontend.thresh.runtime.jscore.bundle.BundleOptions;
+import io.manbang.frontend.thresh.runtime.jscore.bundle.BundleType;
+import io.manbang.frontend.thresh.runtime.jscore.bundle.ContainerType;
 
 public class ThreshDemoFragment extends ThreshFragment {
 

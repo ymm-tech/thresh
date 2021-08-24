@@ -1,0 +1,17 @@
+{
+  "name": "thresh-lib",
+  "version": "1.3.55",
+  "description": "Front-end framework for Thresh",
+  "main": "index.ts",
+  "author": "weishun.xu",
+  "license": "MIT",
+  "files": [
+    "index.ts",
+    "src/**/*"
+  ],
+  "devDependencies": {
+    "@types/node": "^13.1.1",
+    "typescript": "^4.1.3"
+  },
+  "scripts": {}
+}

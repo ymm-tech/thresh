@@ -34,8 +34,8 @@ import android.widget.EditText;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SwitchCompat;
-import io.manbang.frontend.jscore.bundle.BundleType;
 import io.manbang.frontend.thresh.containers.ThreshFlutterActivityLaunchConfigs;
+import io.manbang.frontend.thresh.runtime.jscore.bundle.BundleType;
 import io.manbang.frontend.thresh.util.ThreshToast;
 
 public class MainActivity extends AppCompatActivity {
