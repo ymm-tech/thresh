@@ -24,8 +24,8 @@
 
 #import "ThreshJSCoreChannel.h"
 #import "ThreshDef.h"
-#import <MBJSCore_iOS/MBJSCore.h>
 #import "ThreshJSTimerManager.h"
+#import "ThreshJSExecutor.h"
 
 @interface ThreshJSCoreChannel()
 
@@ -36,7 +36,7 @@
 // js环境是否准备完毕
 @property (nonatomic, assign) BOOL envReady;
 
-@property (nonatomic, strong) MBJSExecutor *jsExe;
+@property (nonatomic, strong) ThreshJSExecutor *jsExe;
 
 @property (nonatomic, strong) NSMapTable *delegateMap;
 
@@ -49,7 +49,7 @@
 - (instancetype)init {
     if(self = [super init]) {
         _delegateMap = [[NSMapTable alloc] initWithKeyOptions:NSPointerFunctionsStrongMemory valueOptions:NSPointerFunctionsWeakMemory capacity:0];
-        self.jsExe = [[MBJSExecutor alloc] init];
+        self.jsExe = [[ThreshJSExecutor alloc] init];
         __weak typeof(self) weakSelf = self;
         self.jsExe.exceptionHandler = ^(NSString *exception) {
             weakSelf.exceptionHandler(exception);
@@ -150,7 +150,7 @@
     if (jsString && [jsString isKindOfClass:[NSString class]] && jsString.length > 0) {
         
         __weak typeof(self) weakSelf = self;
-        [self.jsExe mbEvaluateScript:jsString complete:^{
+        [self.jsExe evaluateScript:jsString complete:^{
             weakSelf.envReady = YES;
             if (complete) {
                 complete();

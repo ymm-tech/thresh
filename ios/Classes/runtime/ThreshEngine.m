@@ -28,7 +28,7 @@
 #import "ThreshPlatformViewFactory.h"
 #import "ThreshJSChannelManager.h"
 #import "ThreshAppDelegate.h"
-#import <MBJSCore_iOS/MBJSCore.h>
+#import "ThreshJSLoader.h"
 
 @interface ThreshPerformance () {
   int64_t _data[ThreshPerformanceSize][2];
@@ -300,11 +300,7 @@ typedef void(^Callback)(BOOL success);
         [self exportLifeCycle:ThreshBeforeLoadBundle ext:@{}];
         if (safeRespondsForProtocol(self.config, @selector(loader), @selector(loadType), nil) &&
             self.config.loader.loadType == LoadWithURL) {
-            MBJSLoaderOptions *options = [MBJSLoaderOptions new];
-            options.loaderType = MBJSLoader_Remote;
-            options.remoteAddr = safeRespondsForProtocol(self.config, @selector(loader), @selector(serverAddress), nil) ? self.config.loader.serverAddress : @"";
-            options.reponse = callback;
-            [[MBJSLoader sharedLoader] loadJSWithOptions:options];
+            [[ThreshJSLoader sharedLoader] loadJSWithAddress:(safeRespondsForProtocol(self.config, @selector(loader), @selector(serverAddress), nil) ? self.config.loader.serverAddress : @"") response:callback];
         } else {
             if (safeRespondsForProtocol(self.config, @selector(loader), @selector(getJSDataWithModuleName:callback:), nil)) {
                 [self.config.loader getJSDataWithModuleName:self.moduleName callback:^(NSData *data) {

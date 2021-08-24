@@ -5,7 +5,7 @@ import HomePage from './pages/homePage'
 import PreDialog from './pages/preDialog'
 
 // 注册默认页面
-Thresh.registerPage('preDialog', () => PreDialog, { isDefault: false })
+Thresh.registerPage('preDialog', () => PreDialog, { isDefault: true })
 Thresh.registerPage('homePage', () => HomePage, { isDefault: false })
 // 注册其他页面
 widgetList.concat(apiList, extraPages).forEach(({ pageName, pageBuilder, useInject }) => {
@@ -16,7 +16,7 @@ widgetList.concat(apiList, extraPages).forEach(({ pageName, pageBuilder, useInje
 })
 
 Thresh.useProviders({
-  propsProvider: [ threshThemeProvider ]
+  propsProvider: [threshThemeProvider]
 })
 
 // flutter 环境准备就绪

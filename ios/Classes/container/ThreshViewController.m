@@ -24,8 +24,8 @@
 
 #import "ThreshViewController.h"
 #import "ThreshDef.h"
-#import <MBJSCore_iOS/MBJSCore.h>
 #import "ThreshAppDelegate.h"
+#import "ThreshJSLoader.h"
 
 NSString *const needRefeshPageNotification = @"NotifyRefreshPageViewNotification";
 
