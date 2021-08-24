@@ -131,7 +131,7 @@ export const widgetList: IPageConfig[] = [
   {
     title: 'DragableScrollView',
     desc: '底部拖拽滚动视图组件',
-    useInject: true,
+    // useInject: true,
     pageName: 'widget-dragableScrollview',
     pageBuilder: () => DrawerScrollViewDemo
   },
