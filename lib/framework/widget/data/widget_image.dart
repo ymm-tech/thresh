@@ -227,7 +227,7 @@ class _DFImageWidgetState extends State<_DFImageWidget> {
     // 本地图片
     else {
       String fullPath = url;
-      if (!fullPath.startsWith('assets://'))
+      if (!fullPath.startsWith('assets://') && !fullPath.startsWith('local://'))
         fullPath = Util.getBundleFilePath(url);
       if (fullPath.startsWith('assets://')) {
         devtools.insert(
@@ -235,14 +235,18 @@ class _DFImageWidgetState extends State<_DFImageWidget> {
           DevInfo(
             title: 'Load Image',
             content: Util.formatMutipulLineText([
-              'From: Assets',
+              'From: Assets/Local',
               'Path: $fullPath',
             ]),
           ),
         );
         Uint8List byteData = await loadImageFromAssets(fullPath);
         return MemoryImage(byteData);
-      } else {
+      } else if(fullPath.startsWith('local://')){
+        // 资源包图片
+        Uint8List byteData = await loadImageFromMemoryFile(File(fullPath.substring('local://'.length)));
+        return MemoryImage(byteData);
+      } else{
         // 资源包图片
         Uint8List byteData = await loadImageFromMemoryFile(File(fullPath));
         return MemoryImage(byteData);

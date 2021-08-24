@@ -33,16 +33,16 @@ class UpdateQueue {
   static commitPendingTime: number = 16
 
   private queue: VNode[] = []
-  get isEmpty (): boolean {
+  get isEmpty(): boolean {
     return !this.queue.length
   }
 
   // 重置队列
-  reset () {
+  reset() {
     this.queue = []
   }
   // 向队尾添加节点
-  add (node: VNode) {
+  add(node: VNode) {
     if (!this.queue.includes(node)) {
       this.queue.push(node)
     }
@@ -50,12 +50,12 @@ class UpdateQueue {
   // 使队内元素唯一并重置
   // 返回操作后得到的数组
   // 规则：遍历所有节点，每一个节点向上获取其所有父元素，如果其父元素已经存在于队列中，则忽略该节点
-  unique (): VNode[] {
+  unique(): VNode[] {
     const uniqued: VNode[] = this.queue.filter((node: VNode, index: number, source: VNode[]) => {
-      if (!node.isMount) return false
+      if (!node.hasMount) return false
       let parent: VNode | void = node.parent
       while (parent) {
-        if (source.includes(parent) || !parent.isMount) return false
+        if (source.includes(parent) || !parent.hasMount) return false
         parent = parent.parent
       }
       return true
@@ -72,7 +72,7 @@ const shouldUpdateQueue: UpdateQueue = new UpdateQueue()
 
 // 计划更新
 // 收集 16ms 内产生的所有更新节点后再更新
-export default function scheduleUpdate (vNode: VNode) {
+export default function scheduleUpdate(vNode: VNode) {
   const now = Date.now()
   if (pendingUpdateQueue.isEmpty || now - UpdateQueue.lastPrecommitTime >= UpdateQueue.commitPendingTime) {
     UpdateQueue.lastPrecommitTime = now
@@ -86,7 +86,7 @@ export default function scheduleUpdate (vNode: VNode) {
 // 准备更新
 // 对队列中的节点执行更新操作
 // 在粗粒度比较每一个用户自定义节点后进行更新
-function prepareCommit (pendingUpdateQueue: VNode[]) {
+function prepareCommit(pendingUpdateQueue: VNode[]) {
   pendingUpdateQueue.forEach((item: VNode) => {
     const newRenderNode: VNode | void = item.doUpdate()
     const oldRenderNode: VNode | void = item.children[0]
@@ -98,7 +98,7 @@ function prepareCommit (pendingUpdateQueue: VNode[]) {
     )
     const updateNodeId = oldRenderNode.fetchNearlyCanUpdateBasicNode().nodeId
     newRenderNode.parent = item
-    item.children = [ newRenderNode ]
+    item.children = [newRenderNode]
     item.updateInfo = {
       updateNodeId,
       invokeUpdateNodeId: item.nodeId
@@ -110,7 +110,7 @@ function prepareCommit (pendingUpdateQueue: VNode[]) {
 }
 
 // 提交更新
-function commitUpdate () {
+function commitUpdate() {
   shouldUpdateQueue.unique().forEach((updateNode: VNode) => {
     if (!updateNode.updateInfo) return
     const { updateNodeId, invokeUpdateNodeId } = updateNode.updateInfo
@@ -120,7 +120,7 @@ function commitUpdate () {
 }
 
 // 比较与合并新旧节点
-function compareAndMergeNode (
+function compareAndMergeNode(
   newNode: VNode,
   oldNode: VNode
 ): boolean {
@@ -145,6 +145,12 @@ function compareAndMergeNode (
   // 新旧节点 type相同 key相同并且都是原子节点时
   // 对新旧节点内部的各节点进行 compare and merge
   if (newNodeIsBasic && oldNodeIsBasic) {
+    // if (newNode.isInputNode && oldNode.isInputNode) {
+    //   if (newNode.props.value !== oldNode.props.value) {
+    //     UtilManager.error(`Dont update 'text' prop of <Input /> by call setState(), this will not take effect on <Input />. You can use Input ref method setValue() to update it.`)
+    //   }
+    // }
+
     // 对 children 进行比较
     compareNodeInProps(newNode.basicWidgetPropChildren, oldNode.basicWidgetPropChildren)
     compareNodeArray(newNode.children, oldNode.children)
@@ -152,7 +158,7 @@ function compareAndMergeNode (
     const newKeys: string[] = Object.keys(newNode.basicWidgetPropChildren)
     const oldKeys: string[] = Object.keys(oldNode.basicWidgetPropChildren)
     // 获取 props 中新旧节点 keyName 的并集
-    const keys = Array.from(new Set([ ...newKeys, ...oldKeys ]))
+    const keys = Array.from(new Set([...newKeys, ...oldKeys]))
     for (let key in keys) {
       const itemInOld: PropChildrenVNodeType | void = oldNode[key]
       const itemInNew: PropChildrenVNodeType | void = newNode[key]
@@ -162,7 +168,7 @@ function compareAndMergeNode (
 
       const itemInOldIsArray: boolean = Array.isArray(itemInOld)
       const itemInNewIsArray: boolean = Array.isArray(itemInNew)
-      
+
       // 新旧节点都不是数组
       if (!itemInOldIsArray && !itemInNewIsArray) {
         compareAndMergeNode(itemInNew as VNode, itemInOld as VNode)
@@ -176,7 +182,7 @@ function compareAndMergeNode (
 }
 
 // 比较两个节点数组
-function compareNodeArray (newNodeArray: VNode[], oldNodeArray: VNode[]) {
+function compareNodeArray(newNodeArray: VNode[], oldNodeArray: VNode[]) {
   const newLength: number = (newNodeArray || []).length
   const oldLength: number = (oldNodeArray || []).length
   if (!newLength || !oldLength) return
@@ -206,7 +212,7 @@ function compareNodeArray (newNodeArray: VNode[], oldNodeArray: VNode[]) {
 }
 
 // 比较属性上的节点
-function compareNodeInProps (newPropNodes: PropChildrenVNode, oldPropsNodes: PropChildrenVNode) {
+function compareNodeInProps(newPropNodes: PropChildrenVNode, oldPropsNodes: PropChildrenVNode) {
   for (let key in newPropNodes) {
     if (newPropNodes[key]) {
       compareAndMergeNode(newPropNodes[key] as VNode, oldPropsNodes[key] as VNode)

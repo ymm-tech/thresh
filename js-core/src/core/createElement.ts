@@ -22,7 +22,7 @@
  *
  */
 
-import Widget from './Widget'
+import Widget, { BasicWidget } from './Widget'
 import Util from '../shared/Util'
 import VNode from './VNode'
 

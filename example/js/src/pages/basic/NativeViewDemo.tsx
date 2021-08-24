@@ -21,7 +21,9 @@ export default class NativeViewDemo extends Widget <any, any> {
         backgroundColor={Colors.Primary}
       >
         <Box>
-          <NativeView type={"thresh/native_text_view"} params={{"text":"我是NativeTextView，测试"}} width={ui.screenWidth} height={ui.rpx(100)} backgroundColor={0xffFFFBF9} />
+          <NativeView
+            gesture={'HorizontalDrag'}
+            type={"thresh/native_text_view"} params={{ "text": "我是NativeTextView，测试" }} width={ui.screenWidth} height={ui.rpx(100)} backgroundColor={0xffFFFBF9} />
         </Box>
       </Page>
     )

@@ -4,8 +4,8 @@ description: Demonstrates how to use the thresh plugin.
 version: 0.0.1
 
 environment:
-  sdk: ">=2.7.0 <3.0.0"
-  flutter: ">=1.20.0"
+  sdk: ">=2.10.0 <3.0.0"
+  flutter: ">=2.2.0"
 
 dependencies:
   flutter:

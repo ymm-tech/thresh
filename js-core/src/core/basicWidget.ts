@@ -32,6 +32,7 @@ import {
   PageProps,
   AppBarProps,
   ContainerProps,
+  StackViewProps,
   ScrollViewProps,
   ListViewProps,
   NestScrollViewProps,
@@ -52,16 +53,20 @@ import {
   CheckboxProps,
   InputProps,
   SwitchProps,
-  PickerProps
+  PickerProps,
+  TabViewProps,
+  GridViewProps
 } from '../types/widget'
+
+const AnimationDuration = 150
 
 /**
  * 页面布局
  */
 
 // 页面组件
-export class Page extends BasicWidget <PageProps, any> {
-  static async invokeBeforePagePop (): Promise<boolean> {
+export class Page extends BasicWidget<PageProps, any> {
+  static async invokeBeforePagePop(): Promise<boolean> {
     const pageNode: VNode | void = Page.getPageWithContextId(appContainer.contextId as string)
     if (!pageNode) return true
     if (!pageNode.props.beforePop) return true
@@ -74,19 +79,20 @@ export class Page extends BasicWidget <PageProps, any> {
     return true
   }
 
-  static invokePageOnShow (contextId: string) {
+  static invokePageOnShow(contextId: string) {
     const pageNode: VNode | void = Page.getPageWithContextId(contextId)
     if (!pageNode) return
+    appContainer.contextId = contextId
     pageNode.props.onShow && pageNode.props.onShow()
   }
 
-  static invokePageOnHide (contextId: string) {
+  static invokePageOnHide(contextId: string) {
     const pageNode: VNode | void = this.getPageWithContextId(contextId)
     if (!pageNode) return
     pageNode.props.onHide && pageNode.props.onHide()
   }
 
-  private static getPageWithContextId (contextId: string): VNode | void {
+  private static getPageWithContextId(contextId: string): VNode | void {
     if (appContainer.isEmpty) return
     const targetPageNode: VNode | void = appContainer.getPageDataWithContextId(contextId)
     if (!targetPageNode) return
@@ -94,9 +100,9 @@ export class Page extends BasicWidget <PageProps, any> {
   }
 }
 // 顶部导航栏组件
-export class AppBar extends BasicWidget <AppBarProps, any> {
+export class AppBar extends BasicWidget<AppBarProps, any> {
   private __lastTitle: string
-  updateTitle (title: string) {
+  updateTitle(title: string) {
     const lastTitle: string = !Util.isNil(this.__lastTitle) ? this.__lastTitle : (this.props.title || '')
     if (lastTitle === title) return
     this.__lastTitle = title
@@ -104,52 +110,56 @@ export class AppBar extends BasicWidget <AppBarProps, any> {
   }
 }
 // 容器组件
-export class Container extends BasicWidget <ContainerProps, any> {}
+export class Container extends BasicWidget<ContainerProps, any> {}
+/**
+ * 堆叠组件
+ * StackView size 有其内部的所有非 absolute 节点撑起
+ * 至少需要有一个非 absolute 的子节点来撑起 StackView size，否则 StackView 将不可见
+ * 子节点可以直接使用 absolute 进行定位
+ * 在未设置 absolute 的情况下，所有子节点会以容器左上角为锚点堆叠放置
+ */
+export class StackView extends BasicWidget<StackViewProps, any> {}
 // 滑动容器组件
-export class ScrollView extends BasicWidget <ScrollViewProps, any> {
-  scrollTo (offset: number, duration?: number) {
+export class ScrollView extends BasicWidget<ScrollViewProps, any> {
+  scrollTo(offset: number, duration: number = AnimationDuration) {
     __setNavProps(this, FlutterMethodChannelType.scrollTo, { offset, duration })
   }
 }
 // 列表容器组件
-export class ListView extends BasicWidget <ListViewProps, any> {
-  scrollTo (offset: number, duration?: number) {
+export class ListView extends BasicWidget<ListViewProps, any> {
+  scrollTo(offset: number, duration: number = AnimationDuration) {
     __setNavProps(this, FlutterMethodChannelType.scrollTo, { offset, duration })
   }
 
-  stopAsyncOperate (type: 'refresh' | 'loadMore') {
+  stopAsyncOperate(type: 'refresh' | 'loadMore') {
     __setNavProps(this, FlutterMethodChannelType.stopAsyncOperate, { type })
   }
 }
-export class NestScrollView extends BasicWidget <NestScrollViewProps, any> {
-  // scrollTo (offset: number, duration?: number) {
-  //   __setNavProps(this, FlutterMethodChannelType.scrollTo, { offset, duration })
-  // }
-  // 打开ScrollView（上滑）
-  open () {
+export class NestScrollView extends BasicWidget<NestScrollViewProps, any> {
+  open() {
     __setNavProps(this, FlutterMethodChannelType.setNestScrollViewStatus, { isOpened: true })
   }
   // 关闭ScrollView（下滑）
-  close () {
+  close() {
     __setNavProps(this, FlutterMethodChannelType.setNestScrollViewStatus, { isOpened: false })
   }
 }
-export class DrawerScrollView extends BasicWidget <DrawerScrollViewProps, any> {}
+export class DrawerScrollView extends BasicWidget<DrawerScrollViewProps, any> { }
 
-export class DragableScrollView extends BasicWidget <DragableScrollViewProps, any> {
-  scrollTo (offset: number, duration?: number) {
+export class DragableScrollView extends BasicWidget<DragableScrollViewProps, any> {
+  scrollTo(offset: number, duration: number = AnimationDuration) {
     __setNavProps(this, FlutterMethodChannelType.scrollTo, { offset, duration })
   }
-  dragPositionAnimateTo (positionType: 'initial' | 'max' | 'min') {
+  dragPositionAnimateTo(positionType: 'initial' | 'max' | 'min') {
     __setNavProps(this, FlutterMethodChannelType.dragPositionAnimateTo, { positionType })
   }
 }
 
-export class SwipeActionsView extends BasicWidget <SwipeActionsViewProps, any> {
-  openActions () {
+export class SwipeActionsView extends BasicWidget<SwipeActionsViewProps, any> {
+  openActions() {
     __setNavProps(this, FlutterMethodChannelType.openActions, {})
   }
-  closeActions () {
+  closeActions() {
     __setNavProps(this, FlutterMethodChannelType.closeActions, {})
   }
 }
@@ -158,21 +168,21 @@ SwipeActionsView.childrenRule = new ChildrenRule({
   length: 0,
 })
 
-export class SwiperView extends BasicWidget <SwiperViewProps, any> {
-  swipeTo (index: number, duration?: number) {
+export class SwiperView extends BasicWidget<SwiperViewProps, any> {
+  swipeTo(index: number, duration: number = AnimationDuration) {
     __setNavProps(this, FlutterMethodChannelType.swipeTo, { index, duration })
   }
 }
-export class NativeView extends BasicWidget <NativeViewProps, any> {
-  refresh (params: any = {}) {
+export class NativeView extends BasicWidget<NativeViewProps, any> {
+  refresh(params: any = {}) {
     this.invokeCustomMethod('refresh', params)
   }
 
-  destroy (params: any = {}) {
+  destroy(params: any = {}) {
     this.invokeCustomMethod('destroy', params)
   }
 
-  invokeCustomMethod (methodName: string, methodParams: any = {}) {
+  invokeCustomMethod(methodName: string, methodParams: any = {}) {
     MethodChannel.invokeNativeViewMethod({
       methodName,
       methodParams,
@@ -187,44 +197,44 @@ export class NativeView extends BasicWidget <NativeViewProps, any> {
  */
 
 // 图标组件
-export class Icon extends BasicWidget <IconProps, any> {}
+export class Icon extends BasicWidget<IconProps, any> { }
 Icon.childrenRule = new ChildrenRule({
   widgetName: 'Icon',
   length: 0
 })
 // 图片组件
-export class Image extends BasicWidget <ImageProps, any> {}
+export class Image extends BasicWidget<ImageProps, any> { }
 Image.childrenRule = new ChildrenRule({
   length: 0,
   widgetName: 'Image'
 })
 // 图片组件
-export class QrImage extends BasicWidget <QrImageProps, any> {}
+export class QrImage extends BasicWidget<QrImageProps, any> { }
 QrImage.childrenRule = new ChildrenRule({
   length: 0,
   widgetName: 'QrImage'
 })
 // 文本组件
-export class Text extends BasicWidget <TextProps, any> {}
+export class Text extends BasicWidget<TextProps, any> { }
 Text.childrenRule = new ChildrenRule({
   name: 'text',
   widgetName: 'Text',
   ruleFunc: (children: any[]) => children.map((child: any) => child != undefined ? child.toString() : '').join('')
 })
 // 无限旋转组件
-export class Spin extends BasicWidget <SpinProps, any> {}
+export class Spin extends BasicWidget<SpinProps, any> { }
 Spin.childrenRule = new ChildrenRule({
   widgetName: 'Spin',
   length: 0,
 })
 // 旋转刷新组件
-export class Refresh extends BasicWidget <RefreshProps, any> {}
+export class Refresh extends BasicWidget<RefreshProps, any> { }
 Refresh.childrenRule = new ChildrenRule({
   widgetName: 'Refresh',
   length: 0,
 })
 // 通知栏组件
-export class NoticeBar extends BasicWidget <NoticeBarProps, any> {}
+export class NoticeBar extends BasicWidget<NoticeBarProps, any> { }
 NoticeBar.childrenRule = new ChildrenRule({
   widgetName: 'NoticeBar',
 })
@@ -234,36 +244,42 @@ NoticeBar.childrenRule = new ChildrenRule({
  */
 
 // 按钮组件
-export class Button extends BasicWidget <ButtonProps, any> {}
+export class Button extends BasicWidget<ButtonProps, any> { }
 Button.childrenRule = new ChildrenRule({
   widgetName: 'Button',
   name: 'child',
   length: 1,
 })
 // 单选框组件
-export class Radio extends BasicWidget <RadioProps, any> {}
+export class Radio extends BasicWidget<RadioProps, any> { }
 Radio.childrenRule = new ChildrenRule({
   length: 1,
   name: 'title',
   widgetName: 'Radio'
 })
 // 开关组件
-export class Switch extends BasicWidget <SwitchProps, any> {}
+export class Switch extends BasicWidget<SwitchProps, any> { }
 Switch.childrenRule = new ChildrenRule({
   length: 0,
   widgetName: 'Switch'
 })
 // 复选框组件
-export class Checkbox extends BasicWidget <CheckboxProps, any> {}
+export class Checkbox extends BasicWidget<CheckboxProps, any> { }
 Checkbox.childrenRule = new ChildrenRule({
   length: 1,
   name: 'title',
   widgetName: 'Checkbox'
 })
 // 输入框组件
-export class Input extends BasicWidget <InputProps, any> {
-  setValue (value: string) {
+export class Input extends BasicWidget<InputProps, any> {
+  setValue(value: string) {
     __setNavProps(this, FlutterMethodChannelType.setValue, { value })
+  }
+  focus() {
+    __setNavProps(this, FlutterMethodChannelType.triggerFocus, { type: 'focus' })
+  }
+  blur() {
+    __setNavProps(this, FlutterMethodChannelType.triggerFocus, { type: 'blur' })
   }
 }
 Input.childrenRule = new ChildrenRule({
@@ -271,9 +287,9 @@ Input.childrenRule = new ChildrenRule({
   widgetName: 'Input'
 })
 
-function __setNavProps (widget: Widget<any, any>, method: FlutterMethodChannelType, params: object = {}) {
+function __setNavProps(widget: Widget<any, any>, method: FlutterMethodChannelType, params: object = {}) {
   const vNode: VNode = widget.__vNode__
-  if (!vNode.isMount) return
+  if (!vNode.hasMount) return
   MethodChannel.call({
     method,
     params: {
@@ -285,13 +301,13 @@ function __setNavProps (widget: Widget<any, any>, method: FlutterMethodChannelTy
 }
 
 // 选择组件
-export class Picker extends BasicWidget <PickerProps, any> {
+export class Picker extends BasicWidget<PickerProps, any> {
   // 跳转到指定位置
-  jumpTo (index: number) {
+  jumpTo(index: number) {
     __setNavProps(this, FlutterMethodChannelType.jumpTo, { index })
   }
   // 滚动到指定位置
-  animateTo(index:number, duration?:number){
+  animateTo(index: number, duration: number = AnimationDuration) {
     __setNavProps(this, FlutterMethodChannelType.animateTo, { index, duration })
   }
 }
@@ -299,10 +315,27 @@ Picker.childrenRule = new ChildrenRule({
   widgetName: 'Picker'
 })
 
+// 顶部tab控制器
+export class TabView extends BasicWidget<TabViewProps, any> {
+  switchTo(index: number) {
+    __setNavProps(this, FlutterMethodChannelType.switchTo, { index })
+  }
+}
+TabView.childrenRule = new ChildrenRule({
+  widgetName: 'TabView'
+})
+
+export class GridView extends BasicWidget<GridViewProps, any> {
+  scrollTo(offset: number, duration: number = AnimationDuration) {
+    __setNavProps(this, FlutterMethodChannelType.scrollTo, { offset, duration })
+  }
+}
+
 export default {
   Page,
   AppBar,
   Container,
+  StackView,
   ScrollView,
   ListView,
   NestScrollView,
@@ -326,4 +359,6 @@ export default {
   Input,
   Switch,
   Picker,
+  TabView,
+  GridView
 }

@@ -45,18 +45,20 @@ void registerUtilChannelMethods() {
           Util.getBoolean(params['showSuccess']));
     },
     'blur': (params) {
-      FocusScope.of(dynamicApp.context).requestFocus(FocusNode());
+      Util.inputBlur();
     },
     'onError': (params) {
       String message = Util.getString(params['message']);
       String stack = Util.getString(params['stack']);
       String pageName = Util.getString(params['pageName']);
       String referPageName = Util.getString(params['referPageName']);
-      Util.onError(ThreshError(message,
-          trace: stack,
-          type: ThreshErrorType.JS,
-          pageName: pageName,
-          referPageName: referPageName));
+      Util.onError(ThreshError(
+        message,
+        trace: stack,
+        type: ThreshErrorType.JS,
+        pageName: pageName,
+        referPageName: referPageName,
+      ));
     }
   });
 }

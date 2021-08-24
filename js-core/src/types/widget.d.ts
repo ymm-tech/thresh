@@ -44,8 +44,10 @@ type TextDecoration = 'none' | 'lineThrough' | 'overline' | 'underline'
 type ImageFit = 'fill' | 'contain' | 'cover' | 'fitWidth' | 'fitHeight' | 'scaleDown' | 'none'
 type Direction = 'vertical' | 'horizontal'
 type IconType = 'loading' | 'apps' | 'arrow_back' | 'arrow_back_ios' | 'arrow_downward' | 'arrow_drop_down' | 'arrow_drop_up' | 'arrow_forward' | 'arrow_forward_ios' | 'arrow_left' | 'arrow_right' | 'arrow_upward' | 'check' | 'check_circle' | 'check_circle_outline' | 'add' | 'add_circle' | 'add_circle_outline' | 'close' | 'cancel' | 'create' | 'chevron_left' | 'chevron_right' | 'aexpand_lesspps' | 'expand_more' | 'refresh' | 'fullscreen' | 'fullscreen_exit' | 'more_horiz' | 'more_vert' | 'unfold_less' | 'unfold_more' | 'control_point' | 'crop' | 'adjust' | 'camera' | 'camera_alt' | 'image' | 'broken_image' | 'phone_iphone' | 'phone_android' | 'watch' | 'tv' | 'headset' | 'computer' | 'cloud_done' | 'cloud_download' | 'cloud_upload' | 'cloud_off' | 'folder' | 'title' | 'insert_link' | 'insert_chart' | 'format_quote' | 'format_list_bulleted' | 'format_list_numbered' | 'attach_file' | 'attach_money' | 'access_alarms' | 'account_box' | 'account_circle' | 'bookmark' | 'bookmark_border' | 'fingerprint' | 'gif' | 'home' | 'info' | 'info_outline'
+type ReturnActionType = 'none' | 'unspecified' | 'done' | 'go' | 'search' | 'send' | 'next' | 'previous' | 'continueAction' | 'join' | 'route' | 'emergencyCall' | 'newline'
 type KeyboardType = 'text' | 'multiline' | 'number' | 'decimalNumber' | 'phone' | 'datetime' | 'emailAddress' | 'url'
 type Alignment = 'topLeft' | 'topCenter' | 'topRight' | 'center' | 'centerLeft' | 'centerRight' | 'bottomLeft' | 'bottomCenter' | 'bottomRight'
+type GestureType = 'HorizontalDrag' | 'VerticalDrag' | 'Pan' | 'Scale'
 
 export interface ToastInfo {
   name?: string,
@@ -158,6 +160,7 @@ export interface BasicWidgetNormalProps extends BasicProps {
   absolute?: EdgeInset,
   flex?: number,
   disabled?: boolean,
+  ignorePointer?: boolean,
   opacity?: number,
   tapOpacity?: number,
   transform?: Transform,
@@ -184,6 +187,8 @@ export interface AppBarProps extends BasicProps {
   titleWeight?: TextWeight,
   centerTitle?: boolean,
   elevation?: boolean,
+  elevationValue?: number,
+  elevationColor?: number,
   showLeadingButton?: boolean,
   leading?: ThreshWidget,
   buttons?: ThreshWidget[],
@@ -203,9 +208,12 @@ export interface ContainerProps extends BasicWidgetNormalProps {
   alignContent?: AlignContent
 }
 
+export interface StackViewProps extends BasicProps { }
+
 export interface ScrollViewProps extends BasicWidgetNormalProps {
   scrollable?: boolean,
   direction?: Direction,
+  avoidKeyboard?: boolean,
   onScroll?: EventCallback
 }
 export interface ListViewProps extends ScrollViewProps {
@@ -213,15 +221,22 @@ export interface ListViewProps extends ScrollViewProps {
   refreshColor?: number,
   refreshBackgroundColor?: number,
   onRefresh?: AsyncEventCallback,
-  onLoadMore?: AsyncEventCallback
+  onLoadMore?: AsyncEventCallback,
 }
 export interface NestScrollViewProps extends BasicWidgetNormalProps {
   appBar?: AppBar,
+  backgroundAppBar?: AppBar,
   offset?: number,
+  initBorderRadius?: number,
+  stickyBorderRadius?: number,
+  triggerStickyDistance?: number,
   backgroundView: ThreshWidget,
   maskView?: ThreshWidget,
   fixedBottomView?: ThreshWidget,
+  animatedBottomView?: ThreshWidget,
+  animatedHeaderView?: ThreshWidget,
   onScroll?: EventCallback,
+  willDragStatusChange?: EventCallback,
   onDragStatusChange?: EventCallback,
 }
 export interface DrawerScrollViewProps extends BasicWidgetNormalProps {
@@ -257,6 +272,7 @@ export interface SwipeActionsViewProps extends BasicWidgetNormalProps {
 export interface NativeViewProps extends BasicWidgetNormalProps {
   type?: string,
   params?: any,
+  gesture?: GestureType | GestureType[],
   onLoad?: EventCallback
 }
 
@@ -293,7 +309,12 @@ export interface QrImageProps extends BasicWidgetNormalProps {
   text: string,
   size?: number,
   gapless?: boolean,
-  foregroundColor?: number
+  foregroundColor?: number,
+  embeddedImageUrl?: string,
+  embeddedImageWidth?: number,
+  embeddedImageHeight?: number,
+  embeddedImageColor?: number
+  errorCorrectionLevel?:number
 }
 
 export interface SpinProps extends BasicWidgetNormalProps {
@@ -344,11 +365,13 @@ export interface InputProps extends BasicWidgetNormalProps {
   placeholder?: string,
   placeholderStyle?: TextStyle,
   cursorColor?: number,
+  cursorHeight?: number,
+  returnActionType?: ReturnActionType,
   keyboardType?: KeyboardType,
   onChange?: EventCallback,
   onFocus?: EventCallback,
   onBlur?: EventCallback,
-  onSubmitted?:EventCallback,
+  onSubmitted?: EventCallback,
 }
 
 export interface SwitchProps extends BasicWidgetNormalProps {
@@ -362,9 +385,44 @@ export interface SwitchProps extends BasicWidgetNormalProps {
 }
 
 export interface PickerProps extends BasicWidgetNormalProps {
-  value?:number,
+  value?: number,
   height: number,
   looping?: boolean,
   itemHeight: number,
   onChange: EventCallback,
+}
+
+export interface TabViewProps extends BasicWidgetNormalProps {
+  tabs?: ThreshWidget[],
+  rightItems?: ThreshWidget[],
+  pages?: ThreshWidget[],
+  tabsHorizontalMargin?: number,
+  isScrollable?: boolean,
+  tabBarColor?: number,
+  tabBarHeight?: number,
+  shadowColor?: number,
+  elevation?: number,
+  borderRadius?: number,
+  labelStyle?: TextStyle,
+  unselectedLabelStyle?: TextStyle,
+  indicatorPadding?: number | EdgeInset,
+  indicatorWeight?: number,
+  indicatorColor?: number,
+  indicatorCap?: 'square' | 'round',
+  onChange?: EventCallback,
+}
+
+export interface GridViewProps extends BasicWidgetNormalProps {
+  scrollable?: 'always' | 'bouncing' | 'never',
+  scrollDirection?: 'vertical' | 'horizontal',
+  startPosition?: 'leading' | 'trailing',
+  layoutGrid?: 'fixedCount' | 'maxExtent',
+  crossAxisCount?: number,
+  maxCrossAxisExtent?: number,
+  mainAxisSpacing?: number,
+  crossAxisSpacing?: number,
+  childAspectRatio?: number,
+  items?: ThreshWidget[],
+  onScroll?: EventCallback,
+  onClicked?: EventCallback
 }

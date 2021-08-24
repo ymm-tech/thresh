@@ -6,11 +6,11 @@ import { Container } from 'thresh-lib/src/core/basicWidget'
 
 const { Page, AppBar, ScrollView, Text } = basicWidgets
 
-export default class TextDemo extends Thresh.Widget <any, any> {
-  widgetDidMount () {
+export default class TextDemo extends Thresh.Widget<any, any> {
+  widgetDidMount() {
     Thresh.pageDidShow()
   }
-  render () {
+  render() {
     return (
       <Page
         backgroundColor={Colors.Pagebg}
@@ -23,7 +23,11 @@ export default class TextDemo extends Thresh.Widget <any, any> {
           <Box>
             <Text color={Colors.Primary} size={20} weight="bolder">这是一段普通文本，可以设置文本颜色和字号、字重。</Text>
           </Box>
-          
+
+          <Container alignItems={'baseline'}>
+            <Text >1111111</Text>
+          </Container>
+
           <Title title="富文本" />
           <Box>
             <Text
@@ -39,12 +43,12 @@ export default class TextDemo extends Thresh.Widget <any, any> {
 
           <Box>
             <Container height={50} border={{ color: Colors.Primary }} justifyContent="center" alignItems="center">
-            <Text
-            border={{ color: Colors.Red }}
+              <Text
+                border={{ color: Colors.Red }}
               // backgroundColor={Colors.Primary}
               // padding={5}
-            >
-              HFJKHDSJFHJSDHFJKD
+              >
+                HFJKHDSJFHJSDHFJKD
             </Text>
             </Container>
           </Box>

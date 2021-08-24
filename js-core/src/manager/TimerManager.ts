@@ -35,6 +35,7 @@ enum TimerType {
 }
 
 export default class TimerManager {
+  private static _timerIds: string[] = []
   /**
    * 定时执行器
    */
@@ -57,6 +58,8 @@ export default class TimerManager {
       type: 'clear',
       id: timerId,
     })
+    const index = TimerManager._timerIds.indexOf(timerId)
+    if (index > -1) TimerManager._timerIds.splice(index, 1)
   }
   /**
    * 执行定时器
@@ -66,12 +69,19 @@ export default class TimerManager {
     bus.fire(timerId)
   }
   /**
+   * 清空所有定时器
+   */
+  static clearAllTimers () {
+    TimerManager._timerIds.forEach(TimerManager.clearTimer)
+  }
+  /**
    * 注册定时器
    */
   private static registerTimer (type: TimerType, callback: Function, duration: number): string {
     if (!Util.isFunc(callback)) return
     if (!duration || duration < 0) duration = 0
     const loop = type === TimerType.interval
+
     const timerId = bus.register(
       loop
         ? callback
@@ -79,7 +89,7 @@ export default class TimerManager {
         // 执行回调后立刻清除
         : () => {
           callback()
-          bus.remove(timerId)
+          TimerManager.clearTimer(timerId)
         },
       this.timerId
     )
@@ -89,6 +99,7 @@ export default class TimerManager {
       duration,
       loop,
     })
+    TimerManager._timerIds.push(timerId)
     return timerId
   }
 

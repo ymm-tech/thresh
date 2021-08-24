@@ -32,6 +32,9 @@ import 'package:thresh/framework/widget/layout/widget_list_view.dart';
 import 'package:thresh/framework/widget/layout/widget_nest_scroll_view.dart';
 import 'package:thresh/devtools/dev_tools.dart';
 import 'package:thresh/basic/util.dart';
+import 'package:thresh/framework/widget/layout/widget_tabbar_controller_view.dart';
+
+const int _animationDuration = 150;
 
 class _ControllerDevInfo {
   final String title;
@@ -102,15 +105,15 @@ void registerControllerChannelMethods() {
       }
     },
 
-    // ScrollView / ListView / DragableScrollView 滚动到指定位置
+    // ScrollView / ListView / DragableScrollView / GridView 滚动到指定位置
     'scrollTo': (params) {
       String pageName = Util.getString(params['pageName']);
       String widgetId = Util.getString(params['widgetId']);
       double offset = Util.getDouble(params['offset']);
-      int duration = Util.getInt(params['duration']) ?? 200;
+      int duration = Util.getInt(params['duration']) ?? _animationDuration;
       List<DynamicModel> targetModels = _findTargetModels(
         params,
-        ['ScrollView', 'ListView', 'DragableScrollView'],
+        ['ScrollView', 'ListView', 'DragableScrollView', 'GridView'],
         _ControllerDevInfo(
           'scrollTo',
           Util.formatMutipulLineText([
@@ -230,7 +233,7 @@ void registerControllerChannelMethods() {
       String pageName = Util.getString(params['pageName']);
       String widgetId = Util.getString(params['widgetId']);
       int index = Util.getInt(params['index']);
-      int duration = Util.getInt(params['duration']) ?? 200;
+      int duration = Util.getInt(params['duration']) ?? _animationDuration;
       List<DynamicModel> targetModels = _findTargetModels(
         params,
         ['ScrollView', 'ListView'],
@@ -272,6 +275,32 @@ void registerControllerChannelMethods() {
       }
     },
 
+    // 修改 Input 的值
+    'triggerFocus': (params) {
+      String pageName = Util.getString(params['pageName']);
+      String widgetId = Util.getString(params['widgetId']);
+      String type = Util.getString(params['type']);
+      if (type == null) return;
+      List<DynamicModel> targetModels = _findTargetModels(
+        params,
+        ['Input'],
+        _ControllerDevInfo(
+          'triggerFocus',
+          Util.formatMutipulLineText([
+            'Page/Modal Name: $pageName',
+            'Widget Id: $widgetId',
+            'Type: $type',
+          ]),
+        ),
+      );
+      for (DynamicModel model in targetModels) {
+        final DFTextEditingController controller =
+            model.controller as DFTextEditingController;
+        if (type == 'focus') controller.focus();
+        if (type == 'blur') controller.blur();
+      }
+    },
+
     // Picker 跳转到指定位置
     'jumpTo': (params) {
       int index = Util.getInt(params['index']);
@@ -297,7 +326,7 @@ void registerControllerChannelMethods() {
     // Picker 滚动到指定位置
     'animateTo': (params) {
       int index = Util.getInt(params['index']);
-      int duration = Util.getInt(params['duration']) ?? 200;
+      int duration = Util.getInt(params['duration']) ?? _animationDuration;
       String pageName = Util.getString(params['pageName']);
       String widgetId = Util.getString(params['widgetId']);
       List<DynamicModel> targetModels = _findTargetModels(
@@ -338,6 +367,28 @@ void registerControllerChannelMethods() {
       for (DynamicModel model in targetModels) {
         (model.controller as DFNestScrollViewCustomController)
             .setNestScrollViewStatus(isOpened);
+      }
+    },
+
+    // tabController 滚动到指定位置
+    'switchTo': (params) {
+      int index = Util.getInt(params['index']);
+      String pageName = Util.getString(params['pageName']);
+      String widgetId = Util.getString(params['widgetId']);
+      List<DynamicModel> targetModels = _findTargetModels(
+        params,
+        ['TabView'],
+        _ControllerDevInfo(
+          'switchTo',
+          Util.formatMutipulLineText([
+            'Page/Modal Name: $pageName',
+            'Widget Id: $widgetId',
+            'Animate To: $index',
+          ]),
+        ),
+      );
+      for (DynamicModel model in targetModels) {
+        (model.controller as ThreshTabController).animateTo(index);
       }
     },
   });

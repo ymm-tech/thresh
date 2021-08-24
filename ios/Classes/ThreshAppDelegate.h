@@ -26,6 +26,7 @@
 #import "ThreshLogger.h"
 #import "ThreshNativeBridge.h"
 #import "ThreshDataLoader.h"
+#import <Flutter/Flutter.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -33,9 +34,11 @@ NS_ASSUME_NONNULL_BEGIN
 
 + (instancetype)sharedInstance;
 
-- (void)startThreshWithLogger:(id<ThreshLogger>)logger;
+- (void)startThreshWithLogger:(id<ThreshLogger>)logger engineGroup:(FlutterEngineGroup *)engineGroup;
 
 @property (nonatomic, strong, readonly) id<ThreshLogger> logger;
+
+@property (nonatomic, strong, readonly) FlutterEngineGroup *engineGroup;
 
 @end
 

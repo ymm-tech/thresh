@@ -42,6 +42,8 @@ class DFInput extends DFBasicWidget {
     this.placeholder,
     this.placeholderStyle,
     this.cursorColor,
+    this.cursorHeight,
+    this.textInputAction,
     this.keyboardType,
     this.controller,
     this.focusNode,
@@ -63,6 +65,8 @@ class DFInput extends DFBasicWidget {
   final String placeholder;
   final TextStyle placeholderStyle;
   final Color cursorColor;
+  final double cursorHeight;
+  final TextInputAction textInputAction;
   final TextInputType keyboardType;
   final DFTextEditingController controller;
   final FocusNode focusNode;
@@ -87,6 +91,8 @@ class DFInput extends DFBasicWidget {
         errorBorder: InputBorder.none,
         border: InputBorder.none,
       ),
+      strutStyle: StrutStyle(height: 1.5),
+      textInputAction: textInputAction,
       keyboardType: keyboardType,
       keyboardAppearance: Brightness.light,
       textCapitalization: TextCapitalization.none,
@@ -99,6 +105,7 @@ class DFInput extends DFBasicWidget {
       maxLengthEnforced: true,
       enabled: !disabled,
       cursorColor: cursorColor,
+      cursorHeight: cursorHeight,
       onChanged: (String value) {
         // 数字类型下，安卓键盘可能依然带有小数点或其他字符按键
         // 通过该方法过滤这些不正确的按键
@@ -192,6 +199,8 @@ class ProxyDFInput extends ProxyBase {
       model.controller = controller;
     }
 
+    final TextStyle textStyle = Util.getTextStyle(props['textStyle']);
+
     return DFInput(
       model,
       disabled: Util.getBoolean(props['disabled']),
@@ -199,10 +208,12 @@ class ProxyDFInput extends ProxyBase {
       maxLines: Util.getInt(props['maxLines']) ?? 1,
       maxLength: maxLength,
       textAlign: Util.getTextAlign(props['textAlign']),
-      textStyle: Util.getTextStyle(props['textStyle']),
+      textStyle: textStyle,
       placeholder: Util.getString(props['placeholder']) ?? '',
       placeholderStyle: Util.getTextStyle(props['placeholderStyle']),
       cursorColor: Util.getColor(props['cursorColor']),
+      cursorHeight: Util.getDouble(props['cursorHeight']),
+      textInputAction: getReturnActionType(props['returnActionType']),
       keyboardType: getKeyboardType(props['keyboardType']),
       controller: controller,
       focusNode: focusNode,
@@ -224,8 +235,42 @@ class ProxyDFInput extends ProxyBase {
     }
   }
 
+  TextInputAction getReturnActionType(dynamic value) {
+    if (value is! String) return null;
+    switch (value) {
+      case 'none':
+        return TextInputAction.none;
+      case 'unspecified':
+        return TextInputAction.unspecified;
+      case 'done':
+        return TextInputAction.done;
+      case 'go':
+        return TextInputAction.go;
+      case 'search':
+        return TextInputAction.search;
+      case 'send':
+        return TextInputAction.send;
+      case 'next':
+        return TextInputAction.next;
+      case 'previous':
+        return TextInputAction.previous;
+      case 'continueAction':
+        return TextInputAction.continueAction;
+      case 'join':
+        return TextInputAction.join;
+      case 'route':
+        return TextInputAction.route;
+      case 'emergencyCall':
+        return TextInputAction.emergencyCall;
+      case 'newline':
+        return TextInputAction.newline;
+      default:
+        return null;
+    }
+  }
+
   TextInputType getKeyboardType(dynamic value) {
-    if (!(value is String)) return TextInputType.text;
+    if (value is! String) return TextInputType.text;
     switch (value) {
       case 'text':
         return TextInputType.text;
@@ -284,5 +329,13 @@ class DFTextEditingController extends TextEditingController {
       return text.substring(0, maxLength);
     }
     return text;
+  }
+
+  focus() {
+    this.focusNode.requestFocus();
+  }
+
+  blur() {
+    Util.inputBlur();
   }
 }

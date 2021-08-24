@@ -120,15 +120,17 @@ export default class Util {
       let temp: string
       if (item instanceof Error) {
         temp = Util.formatError(item)
-      } else if (Util.isObject(item)) {
-        let tempArr: string[] = []
-        for (let key in item) {
-          const value = item[key]
-          if (key !== SHOW_DIVIDER_KEY) tempArr.push(`[${key}] - ${Util.toString(value, true)}`)
-          else tempArr.push(`-----${Util.isString(value) ? value : ''}-----`)
-          temp = tempArr.join('\n')
-        }
-      } else {
+      }
+      // else if (Util.isObject(item)) {
+      //   let tempArr: string[] = []
+      //   for (let key in item) {
+      //     const value = item[key]
+      //     if (key !== SHOW_DIVIDER_KEY) tempArr.push(`[${key}] - ${Util.toString(value, true)}`)
+      //     else tempArr.push(`-----${Util.isString(value) ? value : ''}-----`)
+      //     temp = tempArr.join('\n')
+      //   }
+      // }
+      else {
         temp = Util.toString(item, true)
       }
       if (index) temp = '\n\n\n' + temp
@@ -190,7 +192,7 @@ export default class Util {
   /**
    * 节流函数
    */
-  static throttle (callback: Function, delay: number = 200): Function {
+  static throttle (callback: Function, delay: number = 500): Function {
     let last: number
     return (...args: any[]) => {
       let current: number = Date.now()

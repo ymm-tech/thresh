@@ -32,6 +32,8 @@ NS_ASSUME_NONNULL_BEGIN
 @optional
 - (void)performBridge:(NSDictionary *)bridgeInfo callBack:(ThreshBridgeCallBack)callBack;
 
+- (void)transferThreshData:(id)data;
+
 @end
 
 NS_ASSUME_NONNULL_END

@@ -52,6 +52,7 @@ void initThreshChannel() {
 /// [runApp] 是否直接运行app，默认true，如果为false则需要手动调用runApp
 /// [showWhiteScreenWhenWaitingForMillionSeconds] 当 Thresh 初始页面等待时间超过该时间时会显示白屏页面，默认 3000ms，设为 null 或 0 时不会主动显示白屏页面，仅在非 debugMode 有效
 /// [debugMode] 开发配置，线上环境不要使用
+/// todo: 单例情况下，此处需要返回路由 Map<path, Widget>
 Widget initThreshApp({
   bool runApp = true,
   bool debugMode = false,
@@ -65,6 +66,7 @@ Widget initThreshApp({
   PlaceholderBuilder placeholderPageBuilder,
   ErrorHandler errorHandler,
   int showWhiteScreenWhenWaitingForMillionSeconds = 3000,
+  String remoteDevtoolAddress,
 }) {
   Widget rootApp;
   try {
@@ -89,6 +91,15 @@ Widget initThreshApp({
         InfoType.event,
         InfoType.debug,
       ]);
+      if (remoteDevtoolAddress == null || remoteDevtoolAddress.isEmpty) {
+        if (defaultRoute?.params != null)
+          remoteDevtoolAddress = defaultRoute.params['remoteDevtoolAddress'];
+        if (remoteDevtoolAddress != null &&
+            remoteDevtoolAddress.contains('%3A'))
+          remoteDevtoolAddress = Uri.decodeComponent(remoteDevtoolAddress);
+      }
+      if (remoteDevtoolAddress != null && remoteDevtoolAddress.isNotEmpty)
+        devtools.setRemoteDevtool(remoteDevtoolAddress);
     }
     if (jsBundlePath != null) Util.bundleDirectory = jsBundlePath;
     dynamicApp

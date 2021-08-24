@@ -39,10 +39,11 @@ import java.util.Map;
 
 import androidx.annotation.NonNull;
 
-import io.manbang.frontend.thresh.runtime.jscore.MBJSExecutor;
-import io.manbang.frontend.thresh.runtime.jscore.bundle.BundleOptions;
-import io.manbang.frontend.thresh.runtime.jscore.runtime.JSCallback;
-import io.manbang.frontend.thresh.runtime.jscore.util.V8Util;
+import io.manbang.frontend.jscore.MBJSExecutor;
+import io.manbang.frontend.jscore.bundle.BundleOptions;
+import io.manbang.frontend.jscore.runtime.JSCallback;
+import io.manbang.frontend.jscore.util.V8Util;
+import io.manbang.frontend.thresh.manager.config.ThreshConfigManager;
 import io.manbang.frontend.thresh.util.ThreshLogger;
 
 /**
@@ -205,6 +206,15 @@ public class JSModule {
                 V8Object object = V8Util.toV8Object(executor.runtime(), callParams);
                 executor.executeJSFunction(callJSMethod, null, object);
                 ThreshLogger.v("[finish]");
+            }
+        });
+    }
+
+    public void execEventMessage(final String contextId, final String method, final Object params){
+        runInJsThread(new Runnable() {
+            @Override
+            public void run() {
+                executor.executeJSFunction(callJSLifecycleMethod, null, method, contextId,params);
             }
         });
     }

@@ -41,6 +41,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, assign) BOOL needDefaultSplashScreenView;
 // 自定义splashView
 @property (nonatomic, strong) UIView *splashScreenView;
+// 页面是否透明 默认 不透明
+@property (nonatomic, assign) BOOL opaque;
 
 @end
 

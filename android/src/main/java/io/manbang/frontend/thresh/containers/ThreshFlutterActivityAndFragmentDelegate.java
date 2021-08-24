@@ -3,22 +3,25 @@ package io.manbang.frontend.thresh.containers;
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import static android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW;
+import static io.manbang.frontend.thresh.containers.ThreshFlutterActivityLaunchConfigs.DEFAULT_INITIAL_ROUTE;
+
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-
-import java.util.Arrays;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 import androidx.lifecycle.Lifecycle;
 import io.flutter.FlutterInjector;
+import io.flutter.embedding.android.ExclusiveAppComponent;
 import io.flutter.embedding.android.FlutterEngineConfigurator;
 import io.flutter.embedding.android.FlutterEngineProvider;
 import io.flutter.embedding.android.FlutterSurfaceView;
@@ -33,12 +36,45 @@ import io.flutter.embedding.engine.FlutterShellArgs;
 import io.flutter.embedding.engine.dart.DartExecutor;
 import io.flutter.embedding.engine.renderer.FlutterUiDisplayListener;
 import io.flutter.plugin.platform.PlatformPlugin;
+import java.util.Arrays;
 import io.manbang.frontend.thresh.util.ThreshLogger;
 import io.manbang.frontend.thresh.view.ThreshFlutterView;
 
-import static android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW;
-
-public class ThreshFlutterActivityAndFragmentDelegate {
+/**
+ * Delegate that implements all Flutter logic that is the same between a {@link ThreshActivity} and
+ * a {@link ThreshFragment}.
+ *
+ * <p><strong>Why does this class exist?</strong>
+ *
+ * <p>One might ask why an {@code Activity} and {@code Fragment} delegate needs to exist. Given that
+ * a {@code Fragment} can be placed within an {@code Activity}, it would make more sense to use a
+ * {@link ThreshFragment} within a {@link ThreshActivity}.
+ *
+ * <p>The {@code Fragment} support library adds 100k of binary size to an app, and full-Flutter apps
+ * do not otherwise require that binary hit. Therefore, it was concluded that Flutter must provide a
+ * {@link ThreshActivity} based on the AOSP {@code Activity}, and an independent {@link
+ * ThreshFragment} for add-to-app developers.
+ *
+ * <p>If a time ever comes where the inclusion of {@code Fragment}s in a full-Flutter app is no
+ * longer deemed an issue, this class should be immediately decomposed between {@link
+ * ThreshActivity} and {@link ThreshFragment} and then eliminated.
+ *
+ * <p><strong>Caution when modifying this class</strong>
+ *
+ * <p>Any time that a "delegate" is created with the purpose of encapsulating the internal behaviors
+ * of another object, that delegate is highly susceptible to degeneration. It is easy to tack new
+ * responsibilities on to the delegate which would not otherwise be added to the original object. It
+ * is also easy to begin hanging listeners and callbacks on a delegate object that likewise would
+ * not be added to the original object. A delegate can quickly become a complex web of dependencies
+ * and optional references that are very difficult to track.
+ *
+ * <p>Maintainers of this class should take care to only place code in this delegate that would
+ * otherwise be placed in either {@link ThreshActivity} or {@link ThreshFragment}, and in exactly
+ * the same form. <strong>Do not use this class as a convenient shortcut for any other
+ * behavior.</strong>
+ */
+/* package */
+public class ThreshFlutterActivityAndFragmentDelegate implements ExclusiveAppComponent<Activity> {
     private static final String TAG = "ThreshFlutterActivityAndFragmentDelegate";
     private static final String FRAMEWORK_RESTORATION_BUNDLE_KEY = "framework";
     private static final String PLUGINS_RESTORATION_BUNDLE_KEY = "plugins";
@@ -130,14 +166,6 @@ public class ThreshFlutterActivityAndFragmentDelegate {
             setupFlutterEngine();
         }
 
-        // Regardless of whether or not a FlutterEngine already existed, the PlatformPlugin
-        // is bound to a specific Activity. Therefore, it needs to be created and configured
-        // every time this Fragment attaches to a new Activity.
-        // TODO(mattcarroll): the PlatformPlugin needs to be reimagined because it implicitly takes
-        //                    control of the entire window. This is unacceptable for non-fullscreen
-        //                    use-cases.
-        platformPlugin = host.providePlatformPlugin(host.getActivity(), flutterEngine);
-
         if (host.shouldAttachEngineToActivity()) {
             // Notify any plugins that are currently attached to our FlutterEngine that they
             // are now attached to an Activity.
@@ -148,13 +176,30 @@ public class ThreshFlutterActivityAndFragmentDelegate {
             // which means there shouldn't be any possibility for the Fragment Lifecycle to get out of
             // sync with the Activity. We use the Fragment's Lifecycle because it is possible that the
             // attached Activity is not a LifecycleOwner.
-            ThreshLogger.v(TAG + "Attaching FlutterEngine to the Activity that owns this Fragment.");
-            flutterEngine
-                    .getActivityControlSurface()
-                    .attachToActivity(host.getActivity(), host.getLifecycle());
+            ThreshLogger.v(TAG, "Attaching FlutterEngine to the Activity that owns this delegate.");
+            flutterEngine.getActivityControlSurface().attachToActivity(this, host.getLifecycle());
         }
 
+        // Regardless of whether or not a FlutterEngine already existed, the PlatformPlugin
+        // is bound to a specific Activity. Therefore, it needs to be created and configured
+        // every time this Fragment attaches to a new Activity.
+        // TODO(mattcarroll): the PlatformPlugin needs to be reimagined because it implicitly takes
+        //                    control of the entire window. This is unacceptable for non-fullscreen
+        //                    use-cases.
+        platformPlugin = host.providePlatformPlugin(host.getActivity(), flutterEngine);
+
         host.configureFlutterEngine(flutterEngine);
+    }
+
+    @Override
+    public @NonNull Activity getAppComponent() {
+        final Activity activity = host.getActivity();
+        if (activity == null) {
+            throw new AssertionError(
+                    "FlutterActivityAndFragmentDelegate's getAppComponent should only "
+                            + "be queried after onAttach, when the host's activity should always be non-null");
+        }
+        return activity;
     }
 
     /**
@@ -239,15 +284,19 @@ public class ThreshFlutterActivityAndFragmentDelegate {
             host.onFlutterSurfaceViewCreated(flutterSurfaceView);
 
             // Create the FlutterView that owns the FlutterSurfaceView.
-            flutterView = new ThreshFlutterView(host.getActivity(), flutterSurfaceView);
+            flutterView = createFlutterView(host.getActivity(), flutterSurfaceView);
         } else {
-            FlutterTextureView flutterTextureView = new FlutterTextureView(host.getActivity());
+            FlutterTextureView flutterTextureView = new FlutterTextureView(host.getActivity()){
+                @Override
+                public void setBackground(Drawable background) {
+                }
+            };
 
             // Allow our host to customize FlutterSurfaceView, if desired.
             host.onFlutterTextureViewCreated(flutterTextureView);
 
             // Create the FlutterView that owns the FlutterTextureView.
-            flutterView = new ThreshFlutterView(host.getActivity(), flutterTextureView);
+            flutterView = createFlutterView(host.getActivity(), flutterTextureView);
         }
 
         // Add listener to be notified when Flutter renders its first frame.
@@ -270,8 +319,18 @@ public class ThreshFlutterActivityAndFragmentDelegate {
         return flutterSplashView;
     }
 
-    public void onActivityCreated(@Nullable Bundle bundle) {
-        ThreshLogger.v(TAG + "onActivityCreated. Giving framework and plugins an opportunity to restore state.");
+    protected ThreshFlutterView createFlutterView(Activity activity,FlutterSurfaceView flutterSurfaceView){
+        return new ThreshFlutterView(activity, flutterSurfaceView);
+    }
+
+    protected ThreshFlutterView createFlutterView(Activity activity,FlutterTextureView flutterTextureView){
+        return new ThreshFlutterView(activity, flutterTextureView);
+    }
+
+    public void onRestoreInstanceState(@Nullable Bundle bundle) {
+        ThreshLogger.v(
+                TAG,
+                "onRestoreInstanceState. Giving framework and plugins an opportunity to restore state.");
         ensureAlive();
 
         Bundle pluginState = null;
@@ -327,17 +386,23 @@ public class ThreshFlutterActivityAndFragmentDelegate {
             // So this is expected behavior in many cases.
             return;
         }
-
-        ThreshLogger.v(TAG + "Executing Dart entrypoint: "
+        String initialRoute = host.getInitialRoute();
+        if (initialRoute == null) {
+            initialRoute = maybeGetInitialRouteFromIntent(host.getActivity().getIntent());
+            if (initialRoute == null) {
+                initialRoute = DEFAULT_INITIAL_ROUTE;
+            }
+        }
+        ThreshLogger.v(
+                TAG,
+                "Executing Dart entrypoint: "
                         + host.getDartEntrypointFunctionName()
                         + ", and sending initial route: "
-                        + host.getInitialRoute());
+                        + initialRoute);
 
         // The engine needs to receive the Flutter app's initial route before executing any
         // Dart code to ensure that the initial route arrives in time to be applied.
-        if (host.getInitialRoute() != null) {
-            flutterEngine.getNavigationChannel().setInitialRoute(host.getInitialRoute());
-        }
+        flutterEngine.getNavigationChannel().setInitialRoute(initialRoute);
 
         String appBundlePathOverride = host.getAppBundlePath();
         if (appBundlePathOverride == null || appBundlePathOverride.isEmpty()) {
@@ -349,6 +414,20 @@ public class ThreshFlutterActivityAndFragmentDelegate {
                 new DartExecutor.DartEntrypoint(
                         appBundlePathOverride, host.getDartEntrypointFunctionName());
         flutterEngine.getDartExecutor().executeDartEntrypoint(entrypoint);
+    }
+
+    private String maybeGetInitialRouteFromIntent(Intent intent) {
+        if (host.shouldHandleDeeplinking()) {
+            Uri data = intent.getData();
+            if (data != null && !data.getPath().isEmpty()) {
+                String pathAndQuery = data.getPath();
+                if (data.getQuery() != null && !data.getQuery().isEmpty()) {
+                    pathAndQuery += "?" + data.getQuery();
+                }
+                return pathAndQuery;
+            }
+        }
+        return null;
     }
 
     /**
@@ -451,7 +530,23 @@ public class ThreshFlutterActivityAndFragmentDelegate {
             bundle.putBundle(PLUGINS_RESTORATION_BUNDLE_KEY, plugins);
         }
     }
+    @Override
+    public void detachFromFlutterEngine() {
+        if (host.shouldDestroyEngineWithHost()) {
+            // The host owns the engine and should never have its engine taken by another exclusive
+            // activity.
+            throw new AssertionError(
+                    "The internal FlutterEngine created by "
+                            + host
+                            + " has been attached to by another activity. To persist a FlutterEngine beyond the "
+                            + "ownership of this activity, explicitly create a FlutterEngine");
+        }
 
+        // Default, but customizable, behavior is for the host to call {@link #onDetach}
+        // deterministically as to not mix more events during the lifecycle of the next exclusive
+        // activity.
+        host.detachFromFlutterEngine();
+    }
     /**
      * Invoke this from {@code Activity#onDestroy()} or {@code Fragment#onDetach()}.
      *
@@ -563,10 +658,14 @@ public class ThreshFlutterActivityAndFragmentDelegate {
     public void onNewIntent(@NonNull Intent intent) {
         ensureAlive();
         if (flutterEngine != null) {
-            ThreshLogger.v(TAG + "Forwarding onNewIntent() to FlutterEngine.");
+            ThreshLogger.v(TAG, "Forwarding onNewIntent() to FlutterEngine and sending pushRoute message.");
             flutterEngine.getActivityControlSurface().onNewIntent(intent);
+            String initialRoute = maybeGetInitialRouteFromIntent(intent);
+            if (initialRoute != null && !initialRoute.isEmpty()) {
+                flutterEngine.getNavigationChannel().pushRoute(initialRoute);
+            }
         } else {
-            ThreshLogger.v(TAG + "onNewIntent() invoked before FlutterFragment was attached to an Activity.");
+            ThreshLogger.e(TAG, "onNewIntent() invoked before FlutterFragment was attached to an Activity.");
         }
     }
 
@@ -633,7 +732,7 @@ public class ThreshFlutterActivityAndFragmentDelegate {
                 flutterEngine.getSystemChannel().sendMemoryPressureWarning();
             }
         } else {
-            ThreshLogger.v(TAG + "onTrimMemory() invoked before FlutterFragment was attached to an Activity.");
+            ThreshLogger.e(TAG + "onTrimMemory() invoked before FlutterFragment was attached to an Activity.");
         }
     }
 
@@ -668,11 +767,16 @@ public class ThreshFlutterActivityAndFragmentDelegate {
      * The {@link ThreshActivity} or {@link ThreshFragment} that owns this {@code
      * FlutterActivityAndFragmentDelegate}.
      */
-     public interface Host
-            extends SplashScreenProvider, FlutterEngineProvider, FlutterEngineConfigurator {
+    /* package */ public interface Host
+            extends SplashScreenProvider, FlutterEngineProvider, FlutterEngineConfigurator,
+            PlatformPlugin.PlatformPluginDelegate {
         /** Returns the {@link Context} that backs the host {@link Activity} or {@code Fragment}. */
         @NonNull
         Context getContext();
+
+        /** Returns true if the delegate should retrieve the initial route from the {@link Intent}. */
+        @Nullable
+        boolean shouldHandleDeeplinking();
 
         /**
          * Returns the host {@link Activity} or the {@code Activity} that is currently attached to the
@@ -706,6 +810,15 @@ public class ThreshFlutterActivityAndFragmentDelegate {
          * provided.
          */
         boolean shouldDestroyEngineWithHost();
+
+        /**
+         * Callback called when the {@link FlutterEngine} has been attached to by another activity
+         * before this activity was destroyed.
+         *
+         * <p>The expected behavior is for this activity to synchronously stop using the {@link
+         * FlutterEngine} to avoid lifecycle crosstalk with the new activity.
+         */
+        void detachFromFlutterEngine();
 
         /** Returns the Dart entrypoint that should run when a new {@link FlutterEngine} is created. */
         @NonNull
@@ -749,8 +862,8 @@ public class ThreshFlutterActivityAndFragmentDelegate {
          * experience should control system chrome.
          */
         @Nullable
-        PlatformPlugin providePlatformPlugin(@Nullable Activity activity,
-                                             @NonNull FlutterEngine flutterEngine);
+        PlatformPlugin providePlatformPlugin(
+                @Nullable Activity activity, @NonNull FlutterEngine flutterEngine);
 
         /** Hook for the host to configure the {@link FlutterEngine} as desired. */
         void configureFlutterEngine(@NonNull FlutterEngine flutterEngine);
@@ -806,10 +919,11 @@ public class ThreshFlutterActivityAndFragmentDelegate {
         /**
          * Whether state restoration is enabled.
          *
-         * <p>When this returns true, the instance state provided to {@code onActivityCreated(Bundle)}
-         * will be forwarded to the framework via the {@code RestorationChannel} and during {@code
-         * onSaveInstanceState(Bundle)} the current framework instance state obtained from {@code
-         * RestorationChannel} will be stored in the provided bundle.
+         * <p>When this returns true, the instance state provided to {@code
+         * onRestoreInstanceState(Bundle)} will be forwarded to the framework via the {@code
+         * RestorationChannel} and during {@code onSaveInstanceState(Bundle)} the current framework
+         * instance state obtained from {@code RestorationChannel} will be stored in the provided
+         * bundle.
          *
          * <p>This defaults to true, unless a cached engine is used.
          */

@@ -50,5 +50,6 @@
 
 - (void)removeCurInstance;
 
+- (void)setInitialRouteWithChannel:(NSString *)route;
 
 @end

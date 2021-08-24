@@ -14,25 +14,29 @@ PODS:
   - AFNetworking/Serialization (4.0.1)
   - AFNetworking/UIKit (4.0.1):
     - AFNetworking/NSURLSession
+  - device_info (0.0.1):
+    - Flutter
   - Flutter (1.0.0)
   - FMDB (2.7.5):
     - FMDB/standard (= 2.7.5)
   - FMDB/standard (2.7.5)
-  - MBJSCore_iOS (0.1.1):
+  - MBJSCore_iOS (0.1.4):
     - AFNetworking (= 4.0.1)
     - SSZipArchive
   - path_provider (0.0.1):
     - Flutter
-  - sqflite (0.0.1):
+  - sqflite (0.0.2):
     - Flutter
-    - FMDB (~> 2.7.2)
+    - FMDB (>= 2.7.5)
   - SSZipArchive (2.2.3)
   - thresh (0.0.1):
     - Flutter
+    - MBJSCore_iOS
 
 DEPENDENCIES:
-  - Flutter (from `.symlinks/flutter/ios`)
-  - "MBJSCore_iOS (from `git@code.amh-group.com:MBFrontend/Flutter/MBJSCore_iOS.git`)"
+  - device_info (from `.symlinks/plugins/device_info/ios`)
+  - Flutter (from `Flutter`)
+  - "MBJSCore_iOS (from `git@code.amh-group.com:MBFrontend/Flutter/MBJSCore_iOS.git`, tag `0.1.4`)"
   - path_provider (from `.symlinks/plugins/path_provider/ios`)
   - sqflite (from `.symlinks/plugins/sqflite/ios`)
   - thresh (from `.symlinks/plugins/thresh/ios`)
@@ -44,10 +48,13 @@ SPEC REPOS:
     - SSZipArchive
 
 EXTERNAL SOURCES:
+  device_info:
+    :path: ".symlinks/plugins/device_info/ios"
   Flutter:
-    :path: ".symlinks/flutter/ios"
+    :path: Flutter
   MBJSCore_iOS:
     :git: "git@code.amh-group.com:MBFrontend/Flutter/MBJSCore_iOS.git"
+    :tag: 0.1.4
   path_provider:
     :path: ".symlinks/plugins/path_provider/ios"
   sqflite:
@@ -57,19 +64,20 @@ EXTERNAL SOURCES:
 
 CHECKOUT OPTIONS:
   MBJSCore_iOS:
-    :commit: 6c3c65040feaf31b18b196754e6b3d4b61d0c7b9
     :git: "git@code.amh-group.com:MBFrontend/Flutter/MBJSCore_iOS.git"
+    :tag: 0.1.4
 
 SPEC CHECKSUMS:
   AFNetworking: 7864c38297c79aaca1500c33288e429c3451fdce
-  Flutter: 0e3d915762c693b495b44d77113d4970485de6ec
+  device_info: d7d233b645a32c40dfdc212de5cf646ca482f175
+  Flutter: 434fef37c0980e73bb6479ef766c45957d4b510c
   FMDB: 2ce00b547f966261cd18927a3ddb07cb6f3db82a
-  MBJSCore_iOS: dcc443fe3cb07640f6cb123a2b8e877a38890abb
-  path_provider: fb74bd0465e96b594bb3b5088ee4a4e7bb1f2a9d
-  sqflite: 4001a31ff81d210346b500c55b17f4d6c7589dd0
+  MBJSCore_iOS: 9ac589002c65e7050aa39e56a9e61cc5ccbe2d04
+  path_provider: abfe2b5c733d04e238b0d8691db0cfd63a27a93c
+  sqflite: 6d358c025f5b867b29ed92fc697fd34924e11904
   SSZipArchive: 62d4947b08730e4cda640473b0066d209ff033c9
-  thresh: d32b3baea01f1bd22b93bb89ff70909aba779622
+  thresh: 5a862d675660ff0a304e6858278e54efb3f7633d
 
-PODFILE CHECKSUM: 368be30ce47cbf1b7228f01340ae78be071db846
+PODFILE CHECKSUM: 4a33e3b5a258bf070cea09d4c18bd1932c48aa12
 
-COCOAPODS: 1.9.3
+COCOAPODS: 1.10.1

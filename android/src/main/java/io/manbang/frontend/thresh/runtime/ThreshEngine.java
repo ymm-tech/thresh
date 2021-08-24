@@ -26,7 +26,6 @@ package io.manbang.frontend.thresh.runtime;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.TextUtils;
-import android.util.Log;
 
 import com.eclipsesource.v8.JavaCallback;
 import com.eclipsesource.v8.V8Array;
@@ -34,15 +33,16 @@ import com.eclipsesource.v8.V8Object;
 
 import androidx.annotation.Nullable;
 
-import io.manbang.frontend.thresh.runtime.jscore.bundle.BundleCallback;
-import io.manbang.frontend.thresh.runtime.jscore.bundle.JSBundleLoader;
-import io.manbang.frontend.thresh.runtime.jscore.runtime.JSCallback;
-import io.manbang.frontend.thresh.runtime.jscore.util.V8Util;
+import io.manbang.frontend.jscore.bundle.BundleCallback;
+import io.manbang.frontend.jscore.bundle.JSBundleLoader;
+import io.manbang.frontend.jscore.runtime.JSCallback;
+import io.manbang.frontend.jscore.util.V8Util;
 import io.manbang.frontend.thresh.channel.BridgeCallback;
 import io.manbang.frontend.thresh.channel.MethodConstants;
 import io.manbang.frontend.thresh.channel.nativemodule.NativeModule;
 import io.manbang.frontend.thresh.channel.MethodChannelModule;
 import io.manbang.frontend.thresh.manager.ContextIdManager;
+import io.manbang.frontend.thresh.runtime.release.ModuleRelease;
 import io.manbang.frontend.thresh.util.ThreshLogger;
 
 import java.util.Locale;
@@ -95,7 +95,7 @@ public class ThreshEngine implements LifecycleListener, EngineService {
         assertBundleParams();
         jsModule = JSManager.getInstance().getJSModule(engineOptions.moduleName);
         if (jsModuleInvalid()) {
-            jsModule.destroy();
+            JSManager.getInstance().releaseJsModule(jsModule);
             jsModule = null;
         }
         if (jsModule == null) {
@@ -218,9 +218,14 @@ public class ThreshEngine implements LifecycleListener, EngineService {
         if (isNotTargetContextId(args)) {
             return;
         }
-        if (args != null) {
+        if (args != null && nativeModule != null) {
             nativeModule.dispatchJSCallNativeEvent(ThreshEngine.this, args.get(MethodConstants.CALL_METHOD) + "", args);
         }
+    }
+
+    @Override
+    public void onCreate() {
+        ModuleRelease.getInstance().onCreate(jsModule);
     }
 
     /**
@@ -245,23 +250,31 @@ public class ThreshEngine implements LifecycleListener, EngineService {
 
     /**
      * {@link LifecycleListener#onDestroy()}
+     * JS接收到onDestroy，会通过桥接进行埋点，暂时延迟销毁桥接来解决，后面这块要重新设计
      */
     @Override
     public void onDestroy() {
-        ContextIdManager.INSTANCE.clearByContextId(contextId);
-        if (jsModule != null) {
-            jsModule.onDestroy(contextId);
-            jsModule.unregisterJavaMethodCallBack(jsCallFlutterCallBack, engineOptions.jsCallFlutterMethod);
-            jsModule.unregisterJavaMethodCallBack(jsCallNativeCallBack, engineOptions.jsCallNativeMethod);
-            jsModule.unregisterJavaMethodCallBack(jsCallTimerCallBack, engineOptions.callNativeTimer);
+        if (jsModule == null) {
+           return;
         }
-        // unregister channel
+        jsModule.onDestroy(contextId);
         if (threshChannel != null) {
             threshChannel.unRegister();
-            threshChannel = null;
         }
-        bundleLoader = null;
-        nativeModule = null;
+        mMainHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                clear();
+            }
+        },500);
+        ModuleRelease.getInstance().onDestroy(jsModule);
+    }
+
+    public void clear(){
+        ContextIdManager.INSTANCE.clearByContextId(contextId);
+        jsModule.unregisterJavaMethodCallBack(jsCallFlutterCallBack, engineOptions.jsCallFlutterMethod);
+        jsModule.unregisterJavaMethodCallBack(jsCallNativeCallBack, engineOptions.jsCallNativeMethod);
+        jsModule.unregisterJavaMethodCallBack(jsCallTimerCallBack, engineOptions.callNativeTimer);
     }
 
     /**
@@ -272,6 +285,11 @@ public class ThreshEngine implements LifecycleListener, EngineService {
         if (jsModule != null) {
             jsModule.onBackPressed(contextId);
         }
+    }
+
+    @Override
+    public void onLowMemory() {
+        ModuleRelease.getInstance().onLowMemory();
     }
 
     public ThreshEngineOptions getThreshOptions() {
@@ -384,6 +402,12 @@ public class ThreshEngine implements LifecycleListener, EngineService {
     public void execMessage(String method, Object params) {
         if (jsModule != null) {
             jsModule.execMessage(contextId, method, params);
+        }
+    }
+
+    public void execEventMessage(String method, Object params) {
+        if (jsModule != null) {
+            jsModule.execEventMessage(contextId, method, params);
         }
     }
 

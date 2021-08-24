@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:thresh/devtools/dev_tools.dart';
+import 'package:thresh/framework/core/dynamic_app.dart';
 
 class DevButtons extends StatefulWidget {
   @override
@@ -33,6 +34,24 @@ class _DevButtonsState extends State<DevButtons> {
                 padding: EdgeInsets.all(1),
                 onPressed: () {
                   devtools.showDevtools();
+                },
+              ),
+            ),
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(26),
+                color: Colors.redAccent,
+              ),
+              margin: EdgeInsets.only(left: 5),
+              child: IconButton(
+                icon: Icon(
+                  Icons.laptop_chromebook,
+                  size: 24,
+                  color: Colors.white,
+                ),
+                padding: EdgeInsets.all(1),
+                onPressed: () {
+                  buildRemoteAddressDialog();
                 },
               ),
             ),
@@ -79,6 +98,44 @@ class _DevButtonsState extends State<DevButtons> {
           ],
         ),
       ),
+    );
+  }
+
+  void buildRemoteAddressDialog() {
+    showGeneralDialog(
+      context: dynamicApp.context,
+      barrierDismissible: false,
+      transitionDuration: const Duration(milliseconds: 100),
+      pageBuilder: (BuildContext context, Animation<double> animation,
+          Animation<double> secondaryAnimation) {
+        final TextEditingController controller =
+            TextEditingController(text: devtools.remoteDevtoolAddress);
+        return AlertDialog(
+          title: Text('修改远程调试地址'),
+          content: Padding(
+            padding: EdgeInsets.symmetric(vertical: 20),
+            child: TextField(
+              controller: controller,
+              maxLines: 1,
+            ),
+          ),
+          actions: <Widget>[
+            FlatButton(
+              child: Text('取消'),
+              onPressed: () {
+                Navigator.pop(context);
+              },
+            ),
+            FlatButton(
+              child: Text('确认'),
+              onPressed: () {
+                devtools.setRemoteDevtool(controller.text);
+                Navigator.pop(context);
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 }

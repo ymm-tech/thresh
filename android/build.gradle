@@ -1,7 +1,7 @@
 group 'io.manbang.frontend.thresh'
 version '1.0-SNAPSHOT'
-
 buildscript {
+
     ext{
         kotlin_version = '1.3.72'
     }
@@ -9,9 +9,17 @@ buildscript {
         maven {url 'https://maven.aliyun.com/repository/google'}
         maven {url 'http://maven.aliyun.com/mvn/repository/'}
         maven {url 'http://maven.aliyun.com/nexus/content/groups/public/'}
+        maven {url 'http://maven.amh-group.com/artifactory/libs-release-local'}
+        maven {url 'http://maven.amh-group.com/artifactory/libs-snapshot-local'}
+        maven {url 'http://maven.amh-group.com/artifactory/' +
+                'plugins-snapshot-local'}
+        maven {url 'http://maven.amh-group.com/artifactory/plugins-release-local'}
         google()
         jcenter()
         maven {url "https://jitpack.io"}
+        maven {url 'http://nexus.56qq.cn:81/content/repositories/wlqq-releases'}
+        maven {url 'http://nexus.56qq.cn:81/content/repositories/wlqq-snapshots'}
+        maven {url 'http://nexus.56qq.cn:81/content/repositories/thirdparty'}
     }
 
     dependencies {
@@ -25,9 +33,16 @@ rootProject.allprojects {
         maven {url 'https://maven.aliyun.com/repository/google'}
         maven {url 'http://maven.aliyun.com/mvn/repository/'}
         maven {url 'http://maven.aliyun.com/nexus/content/groups/public/'}
+        maven {url 'http://maven.amh-group.com/artifactory/libs-release-local'}
+        maven {url 'http://maven.amh-group.com/artifactory/libs-snapshot-local'}
+        maven {url 'http://maven.amh-group.com/artifactory/plugins-snapshot-local'}
+        maven {url 'http://maven.amh-group.com/artifactory/plugins-release-local'}
         google()
         jcenter()
         maven {url "https://jitpack.io"}
+        maven {url 'http://nexus.56qq.cn:81/content/repositories/wlqq-releases'}
+        maven {url 'http://nexus.56qq.cn:81/content/repositories/wlqq-snapshots'}
+        maven {url 'http://nexus.56qq.cn:81/content/repositories/thirdparty'}
     }
 
     configurations.all {
@@ -55,10 +70,15 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.0.0'
     implementation 'androidx.annotation:annotation:1.0.0'
     implementation 'androidx.lifecycle:lifecycle-common-java8:2.0.0'
-    implementation'com.squareup.retrofit2:retrofit:2.3.0'
-    implementation 'com.eclipsesource.j2v8:j2v8:6.2.0@aar'
+    implementation 'com.squareup.retrofit2:retrofit:2.3.0'
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-//    api "com.ymm.lib:flutter-sdk:1.22.5-SNAPSHOT"
+    // demo工程编译使用
+//    implementation "io.manbang.frontend:jscore:${v_lib_jscore}"
+    // 插件方式集成时需要剔除，否则module工程打包失败
+    compileOnly ("io.manbang.frontend:jscore:${v_lib_jscore}"){
+        exclude group: 'com.ymm.lib', module: 'component_apt'
+    }
+//    api "com.ymm.lib:flutter-sdk:2.2.2-SNAPSHOT"
 }
 
 ext {

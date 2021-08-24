@@ -21,7 +21,7 @@
  * SOFTWARE.
  *
  */
-package io.manbang.frontend.thresh.util;
+package android.src.main.java.io.manbang.frontend.thresh.util;
 
 import android.app.Activity;
 import android.content.Context;

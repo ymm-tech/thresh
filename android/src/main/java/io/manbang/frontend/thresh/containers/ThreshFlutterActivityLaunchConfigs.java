@@ -15,6 +15,8 @@ public class ThreshFlutterActivityLaunchConfigs {
             "io.flutter.embedding.android.SplashScreenDrawable";
     /* package */ public static final String NORMAL_THEME_META_DATA_KEY =
             "io.flutter.embedding.android.NormalTheme";
+    /* package */ public static final String HANDLE_DEEPLINKING_META_DATA_KEY =
+            "flutter_deeplinking_enabled";
 
     // Intent extra arguments.
     /* package */ public static final String EXTRA_INITIAL_ROUTE = "route";
@@ -26,7 +28,7 @@ public class ThreshFlutterActivityLaunchConfigs {
 
     // Default configuration.
     /* package */ public static final String DEFAULT_DART_ENTRYPOINT = "main";
-    /* package */ public static final String DEFAULT_INITIAL_ROUTE = "/index";
+    /* package */ public static final String DEFAULT_INITIAL_ROUTE = "/";
     /* package */ public static final String DEFAULT_BACKGROUND_MODE = BackgroundMode.opaque.name();
 
     /** The mode of the background of a Flutter {@code Activity}, either opaque or transparent. */

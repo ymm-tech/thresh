@@ -67,6 +67,11 @@ public class JSManager {
         return null;
     }
 
+    public void releaseJsModule(JSModule jsModule){
+        jsModules.remove(jsModule.getModuleName());
+        jsModule.destroy();
+    }
+
     /**
      * register js module
      */

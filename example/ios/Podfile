@@ -32,6 +32,9 @@ target 'Runner' do
   use_modular_headers!
 
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
+
+  # 暂时还未将jscore上传到github，内部库需要通过地址直接引用
+  pod 'MBJSCore_iOS', :git=>'git@code.amh-group.com:MBFrontend/Flutter/MBJSCore_iOS.git', :tag=>'0.1.4'
 end
 
 post_install do |installer|

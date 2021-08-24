@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
 import 'thresh.dart' as thresh;
@@ -17,5 +18,16 @@ void main() async {
   }
   // 默认测试页面
   thresh.main();
+
+  MethodChannel('io.manbang.frontend/method_channel')
+      .setMethodCallHandler((call) async {
+    switch (call.method) {
+      case 'setInitRoute':
+        print("setInitRoute==>" + call.arguments);
+        thresh.initPlugin(call.arguments);
+        break;
+    }
+  });
 }
+
 

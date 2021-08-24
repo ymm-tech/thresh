@@ -88,8 +88,8 @@ class MediaQuery {
   private _devicePixelRatio: number = 1
   private _designWidth: number = 750
   private _designHeight: number = 1280
-  private _scaleWidth: number = 1
-  private _scaleHeight: number = 1
+  private _scaleWidth: number = 0.5
+  private _scaleHeight: number = 0.5
 
   get screenWidth (): number {
     return this._screenWidth
@@ -130,8 +130,12 @@ class MediaQuery {
     this.setScaleInfo()
   }
   private setScaleInfo () {
+    // 默认UED为两倍图
+    // scale > 0.5 时忽略并强设为 0.5
     this._scaleWidth = this._screenWidth / this._designWidth
-    this._designHeight = this._screenHeight / this._designHeight
+    this._scaleHeight = this._screenHeight / this._designHeight
+    if (this._scaleWidth > 0.5) this._scaleWidth = 0.5
+    if (this._scaleHeight > 0.5) this._scaleHeight = 0.5
   }
   computeRealWidth (width): number {
     return Math.floor(width * this._scaleWidth)

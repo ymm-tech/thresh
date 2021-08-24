@@ -64,6 +64,7 @@ static NSString * const kMethodReloadJSBundle = @"reload";
 static NSString * const kMethodPageDidLoad = @"pageDidLoad";
 static NSString * const kMethodPageDidShow = @"pageDidShow";
 static NSString * const kMethodCloseWindow = @"closeWindow";
+static NSString * const kMethodThreshData = @"sendData";
 
 //以下依赖ThreshBridge js->native
 static NSString * const kMethodBridgeRequest = @"bridgeRequest";

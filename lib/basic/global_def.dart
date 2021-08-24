@@ -288,12 +288,12 @@ class RouteInfo {
   final String pageName;
   final Map<String, dynamic> params;
 
-  const RouteInfo(this.pageName, {this.params});
+  const RouteInfo(this.pageName, {this.params = const {}});
 
   Map<String, dynamic> getInfo() {
     return {
       'pageName': pageName,
-      'params': params,
+      'params': params ?? {},
     };
   }
 }
@@ -348,15 +348,17 @@ class ThreshError extends Error {
   final String pageName;
   final String referPageName;
 
-  ThreshError(this.message,
-      {this.trace,
-      this.type = ThreshErrorType.Flutter,
-      this.pageName,
-      this.referPageName})
-      : super();
+  ThreshError(
+    this.message, {
+    this.trace,
+    this.type = ThreshErrorType.Flutter,
+    this.pageName,
+    this.referPageName,
+  }) : super();
 
   String toString() => Util.formatMutipulLineText([
         '[Error Detail] - $message',
+        '[Error Trace] = $trace',
         '[Error Type] - ${this.type == ThreshErrorType.Flutter ? 'Flutter' : 'JS'}',
       ]);
 }

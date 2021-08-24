@@ -101,4 +101,10 @@ static NSMutableDictionary* g_instanceDic;
     }
 }
 
+- (void)setInitialRouteWithChannel:(NSString *)route {
+    
+    FlutterMethodChannel *channel = [FlutterMethodChannel methodChannelWithName:@"io.manbang.frontend/method_channel" binaryMessenger:[self.pluginRegistrar messenger]];
+    [channel invokeMethod:@"setInitRoute" arguments:route];
+}
+
 @end

@@ -26,6 +26,7 @@ import MethodChannel, { FlutterMethodChannelType } from '../channel/MethodChanne
 import BridgeManager from './BridgeManager'
 import Util from '../shared/Util'
 import { BridgeParams } from '../types/type'
+import { ThreshAppContext } from '../core/ThreshAppContext'
 import threshApp from '../core/ThreshApp'
 
 export enum InfoType {
@@ -89,14 +90,14 @@ export class DevtoolsManager {
       if (isRequest) {
         showInfo = {
           method: params.method,
-          [SHOW_DIVIDER_KEY]: 'params',
+          // [SHOW_DIVIDER_KEY]: 'params',
           ...(params.data || params.query || {})
         }
       } else {
         showInfo = {
           code: data.code,
           reason: data.reason,
-          [SHOW_DIVIDER_KEY]: 'data',
+          // [SHOW_DIVIDER_KEY]: 'data',
           ...(
             (Util.isString(data.data) || Util.isNil(data.data) || !Util.isObject(data.data))
             ? { data: data.data }

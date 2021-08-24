@@ -6,9 +6,16 @@ buildscript {
         maven {url 'https://maven.aliyun.com/repository/google'}
         maven {url 'http://maven.aliyun.com/mvn/repository/'}
         maven {url 'http://maven.aliyun.com/nexus/content/groups/public/'}
+        maven {url 'http://maven.amh-group.com/artifactory/libs-release-local'}
+        maven {url 'http://maven.amh-group.com/artifactory/libs-snapshot-local'}
+        maven {url 'http://maven.amh-group.com/artifactory/plugins-snapshot-local'}
+        maven {url 'http://maven.amh-group.com/artifactory/plugins-release-local'}
         google()
         jcenter()
         maven {url "https://jitpack.io"}
+        maven {url 'http://nexus.56qq.cn:81/content/repositories/wlqq-releases'}
+        maven {url 'http://nexus.56qq.cn:81/content/repositories/wlqq-snapshots'}
+        maven {url 'http://nexus.56qq.cn:81/content/repositories/thirdparty'}
     }
 
     dependencies {
@@ -22,9 +29,16 @@ allprojects {
         maven {url 'https://maven.aliyun.com/repository/google'}
         maven {url 'http://maven.aliyun.com/mvn/repository/'}
         maven {url 'http://maven.aliyun.com/nexus/content/groups/public/'}
+        maven {url 'http://maven.amh-group.com/artifactory/libs-release-local'}
+        maven {url 'http://maven.amh-group.com/artifactory/libs-snapshot-local'}
+        maven {url 'http://maven.amh-group.com/artifactory/plugins-snapshot-local'}
+        maven {url 'http://maven.amh-group.com/artifactory/plugins-release-local'}
         google()
         jcenter()
         maven {url "https://jitpack.io"}
+        maven {url 'http://nexus.56qq.cn:81/content/repositories/wlqq-releases'}
+        maven {url 'http://nexus.56qq.cn:81/content/repositories/wlqq-snapshots'}
+        maven {url 'http://nexus.56qq.cn:81/content/repositories/thirdparty'}
     }
 
     configurations.all {

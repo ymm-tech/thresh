@@ -23,6 +23,7 @@
  */
 package io.manbang.frontend.thresh.channel.nativemodule;
 
+import android.app.Activity;
 import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
@@ -57,6 +58,9 @@ public abstract class NativeModule  {
         addInvoke(MethodConstants.PRINT,new ReportPerformanceInvoke());
         addInvoke(MethodConstants.PAGE_DID_SHOW,new ReportPerformanceInvoke());
         addInvoke(MethodConstants.CALL_TIMER_OPERATOR,new TimerOperatorInvoke());
+        if(context instanceof Activity){
+            addInvoke(MethodConstants.BRIDGE_SEND_RESULT,new SendResultInvoke((Activity) context));
+        }
     }
 
     protected void addInvoke(String methodName,INativeInvoke invoke){
