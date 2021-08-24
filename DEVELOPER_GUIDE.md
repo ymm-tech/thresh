@@ -12,7 +12,7 @@
 
 JS/TS：VSCode + node + npm/yarn
 
-Flutter SDK：flutter1.22.5【备注：新版本后续会逐步支持  [Flutter环境安装请移步](https://flutter.dev/docs/get-started/install)】
+Flutter SDK：flutter2.2.2【备注：新版本后续会逐步支持  [Flutter环境安装请移步](https://flutter.dev/docs/get-started/install)】
 
 #### 1.2、仓库说明
 

@@ -78,7 +78,7 @@ Android 端环境 ：Android Studio  iOS 端：XCode
 
 JS：VSCode + node + npm/yarn
 
-Flutter SDK：**flutter 1.22.5 **【备注：新版本后续会逐步支持 [Flutter环境安装请移步](https://flutter.dev/docs/get-started/install)】
+Flutter SDK：**flutter 2.2.2 **【备注：新版本后续会逐步支持 [Flutter环境安装请移步](https://flutter.dev/docs/get-started/install)】
 
 #### 2.2、仓库说明
 
