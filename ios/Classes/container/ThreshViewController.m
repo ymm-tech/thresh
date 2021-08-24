@@ -24,7 +24,8 @@
 
 #import "ThreshViewController.h"
 #import "ThreshDef.h"
-#import "ThreshJSLoader.h"
+#import <MBJSCore_iOS/MBJSCore.h>
+#import "ThreshAppDelegate.h"
 
 NSString *const needRefeshPageNotification = @"NotifyRefreshPageViewNotification";
 
@@ -98,20 +99,38 @@ NSString *const needRefeshPageNotification = @"NotifyRefreshPageViewNotification
 
 @property (nonatomic, strong) UIView<ThreshDefaultViewOptions> *errorView;
 
+@property (nonatomic, assign) BOOL opaque;
+
 @end
 
 @implementation ThreshViewController
 
 // 初始化整个环境，包括js、dart
 - (instancetype)initWithConfig:(id<ThreshProtocol>)config {
-    if(self = [super init]) {
+    
+//    if ([ThreshAppDelegate sharedInstance].engineGroup) {
+//        FlutterEngine *engine = [[ThreshAppDelegate sharedInstance].engineGroup makeEngineWithEntrypoint:safeRespondsForProtocol(config, @selector(router), @selector(entrypoint), nil) ? config.router.entrypoint : @"main" libraryURI:nil];
+//        self = [super initWithEngine:engine nibName:nil bundle:nil];
+//    } else {
+        self = [super init];
+//    }
+    if(self) {
         ThreshInfo(@"init ThreshViewController");
         self.config = config;
         [self exportLifeCycle:ThreshPageInit ext:@{}];
         static NSUInteger rootId = 0;
         rootId++;
         self.threshEngine = [[ThreshEngine alloc] initWithConfig:config flutterEngine:self.engine rootId:rootId];
+        [self.threshEngine.performance markStartForTag:ThreshPerformanceFlutterFirstFrame];
         [self initialRoute:config contextId:self.threshEngine.contextId];
+        
+        _opaque = safeRespondsForProtocol(config, @selector(options), @selector(opaque), nil) ? config.options.opaque : true;
+        if (!_opaque) {
+            self.viewOpaque = NO;
+            self.modalPresentationStyle = UIModalPresentationOverFullScreen;
+        } else {
+            self.modalPresentationStyle = UIModalPresentationFullScreen;
+        }
     }
     return self;
 }
@@ -133,6 +152,7 @@ NSString *const needRefeshPageNotification = @"NotifyRefreshPageViewNotification
 #endif
     __weak typeof(self) weakSelf = self;
     [self setFlutterViewDidRenderCallback:^{
+        [weakSelf.threshEngine.performance markStopForTag:ThreshPerformanceFlutterFirstFrame];
         [weakSelf exportLifeCycle:ThreshFlutterFirstFrame ext:@{}];
     }];
     self.edgesForExtendedLayout = UIRectEdgeNone;
@@ -162,6 +182,7 @@ NSString *const needRefeshPageNotification = @"NotifyRefreshPageViewNotification
 
 - (void)viewWillDisappear:(BOOL)animated {
     [super viewWillDisappear:animated];
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"ThreshViewControllerWillDisappear" object:nil];
     ThreshInfo(@"---viewWillDisappear %@", self.pageName);
     [self.threshEngine viewWillDisappear]; // 通知engine页面即将消失
     //Avoid super call intentionally.
@@ -254,10 +275,6 @@ NSString *const needRefeshPageNotification = @"NotifyRefreshPageViewNotification
 }
 
 #pragma mark - config
-
-- (UIModalPresentationStyle)modalPresentationStyle {
-    return UIModalPresentationFullScreen;
-}
 
 - (BOOL)loadDefaultSplashScreenView {
     if (safeRespondsForProtocol(self.config, @selector(options), @selector(needDefaultSplashScreenView), nil)) {

@@ -32,6 +32,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface ThreshConfig : NSObject <ThreshProtocol>
 
+- (instancetype)initWithOpaque:(BOOL)opaque;
+
 @end
 
 NS_ASSUME_NONNULL_END

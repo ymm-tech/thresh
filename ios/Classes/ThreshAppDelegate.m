@@ -32,6 +32,8 @@
 
 @property (nonatomic, strong) id<ThreshNativeBridge> nativeBridge;
 
+@property (nonatomic, strong) FlutterEngineGroup *engineGroup;
+
 @end
 
 @implementation ThreshAppDelegate
@@ -46,9 +48,12 @@
     return instance;
 }
 
-- (void)startThreshWithLogger:(id<ThreshLogger>)logger {
+- (void)startThreshWithLogger:(id<ThreshLogger>)logger engineGroup:(nonnull FlutterEngineGroup *)engineGroup {
     if (logger) {
         _logger = logger;
+    }
+    if (engineGroup) {
+        _engineGroup = engineGroup;
     }
 }
 

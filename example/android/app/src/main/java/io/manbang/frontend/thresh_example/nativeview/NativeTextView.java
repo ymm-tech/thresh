@@ -26,6 +26,7 @@ package io.manbang.frontend.thresh_example.nativeview;
 import android.content.Context;
 import android.graphics.Color;
 import android.view.View;
+import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -39,26 +40,32 @@ import io.flutter.plugin.platform.PlatformView;
 public class NativeTextView implements PlatformView {
 
     public static final String NATIVE_TEXT_VIEW = "thresh/native_text_view";
-    
+
     private Context mContext;
 
     private TextView textView;
+
+    private HorizontalScrollView scrollView;
 
     boolean isInit;
 
     public NativeTextView(Context context, Map params) {
         mContext = context;
         textView = new TextView(mContext);
+        textView.setSingleLine();
         textView.setBackgroundColor(Color.parseColor("#fff5f5f5"));
         textView.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
-                                                               LinearLayout.LayoutParams.WRAP_CONTENT));
-        textView.setText(params.get("text") + "");
+                LinearLayout.LayoutParams.WRAP_CONTENT));
+        textView.setText(params.get("text") + "撒打算打算的撒打算的撒打算打算打算打撒上打算打撒上点想想想想想想想");
         isInit = true;
+
+        scrollView = new HorizontalScrollView(context);
+        scrollView.addView(textView);
     }
 
     @Override
     public View getView() {
-        return textView;
+        return scrollView;
     }
 
     @Override

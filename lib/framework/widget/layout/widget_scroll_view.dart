@@ -35,6 +35,8 @@ class DFScrollView extends DFBasicWidget {
     this.scrollable = true,
     this.direction = 'vertical',
     this.padding,
+    this.avoidKeyboard = false,
+    this.physics,
     this.controller,
     this.children,
     this.onScroll,
@@ -43,6 +45,8 @@ class DFScrollView extends DFBasicWidget {
   final bool scrollable;
   final String direction;
   final EdgeInsets padding;
+  final bool avoidKeyboard;
+  final ScrollPhysics physics;
   final ScrollController controller;
   final List<Widget> children;
   final ParamGlobalHandler onScroll;
@@ -50,7 +54,7 @@ class DFScrollView extends DFBasicWidget {
   @override
   Widget buildMainWidget(BuildContext context) {
     bool isVertical = direction == 'vertical';
-    return MediaQuery.removePadding(
+    Widget $scrollView = MediaQuery.removePadding(
       removeTop: true,
       removeBottom: true,
       context: context,
@@ -70,9 +74,7 @@ class DFScrollView extends DFBasicWidget {
             controller: controller,
             padding: padding,
             scrollDirection: isVertical ? Axis.vertical : Axis.horizontal,
-            physics: scrollable
-                ? AlwaysScrollableScrollPhysics()
-                : NeverScrollableScrollPhysics(),
+            physics: physics,
             children: [
               Column(
                 mainAxisAlignment: MainAxisAlignment.start,
@@ -96,6 +98,7 @@ class DFScrollView extends DFBasicWidget {
         ),
       ),
     );
+    return avoidKeyboard ? Scaffold(body: $scrollView) : $scrollView;
   }
 
   static bool isScrollView(Widget w) {
@@ -125,18 +128,27 @@ class ProxyDFScrollView extends ProxyBase {
       model.controller = controller;
     }
 
+    final bool scrollable =
+        Util.getBoolean(props['scrollable'], nullIsTrue: true);
+    ScrollPhysics physics =
+        AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics());
+    if (!scrollable)
+      physics = NeverScrollableScrollPhysics(parent: BouncingScrollPhysics());
+
     return DFScrollView(
       model,
       controller: controller,
-      scrollable: Util.getBoolean(props['scrollable'], nullIsTrue: true),
+      physics: physics,
       direction: Util.getDirection(props['direction']),
       padding: Util.getEdgeInsets(props['padding']),
+      avoidKeyboard: Util.getBoolean(props['avoidKeyboard']),
       children: Util.getWidgetList(buildProps['children']),
       onScroll: getOnScrollDebouncedMethod(eventGlobalHandlerWithParam(
-          pageName: model.pageName,
-          widgetId: model.widgetId,
-          eventId: model.props['_onScrollId'],
-          type: 'onScroll')),
+        pageName: model.pageName,
+        widgetId: model.widgetId,
+        eventId: model.props['_onScrollId'],
+        type: 'onScroll',
+      )),
     );
   }
 

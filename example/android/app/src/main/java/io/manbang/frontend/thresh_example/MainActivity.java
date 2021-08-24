@@ -34,7 +34,7 @@ import android.widget.EditText;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SwitchCompat;
-import io.manbang.frontend.thresh.runtime.jscore.bundle.BundleType;
+import io.manbang.frontend.jscore.bundle.BundleType;
 import io.manbang.frontend.thresh.containers.ThreshFlutterActivityLaunchConfigs;
 import io.manbang.frontend.thresh.util.ThreshToast;
 
@@ -55,10 +55,13 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 sharedPreferences.edit().remove("debug_local_ip").apply();
                 Intent intent = new Intent(MainActivity.this, ThreshDemoActivity.class);
-                intent.putExtra("load_mode", BundleType.ASSETS_FILE.getType());
-                // 默认指定的是assets目录路径：assets://home; "assets://"为固定格式
-                intent.putExtra(ThreshFlutterActivityLaunchConfigs.EXTRA_INITIAL_ROUTE, "thresh/thresh-page?page=homePage&jsBundlePath=assets://home");
-                intent.putExtra(ThreshFlutterActivityLaunchConfigs.EXTRA_DESTROY_ENGINE_WITH_ACTIVITY, true);
+                intent.putExtra("load_mode", BundleType.ASSETS_FILE.getType()).putExtra(
+                        ThreshFlutterActivityLaunchConfigs.EXTRA_INITIAL_ROUTE,
+                        "thresh/thresh-page?page=homePage")
+                        //                      .putExtra(ThreshFlutterActivityLaunchConfigs.EXTRA_BACKGROUND_MODE, ThreshFlutterActivityLaunchConfigs.BackgroundMode.transparent)
+                        .putExtra(
+                                ThreshFlutterActivityLaunchConfigs.EXTRA_DESTROY_ENGINE_WITH_ACTIVITY,
+                                true);
                 startActivity(intent);
             }
         });
@@ -68,8 +71,7 @@ public class MainActivity extends AppCompatActivity {
                 sharedPreferences.edit().remove("debug_local_ip").apply();
                 Intent intent = new Intent(MainActivity.this, ThreshDemoFragmentActivity.class);
                 intent.putExtra("load_mode", BundleType.ASSETS_FILE.getType());
-                // 默认指定的是assets目录路径：assets://home; "assets://"为固定格式
-                intent.putExtra(ThreshFlutterActivityLaunchConfigs.EXTRA_INITIAL_ROUTE, "thresh/thresh-page?page=homePage&jsBundlePath=assets://home");
+                intent.putExtra(ThreshFlutterActivityLaunchConfigs.EXTRA_INITIAL_ROUTE, "thresh/thresh-page?page=homePage");
                 startActivity(intent);
             }
         });

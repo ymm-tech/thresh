@@ -51,6 +51,9 @@ class DFDragableScrollView extends DFBasicWidget {
                   removeTop: true,
                   removeBottom: true,
                   child: ListView(
+                    physics: AlwaysScrollableScrollPhysics(
+                      parent: BouncingScrollPhysics(),
+                    ),
                     controller: controller,
                     children: children,
                   ),

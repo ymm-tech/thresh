@@ -22,6 +22,7 @@
 import 'package:thresh/framework/widget/data/widget_notice_bar.dart';
 import 'package:thresh/framework/widget/data/widget_qr_image.dart';
 import 'package:thresh/framework/widget/data/widget_picker.dart';
+import 'package:thresh/framework/widget/layout/widget_grid_view.dart';
 import 'package:thresh/framework/widget/layout/widget_page.dart';
 import 'package:thresh/framework/widget/layout/widget_app_bar.dart';
 import 'package:thresh/framework/widget/layout/widget_container.dart';
@@ -30,6 +31,7 @@ import 'package:thresh/framework/widget/layout/widget_list_view.dart';
 import 'package:thresh/framework/widget/layout/widget_drawer_scroll_view.dart';
 import 'package:thresh/framework/widget/layout/widget_nest_scroll_view.dart';
 import 'package:thresh/framework/widget/layout/widget_dragable_scroll_view/index.dart';
+import 'package:thresh/framework/widget/layout/widget_stack_view.dart';
 import 'package:thresh/framework/widget/layout/widget_swiper_view.dart';
 import 'package:thresh/framework/widget/layout/widget_swipe_actions_view.dart';
 import 'package:thresh/framework/widget/layout/widget_native_view.dart';
@@ -43,11 +45,13 @@ import 'package:thresh/framework/widget/form/widget_radio.dart';
 import 'package:thresh/framework/widget/form/widget_checkbox.dart';
 import 'package:thresh/framework/widget/form/widget_input.dart';
 import 'package:thresh/framework/widget/form/widget_switch.dart';
+import 'package:thresh/framework/widget/layout/widget_tabbar_controller_view.dart';
 
 void registeBasicWidgets() {
   ProxyDFPage.register();
   ProxyDFAppBar.register();
   ProxyDFContainer.register();
+  ProxyDFStackView.register();
   ProxyDFScrollView.register();
   ProxyDFListView.register();
   ProxyDFNestScrollView.register();
@@ -71,4 +75,6 @@ void registeBasicWidgets() {
   ProxyDFInput.register();
   ProxyDFSwitch.register();
   ProxyDFPicker.register();
+  ProxyThreshTabView.register();
+  ProxyThreshGridView.register();
 }

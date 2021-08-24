@@ -57,8 +57,8 @@ class _DynamicApp {
   /// js 版本
   String jsVersion = '';
 
-  /// df 版本
-  String flutterVersion = '1.3.0';
+  /// thresh 版本
+  String flutterVersion = '1.3.2';
 
   /// 需要显示的 flutter app
   Widget mainApp;
@@ -128,6 +128,9 @@ class _DynamicApp {
 
   /// flutter页面 context
   BuildContext _flutterPageContext;
+
+  /// 屏幕方向
+  Orientation _orientation;
 
   /// df app 实例化方法
   static _DynamicApp getInstance() {
@@ -314,6 +317,7 @@ class _DynamicApp {
     !popup
         ? showGeneralDialog(
             context: context,
+            barrierColor: Colors.transparent,
             barrierDismissible: false,
             transitionDuration: const Duration(milliseconds: 150),
             pageBuilder: (BuildContext buildContext,
@@ -382,9 +386,11 @@ class _DynamicApp {
   /// 将设备信息发送给 js
   void sendMediaQuery() {
     MediaQueryData data = MediaQuery.of(mediaQueryContext);
+    final Size size =
+        _orientation == Orientation.portrait ? data.size : Size.zero;
     call(method: ChannelMethod.mediaQuery, params: {
-      'width': data.size.width,
-      'height': data.size.height,
+      'width': size.width,
+      'height': size.height,
       'statusBarHeight': data.padding.top,
       'bottomBarHeight': data.padding.bottom,
       'appBarHeight': dynamicApp.appBarHeight,
@@ -395,7 +401,7 @@ class _DynamicApp {
       // 是否需要通过 js 获取 bundlePath
       // 存在 jsBundlePath 时则不需要通过 js 获取
       'needJsBundlePath': jsBundlePath == null,
-      'packageTag': '0401 12:00',
+      'packageTag': '0722 14:00',
     });
   }
 
@@ -559,7 +565,6 @@ class _DynamicAppRootState extends State<DynamicAppRoot> {
   }
 
   Widget get mainApp => MaterialApp(
-        color: Colors.white,
         title: dynamicApp?.appName ?? '',
         theme: ThemeData(
           primarySwatch: Colors.blue,
@@ -572,15 +577,14 @@ class _DynamicAppRootState extends State<DynamicAppRoot> {
   Widget build(BuildContext context) {
     return Material(
       key: key,
+      color: Colors.transparent,
       child: WillPopScope(
         child: Stack(
           textDirection: TextDirection.ltr,
           children: <Widget>[
             mainApp,
             DFToastWrap(),
-            dynamicApp?.debugMode == true
-              ? DevButtons()
-              : Container(),
+            dynamicApp?.debugMode == true ? DevButtons() : Container(),
           ],
         ),
         onWillPop: () {
@@ -620,7 +624,12 @@ class DynamicMainApp extends StatelessWidget {
         dynamicApp.ready();
     });
 
-    return dynamicApp.mainApp ?? DynamicPage();
+    return OrientationBuilder(
+      builder: (context, orientation) {
+        dynamicApp._orientation = orientation;
+        return dynamicApp.mainApp ?? DynamicPage();
+      },
+    );
   }
 }
 
@@ -647,6 +656,6 @@ class DynamicPageRoute<T> extends PageRoute<T>
   @override
   String get debugLabel => '${super.debugLabel}(${settings.name})';
 
-  // @override
-  // bool get opaque => false;
+  @override
+  bool get opaque => false;
 }

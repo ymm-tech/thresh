@@ -151,7 +151,7 @@ void registerRenderChannelMethods() {
           content: Util.formatMutipulLineText([
             'Widget Id: $invokeDidUpdateWidgetId',
             'Page/Modal Name: $pageName',
-            'Update Data: $updateData',
+            // 'Update Data: $updateData',
           ]),
         ),
       );

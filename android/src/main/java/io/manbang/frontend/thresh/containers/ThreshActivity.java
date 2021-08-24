@@ -85,7 +85,7 @@ public abstract class ThreshActivity extends AppCompatActivity implements Thresh
 
         delegate = new ThreshFlutterActivityAndFragmentDelegate(this);
         delegate.onAttach(this);
-        delegate.onActivityCreated(savedInstanceState);
+        delegate.onRestoreInstanceState(savedInstanceState);
 
         configureWindowForTransparency();
         setContentView(createFlutterView());
@@ -94,17 +94,19 @@ public abstract class ThreshActivity extends AppCompatActivity implements Thresh
 
     private void switchLaunchThemeForNormalTheme() {
         try {
-            ActivityInfo activityInfo = getPackageManager().getActivityInfo(getComponentName(), PackageManager.GET_META_DATA);
-            if (activityInfo.metaData != null) {
-                int normalThemeRID = activityInfo.metaData.getInt(NORMAL_THEME_META_DATA_KEY, -1);
+            Bundle metaData = getMetaData();
+            if (metaData != null) {
+                int normalThemeRID = metaData.getInt(NORMAL_THEME_META_DATA_KEY, -1);
                 if (normalThemeRID != -1) {
                     setTheme(normalThemeRID);
                 }
             } else {
-                ThreshLogger.v(TAG + "Using the launch theme as normal theme.");
+                ThreshLogger.v(TAG, "Using the launch theme as normal theme.");
             }
         } catch (PackageManager.NameNotFoundException exception) {
-            ThreshLogger.e(TAG + "Could not read meta-data for FlutterActivity. Using the launch theme as normal theme.");
+            ThreshLogger.e(
+                    TAG,
+                    "Could not read meta-data for FlutterActivity. Using the launch theme as normal theme.");
         }
     }
 
@@ -130,10 +132,8 @@ public abstract class ThreshActivity extends AppCompatActivity implements Thresh
     @SuppressWarnings("deprecation")
     private Drawable getSplashScreenFromManifest() {
         try {
-            ActivityInfo activityInfo =
-                    getPackageManager().getActivityInfo(getComponentName(), PackageManager.GET_META_DATA);
-            Bundle metadata = activityInfo.metaData;
-            int splashScreenId = metadata != null ? metadata.getInt(SPLASH_SCREEN_META_DATA_KEY) : 0;
+            Bundle metaData = getMetaData();
+            int splashScreenId = metaData != null ? metaData.getInt(SPLASH_SCREEN_META_DATA_KEY) : 0;
             return splashScreenId != 0
                     ? Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP
                     ? getResources().getDrawable(splashScreenId, getTheme())
@@ -154,8 +154,8 @@ public abstract class ThreshActivity extends AppCompatActivity implements Thresh
      * Activity} must include {@code <item name="android:windowIsTranslucent">true</item>}.
      */
     private void configureWindowForTransparency() {
-        FlutterActivityLaunchConfigs.BackgroundMode backgroundMode = getBackgroundMode();
-        if (backgroundMode == FlutterActivityLaunchConfigs.BackgroundMode.transparent) {
+        ThreshFlutterActivityLaunchConfigs.BackgroundMode backgroundMode = getBackgroundMode();
+        if (backgroundMode == ThreshFlutterActivityLaunchConfigs.BackgroundMode.transparent) {
             getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         }
     }
@@ -178,78 +178,119 @@ public abstract class ThreshActivity extends AppCompatActivity implements Thresh
     @Override
     protected void onStart() {
         super.onStart();
-        delegate.onStart();
+        if (stillAttachedForEvent("onStart")) {
+            delegate.onStart();
+        }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        delegate.onResume();
+        if (stillAttachedForEvent("onResume")) {
+            delegate.onResume();
+        }
     }
 
     @Override
     public void onPostResume() {
         super.onPostResume();
-        delegate.onPostResume();
+        if (stillAttachedForEvent("onPostResume")) {
+            delegate.onPostResume();
+        }
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        delegate.onPause();
+        if (stillAttachedForEvent("onPause")) {
+            delegate.onPause();
+        }
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-        delegate.onStop();
+        if (stillAttachedForEvent("onStop")) {
+            delegate.onStop();
+        }
     }
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        delegate.onSaveInstanceState(outState);
+        if (stillAttachedForEvent("onSaveInstanceState")) {
+            delegate.onSaveInstanceState(outState);
+        }
+    }
+
+    /**
+     * Irreversibly release this activity's control of the {@link FlutterEngine} and its
+     * subcomponents.
+     *
+     * <p>Calling will disconnect this activity's view from the Flutter renderer, disconnect this
+     * activity from plugins' {@link ActivityControlSurface}, and stop system channel messages from
+     * this activity.
+     *
+     * <p>After calling, this activity should be disposed immediately and not be re-used.
+     */
+    private void release() {
+        delegate.onDestroyView();
+        delegate.onDetach();
+        delegate.release();
+        delegate = null;
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        delegate.onDestroyView();
-        delegate.onDetach();
+        if (stillAttachedForEvent("onDestroy")) {
+            release();
+        }
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        delegate.onActivityResult(requestCode, resultCode, data);
+        if (stillAttachedForEvent("onActivityResult")) {
+            delegate.onActivityResult(requestCode, resultCode, data);
+        }
     }
 
     @Override
     protected void onNewIntent(@NonNull Intent intent) {
         super.onNewIntent(intent);
-        delegate.onNewIntent(intent);
+        if (stillAttachedForEvent("onNewIntent")) {
+            delegate.onNewIntent(intent);
+        }
     }
 
     @Override
     public void onBackPressed() {
-        delegate.onBackPressed();
+        if (stillAttachedForEvent("onBackPressed")) {
+            delegate.onBackPressed();
+        }
     }
 
     @Override
     public void onRequestPermissionsResult(
             int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        delegate.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (stillAttachedForEvent("onRequestPermissionsResult")) {
+            delegate.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        }
     }
 
     @Override
     public void onUserLeaveHint() {
-        delegate.onUserLeaveHint();
+        if (stillAttachedForEvent("onUserLeaveHint")) {
+            delegate.onUserLeaveHint();
+        }
     }
 
     @Override
     public void onTrimMemory(int level) {
         super.onTrimMemory(level);
-        delegate.onTrimMemory(level);
+        if (stillAttachedForEvent("onTrimMemory")) {
+            delegate.onTrimMemory(level);
+        }
     }
 
     /**
@@ -265,7 +306,7 @@ public abstract class ThreshActivity extends AppCompatActivity implements Thresh
     /**
      * {@link ThreshFlutterActivityAndFragmentDelegate.Host} method that is used by {@link
      * ThreshFlutterActivityAndFragmentDelegate} to obtain an {@code Activity} reference as needed. This
-     * reference is used by the delegate to instantiate a {@link io.manbang.frontend.thresh.view.ThreshFlutterView}, a {@link
+     * reference is used by the delegate to instantiate a {@link ThreshFlutterView}, a {@link
      * PlatformPlugin}, and to determine if the {@code Activity} is changing configurations.
      */
     @Override
@@ -331,11 +372,9 @@ public abstract class ThreshActivity extends AppCompatActivity implements Thresh
     @NonNull
     public String getDartEntrypointFunctionName() {
         try {
-            ActivityInfo activityInfo =
-                    getPackageManager().getActivityInfo(getComponentName(), PackageManager.GET_META_DATA);
-            Bundle metadata = activityInfo.metaData;
+            Bundle metaData = getMetaData();
             String desiredDartEntrypoint =
-                    metadata != null ? metadata.getString(DART_ENTRYPOINT_META_DATA_KEY) : null;
+                    metaData != null ? metaData.getString(DART_ENTRYPOINT_META_DATA_KEY) : null;
             return desiredDartEntrypoint != null ? desiredDartEntrypoint : DEFAULT_DART_ENTRYPOINT;
         } catch (PackageManager.NameNotFoundException e) {
             return DEFAULT_DART_ENTRYPOINT;
@@ -431,7 +470,7 @@ public abstract class ThreshActivity extends AppCompatActivity implements Thresh
     @NonNull
     @Override
     public RenderMode getRenderMode() {
-        return getBackgroundMode() == FlutterActivityLaunchConfigs.BackgroundMode.opaque ? RenderMode.surface : RenderMode.texture;
+        return getBackgroundMode() == ThreshFlutterActivityLaunchConfigs.BackgroundMode.opaque ? RenderMode.surface : RenderMode.texture;
     }
 
     /**
@@ -441,7 +480,7 @@ public abstract class ThreshActivity extends AppCompatActivity implements Thresh
     @NonNull
     @Override
     public TransparencyMode getTransparencyMode() {
-        return getBackgroundMode() == FlutterActivityLaunchConfigs.BackgroundMode.opaque
+        return getBackgroundMode() == ThreshFlutterActivityLaunchConfigs.BackgroundMode.opaque
                 ? TransparencyMode.opaque
                 : TransparencyMode.transparent;
     }
@@ -451,12 +490,12 @@ public abstract class ThreshActivity extends AppCompatActivity implements Thresh
      * FlutterActivityLaunchConfigs.BackgroundMode#opaque}.
      */
     @NonNull
-    protected FlutterActivityLaunchConfigs.BackgroundMode getBackgroundMode() {
+    protected ThreshFlutterActivityLaunchConfigs.BackgroundMode getBackgroundMode() {
         if (getIntent().hasExtra(EXTRA_BACKGROUND_MODE)) {
-            return FlutterActivityLaunchConfigs.BackgroundMode
+            return ThreshFlutterActivityLaunchConfigs.BackgroundMode
                     .valueOf(getIntent().getStringExtra(EXTRA_BACKGROUND_MODE));
         } else {
-            return FlutterActivityLaunchConfigs.BackgroundMode.opaque;
+            return ThreshFlutterActivityLaunchConfigs.BackgroundMode.opaque;
         }
     }
 
@@ -482,12 +521,21 @@ public abstract class ThreshActivity extends AppCompatActivity implements Thresh
         return delegate.getFlutterEngine();
     }
 
+
+    /** Retrieves the meta data specified in the AndroidManifest.xml. */
+    @Nullable
+    protected Bundle getMetaData() throws PackageManager.NameNotFoundException {
+        ActivityInfo activityInfo =
+                getPackageManager().getActivityInfo(getComponentName(), PackageManager.GET_META_DATA);
+        return activityInfo.metaData;
+    }
+
     @Nullable
     @Override
     public PlatformPlugin providePlatformPlugin(
             @Nullable Activity activity, @NonNull FlutterEngine flutterEngine) {
         if (activity != null) {
-            return new PlatformPlugin(getActivity(), flutterEngine.getPlatformChannel());
+            return new PlatformPlugin(getActivity(), flutterEngine.getPlatformChannel(),this);
         } else {
             return null;
         }
@@ -524,6 +572,26 @@ public abstract class ThreshActivity extends AppCompatActivity implements Thresh
         return true;
     }
 
+    /**
+     * Whether to handle the deeplinking from the {@code Intent} automatically if the {@code
+     * getInitialRoute} returns null.
+     *
+     * <p>The default implementation looks {@code <meta-data>} called {@link
+     * ThreshFlutterActivityLaunchConfigs#HANDLE_DEEPLINKING_META_DATA_KEY} within the Android manifest
+     * definition for this {@code FlutterActivity}.
+     */
+    @Override
+    public boolean shouldHandleDeeplinking() {
+        try {
+            Bundle metaData = getMetaData();
+            boolean shouldHandleDeeplinking =
+                    metaData != null ? metaData.getBoolean(ThreshFlutterActivityLaunchConfigs.HANDLE_DEEPLINKING_META_DATA_KEY) : false;
+            return shouldHandleDeeplinking;
+        } catch (PackageManager.NameNotFoundException e) {
+            return false;
+        }
+    }
+
     @Override
     public void onFlutterSurfaceViewCreated(@NonNull FlutterSurfaceView flutterSurfaceView) {
         // Hook for subclasses.
@@ -557,6 +625,20 @@ public abstract class ThreshActivity extends AppCompatActivity implements Thresh
         }
         if (getCachedEngineId() != null) {
             // Prevent overwriting the existing state in a cached engine with restoration state.
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    public boolean popSystemNavigator() {
+        // Hook for subclass. No-op if returns false.
+        return false;
+    }
+
+    private boolean stillAttachedForEvent(String event) {
+        if (delegate == null) {
+            ThreshLogger.e(TAG, "FlutterActivity " + hashCode() + " " + event + " called after release.");
             return false;
         }
         return true;

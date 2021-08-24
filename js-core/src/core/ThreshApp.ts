@@ -50,7 +50,7 @@ export class ThreshApp {
   flutterVersion: string
   // js version
   get jsVersion (): string {
-    return '1.3.0'
+    return '1.3.2'
   }
   // 是否调试模式
   debugMode: boolean = false
@@ -69,14 +69,19 @@ export class ThreshApp {
   Widget = Widget
 
   get pageName (): string {
-    return appContainer.currentPageName || (threshApp.injectRouteInfo || { pageName: '' }).pageName
+    const originPageName = appContainer.currentPageName
+    const defaultPageName = (threshApp.injectRouteInfo || { pageName: '' }).pageName
+    if (!originPageName) return defaultPageName
+    return originPageName.split('#').shift() || defaultPageName
   }
   get referPageName (): string {
-    return appContainer.referPageName || ''
+    const originReferPageName = appContainer.referPageName
+    if (!originReferPageName) return ''
+    return originReferPageName.split('#').shift() || ''
   }
 
   constructor () {
-    threshAppContext.initGlobal(threshApp)
+    threshAppContext.initGlobal(this)
   }
 
   clear () {

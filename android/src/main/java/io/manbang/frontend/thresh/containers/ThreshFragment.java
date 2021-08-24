@@ -44,6 +44,8 @@ public class ThreshFragment extends Fragment implements ThreshFlutterActivityAnd
     protected static final String ARG_DART_ENTRYPOINT = "dart_entrypoint";
     /** Initial Flutter route that is rendered in a Navigator widget. */
     public static final String ARG_INITIAL_ROUTE = "initial_route";
+    /** Whether the activity delegate should handle the deeplinking request. */
+    public static final String ARG_HANDLE_DEEPLINKING = "handle_deeplinking";
     /** Path to Flutter's Dart code. */
     protected static final String ARG_APP_BUNDLE_PATH = "app_bundle_path";
     /** Flutter shell arguments. */
@@ -55,7 +57,7 @@ public class ThreshFragment extends Fragment implements ThreshFlutterActivityAnd
      */
     protected static final String ARG_FLUTTERVIEW_TRANSPARENCY_MODE = "flutterview_transparency_mode";
     /** See {@link #shouldAttachEngineToActivity()}. */
-    protected static final String ARG_SHOULD_ATTACH_ENGINE_TO_ACTIVITY =
+    public static final String ARG_SHOULD_ATTACH_ENGINE_TO_ACTIVITY =
             "should_attach_engine_to_activity";
     /**
      * The ID of a {@link FlutterEngine} cached in {@link FlutterEngineCache} that will be used within
@@ -67,7 +69,7 @@ public class ThreshFragment extends Fragment implements ThreshFlutterActivityAnd
      * when the {@code FlutterFragment} is destroyed, false if the {@link FlutterEngine} should
      * outlive the {@code FlutterFragment}.
      */
-    protected static final String ARG_DESTROY_ENGINE_WITH_FRAGMENT = "destroy_engine_with_fragment";
+    public static final String ARG_DESTROY_ENGINE_WITH_FRAGMENT = "destroy_engine_with_fragment";
     /**
      * True if the framework state in the engine attached to this engine should be stored and restored
      * when this fragment is created and destroyed.
@@ -129,7 +131,7 @@ public class ThreshFragment extends Fragment implements ThreshFlutterActivityAnd
      *       super constructor to set the {@code FlutterFragment} subclass: {@code public MyBuilder()
      *       { super(MyFlutterFragment.class); } }
      *   <li>Add appropriate property methods for the new properties.
-     *   <li>Override {@link NewEngineFragmentBuilder#createArgs()}, call through to the super method,
+     *   <li>Override {@link ThreshFragment.NewEngineFragmentBuilder#createArgs()}, call through to the super method,
      *       then add the new properties as arguments in the {@link Bundle}.
      * </ol>
      *
@@ -141,6 +143,7 @@ public class ThreshFragment extends Fragment implements ThreshFlutterActivityAnd
         private final Class<? extends ThreshFragment> fragmentClass;
         private String dartEntrypoint = "main";
         private String initialRoute = "/";
+        private boolean handleDeeplinking = false;
         private String appBundlePath = null;
         private FlutterShellArgs shellArgs = null;
         private RenderMode renderMode = RenderMode.surface;
@@ -181,6 +184,16 @@ public class ThreshFragment extends Fragment implements ThreshFlutterActivityAnd
         }
 
         /**
+         * Whether to handle the deeplinking from the {@code Intent} automatically if the {@code
+         * getInitialRoute} returns null.
+         */
+        @NonNull
+        public NewEngineFragmentBuilder handleDeeplinking(@NonNull Boolean handleDeeplinking) {
+            this.handleDeeplinking = handleDeeplinking;
+            return this;
+        }
+
+        /**
          * The path to the app bundle which contains the Dart app to execute. Null when unspecified,
          * which defaults to {@link FlutterLoader#findAppBundlePath()}
          */
@@ -189,6 +202,7 @@ public class ThreshFragment extends Fragment implements ThreshFlutterActivityAnd
             this.appBundlePath = appBundlePath;
             return this;
         }
+
 
         /** Any special configuration arguments for the Flutter engine */
         @NonNull
@@ -272,6 +286,7 @@ public class ThreshFragment extends Fragment implements ThreshFlutterActivityAnd
         protected Bundle createArgs() {
             Bundle args = new Bundle();
             args.putString(ARG_INITIAL_ROUTE, initialRoute);
+            args.putBoolean(ARG_HANDLE_DEEPLINKING, handleDeeplinking);
             args.putString(ARG_APP_BUNDLE_PATH, appBundlePath);
             args.putString(ARG_DART_ENTRYPOINT, dartEntrypoint);
             // TODO(mattcarroll): determine if we should have an explicit FlutterTestFragment instead of
@@ -318,7 +333,7 @@ public class ThreshFragment extends Fragment implements ThreshFlutterActivityAnd
     }
 
     /**
-     * Returns a {@link CachedEngineFragmentBuilder} to create a {@code FlutterFragment} with a cached
+     * Returns a {@link ThreshFragment.CachedEngineFragmentBuilder} to create a {@code FlutterFragment} with a cached
      * {@link FlutterEngine} in {@link FlutterEngineCache}.
      *
      * <p>An {@code IllegalStateException} will be thrown during the lifecycle of the {@code
@@ -330,7 +345,7 @@ public class ThreshFragment extends Fragment implements ThreshFlutterActivityAnd
      */
     @NonNull
     public static ThreshFragment.CachedEngineFragmentBuilder withCachedEngine(@NonNull String engineId) {
-        return new CachedEngineFragmentBuilder(engineId);
+        return new ThreshFragment.CachedEngineFragmentBuilder(engineId);
     }
 
     /**
@@ -353,7 +368,7 @@ public class ThreshFragment extends Fragment implements ThreshFlutterActivityAnd
      *       super constructor to set the {@code FlutterFragment} subclass: {@code public MyBuilder()
      *       { super(MyFlutterFragment.class); } }
      *   <li>Add appropriate property methods for the new properties.
-     *   <li>Override {@link CachedEngineFragmentBuilder#createArgs()}, call through to the super
+     *   <li>Override {@link ThreshFragment.CachedEngineFragmentBuilder#createArgs()}, call through to the super
      *       method, then add the new properties as arguments in the {@link Bundle}.
      * </ol>
      *
@@ -365,6 +380,7 @@ public class ThreshFragment extends Fragment implements ThreshFlutterActivityAnd
         private final Class<? extends ThreshFragment> fragmentClass;
         private final String engineId;
         private boolean destroyEngineWithFragment = false;
+        private boolean handleDeeplinking = false;
         private RenderMode renderMode = RenderMode.surface;
         private TransparencyMode transparencyMode = TransparencyMode.transparent;
         private boolean shouldAttachEngineToActivity = true;
@@ -413,6 +429,15 @@ public class ThreshFragment extends Fragment implements ThreshFlutterActivityAnd
         public ThreshFragment.CachedEngineFragmentBuilder transparencyMode(
                 @NonNull TransparencyMode transparencyMode) {
             this.transparencyMode = transparencyMode;
+            return this;
+        }
+        /**
+         * Whether to handle the deeplinking from the {@code Intent} automatically if the {@code
+         * getInitialRoute} returns null.
+         */
+        @NonNull
+        public CachedEngineFragmentBuilder handleDeeplinking(@NonNull Boolean handleDeeplinking) {
+            this.handleDeeplinking = handleDeeplinking;
             return this;
         }
 
@@ -468,6 +493,7 @@ public class ThreshFragment extends Fragment implements ThreshFlutterActivityAnd
             Bundle args = new Bundle();
             args.putString(ARG_CACHED_ENGINE_ID, engineId);
             args.putBoolean(ARG_DESTROY_ENGINE_WITH_FRAGMENT, destroyEngineWithFragment);
+            args.putBoolean(ARG_HANDLE_DEEPLINKING, handleDeeplinking);
             args.putString(
                     ARG_FLUTTERVIEW_RENDER_MODE,
                     renderMode != null ? renderMode.name() : RenderMode.surface.name());
@@ -538,6 +564,12 @@ public class ThreshFragment extends Fragment implements ThreshFlutterActivityAnd
         delegate.onAttach(context);
     }
 
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        delegate.onRestoreInstanceState(savedInstanceState);
+    }
+
     @Nullable
     @Override
     public View onCreateView(
@@ -546,26 +578,24 @@ public class ThreshFragment extends Fragment implements ThreshFlutterActivityAnd
     }
 
     @Override
-    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        delegate.onActivityCreated(savedInstanceState);
-    }
-
-    @Override
     public void onStart() {
         super.onStart();
-        delegate.onStart();
+        if (stillAttachedForEvent("onStart")) {
+            delegate.onStart();
+        }
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        delegate.onResume();
+        if (stillAttachedForEvent("onResume")) {
+            delegate.onResume();
+        }
     }
 
     // TODO(mattcarroll): determine why this can't be in onResume(). Comment reason, or move if
     // possible.
-    @ActivityCallThrough
+    @ThreshFragment.ActivityCallThrough
     public void onPostResume() {
         delegate.onPostResume();
     }
@@ -573,33 +603,61 @@ public class ThreshFragment extends Fragment implements ThreshFlutterActivityAnd
     @Override
     public void onPause() {
         super.onPause();
-        delegate.onPause();
+        if (stillAttachedForEvent("onPause")) {
+            delegate.onPause();
+        }
     }
 
     @Override
     public void onStop() {
         super.onStop();
-        delegate.onStop();
+        if (stillAttachedForEvent("onStop")) {
+            delegate.onStop();
+        }
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        delegate.onDestroyView();
+        if (stillAttachedForEvent("onDestroyView")) {
+            delegate.onDestroyView();
+        }
     }
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        delegate.onSaveInstanceState(outState);
+        if (stillAttachedForEvent("onSaveInstanceState")) {
+            delegate.onSaveInstanceState(outState);
+        }
+    }
+
+    @Override
+    public void detachFromFlutterEngine() {
+        ThreshLogger.v(
+                TAG,
+                "FlutterFragment "
+                        + this
+                        + " connection to the engine "
+                        + getFlutterEngine()
+                        + " evicted by another attaching activity");
+        // Redundant calls are ok.
+        delegate.onDestroyView();
+        delegate.onDetach();
+        delegate.release();
+        delegate = null;
     }
 
     @Override
     public void onDetach() {
         super.onDetach();
-        delegate.onDetach();
-        delegate.release();
-        delegate = null;
+        if (delegate != null) {
+            delegate.onDetach();
+            delegate.release();
+            delegate = null;
+        } else {
+            ThreshLogger.v(TAG, "FlutterFragment " + this + " onDetach called after release.");
+        }
     }
 
     /**
@@ -613,10 +671,12 @@ public class ThreshFragment extends Fragment implements ThreshFlutterActivityAnd
      * @param permissions permissions that were requested
      * @param grantResults permission grants or denials
      */
-    @ActivityCallThrough
+    @ThreshFragment.ActivityCallThrough
     public void onRequestPermissionsResult(
             int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        delegate.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (stillAttachedForEvent("onRequestPermissionsResult")) {
+            delegate.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        }
     }
 
     /**
@@ -627,9 +687,11 @@ public class ThreshFragment extends Fragment implements ThreshFlutterActivityAnd
      *
      * @param intent new Intent
      */
-    @ActivityCallThrough
+    @ThreshFragment.ActivityCallThrough
     public void onNewIntent(@NonNull Intent intent) {
-        delegate.onNewIntent(intent);
+        if (stillAttachedForEvent("onNewIntent")) {
+            delegate.onNewIntent(intent);
+        }
     }
 
     /**
@@ -637,9 +699,11 @@ public class ThreshFragment extends Fragment implements ThreshFlutterActivityAnd
      *
      * <p>See {@link Activity#onBackPressed()}
      */
-    @ActivityCallThrough
+    @ThreshFragment.ActivityCallThrough
     public void onBackPressed() {
-        delegate.onBackPressed();
+        if (stillAttachedForEvent("onBackPressed")) {
+            delegate.onBackPressed();
+        }
     }
 
     /**
@@ -654,7 +718,9 @@ public class ThreshFragment extends Fragment implements ThreshFlutterActivityAnd
      */
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        delegate.onActivityResult(requestCode, resultCode, data);
+        if (stillAttachedForEvent("onActivityResult")) {
+            delegate.onActivityResult(requestCode, resultCode, data);
+        }
     }
 
     /**
@@ -662,9 +728,11 @@ public class ThreshFragment extends Fragment implements ThreshFlutterActivityAnd
      * background as the result of a user's choice/action, i.e., not as the result of an OS decision.
      *
      */
-    @ActivityCallThrough
+    @ThreshFragment.ActivityCallThrough
     public void onUserLeaveHint() {
-        delegate.onUserLeaveHint();
+        if (stillAttachedForEvent("onUserLeaveHint")) {
+            delegate.onUserLeaveHint();
+        }
     }
 
     /**
@@ -676,9 +744,11 @@ public class ThreshFragment extends Fragment implements ThreshFlutterActivityAnd
      *
      * @param level level
      */
-    @ActivityCallThrough
+    @ThreshFragment.ActivityCallThrough
     public void onTrimMemory(int level) {
-        delegate.onTrimMemory(level);
+        if (stillAttachedForEvent("onTrimMemory")) {
+            delegate.onTrimMemory(level);
+        }
     }
 
     /**
@@ -689,7 +759,9 @@ public class ThreshFragment extends Fragment implements ThreshFlutterActivityAnd
     @Override
     public void onLowMemory() {
         super.onLowMemory();
-        delegate.onLowMemory();
+        if (stillAttachedForEvent("onLowMemory")) {
+            delegate.onLowMemory();
+        }
     }
 
     /**
@@ -919,14 +991,23 @@ public class ThreshFragment extends Fragment implements ThreshFlutterActivityAnd
     }
 
     /**
-     * See {@link NewEngineFragmentBuilder#shouldAttachEngineToActivity()} and {@link
-     * CachedEngineFragmentBuilder#shouldAttachEngineToActivity()}.
+     * See {@link ThreshFragment.NewEngineFragmentBuilder#shouldAttachEngineToActivity()} and {@link
+     * ThreshFragment.CachedEngineFragmentBuilder#shouldAttachEngineToActivity()}.
      *
      * <p>Used by this {@code ThreshFragment}'s {@link ThreshFlutterActivityAndFragmentDelegate}
      */
     @Override
     public boolean shouldAttachEngineToActivity() {
         return getArguments().getBoolean(ARG_SHOULD_ATTACH_ENGINE_TO_ACTIVITY);
+    }
+
+    /**
+     * Whether to handle the deeplinking from the {@code Intent} automatically if the {@code
+     * getInitialRoute} returns null.
+     */
+    @Override
+    public boolean shouldHandleDeeplinking() {
+        return getArguments().getBoolean(ARG_HANDLE_DEEPLINKING);
     }
 
     @Override
@@ -983,6 +1064,20 @@ public class ThreshFragment extends Fragment implements ThreshFlutterActivityAnd
             return getArguments().getBoolean(ARG_ENABLE_STATE_RESTORATION);
         }
         if (getCachedEngineId() != null) {
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    public boolean popSystemNavigator() {
+        // Hook for subclass. No-op if returns false.
+        return false;
+    }
+
+    private boolean stillAttachedForEvent(String event) {
+        if (delegate == null) {
+            ThreshLogger.e(TAG, "FlutterFragment " + hashCode() + " " + event + " called after release.");
             return false;
         }
         return true;

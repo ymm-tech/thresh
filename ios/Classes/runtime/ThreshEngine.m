@@ -28,7 +28,102 @@
 #import "ThreshPlatformViewFactory.h"
 #import "ThreshJSChannelManager.h"
 #import "ThreshAppDelegate.h"
-#import "ThreshJSLoader.h"
+#import <MBJSCore_iOS/MBJSCore.h>
+
+@interface ThreshPerformance () {
+  int64_t _data[ThreshPerformanceSize][2];
+}
+@property (nonatomic, copy) NSArray<NSString *> *labelsForTags;
+@end
+
+@implementation ThreshPerformance
+
+- (instancetype)init
+{
+  if (self = [super init]) {
+    // Keep this in sync with ThreshPerformanceTag
+    _labelsForTags = @[
+      @"ThreshScriptLoad",
+      @"ThreshScriptExecution",
+      @"ThreshFlutterFirstFrame",
+      @"ThreshFirstFrame",
+      @"ThreshFirstShow",
+    ];
+  }
+  return self;
+}
+
+- (void)markStartForTag:(ThreshPerformanceTag)tag
+{
+    _data[tag][0] =  [[NSDate date] timeIntervalSince1970] * 1000;
+    _data[tag][1] = 0;
+}
+
+- (void)markStopForTag:(ThreshPerformanceTag)tag
+{
+  if (_data[tag][0] != 0 && _data[tag][1] == 0) {
+      _data[tag][1] =  [[NSDate date] timeIntervalSince1970] * 1000;
+  } else {
+      ThreshWarn(@"Unbalanced calls start/end for tag %li", (unsigned long)tag);
+  }
+}
+
+- (NSDictionary<NSString *, NSNumber *> *)valuesForTags
+{
+  NSMutableDictionary *result = @{}.mutableCopy;
+  for (NSUInteger index = 0; index < ThreshPerformanceSize; index++) {
+      double duration = _data[index][1] - _data[index][0];
+      NSString *label = _labelsForTags[index];
+      if (nil != label) {
+          [result addEntriesFromDictionary:@{label: @(duration)}];
+      }
+  }
+  return result;
+}
+
+- (void)setValue:(int64_t)value forTag:(ThreshPerformanceTag)tag
+{
+  _data[tag][0] = 0;
+  _data[tag][1] = value;
+}
+
+- (void)setStopValue:(int64_t)value forTag:(ThreshPerformanceTag)tag
+{
+  _data[tag][1] = value;
+}
+
+- (void)addValue:(int64_t)value forTag:(ThreshPerformanceTag)tag
+{
+  _data[tag][0] = 0;
+  _data[tag][1] += value;
+}
+
+- (void)appendStartForTag:(ThreshPerformanceTag)tag
+{
+  _data[tag][0] =  [[NSDate date] timeIntervalSince1970] * 1000;
+}
+
+- (void)appendStopForTag:(ThreshPerformanceTag)tag
+{
+  if (_data[tag][0] != 0) {
+    _data[tag][1] +=  [[NSDate date] timeIntervalSince1970] * 1000 - _data[tag][0];
+    _data[tag][0] = 0;
+  } else {
+      ThreshWarn(@"Unbalanced calls start/end for tag %li", (unsigned long)tag);
+  }
+}
+
+- (int64_t)durationForTag:(ThreshPerformanceTag)tag
+{
+  return _data[tag][1] - _data[tag][0];
+}
+
+- (int64_t)valueForTag:(ThreshPerformanceTag)tag
+{
+  return _data[tag][1];
+}
+
+@end
 
 static NSMapTable<NSString *, NSHashTable *> *_loadCallbacks; // 装载js回调
 static NSMutableDictionary *_viewContextDic;
@@ -68,6 +163,9 @@ typedef void(^Callback)(BOOL success);
 - (instancetype)initWithConfig:(id<ThreshProtocol>)config flutterEngine:(FlutterEngine *)engine rootId:(NSUInteger)rootId {
     
     if (self = [super init]) {
+        _performance = ThreshPerformance.new;
+        [_performance markStartForTag:ThreshPerformanceThreshFirstFrame];
+        [_performance markStartForTag:ThreshPerformanceThreshFirstShow];
         self.config = config;
         self.rootId = rootId;
         self.pageName = safeRespondsForProtocol(config, @selector(router), @selector(pageName), nil) ? config.router.pageName : @"errorPage";
@@ -168,30 +266,45 @@ typedef void(^Callback)(BOOL success);
 
 - (void)_loadAndEvalJS:(void (^)(BOOL success))complete {
     
+    __weak typeof(self) weakSelf = self;
     dispatch_async(dispatch_get_global_queue(0, 0), ^{
         
-        __weak typeof(self) weakSelf = self;
+        
         void (^callback)(NSData *, NSError *) = ^(NSData *response, NSError *err) {
             
+            if (nil != response && nil == err) {
+                [weakSelf.performance markStopForTag:ThreshPerformanceScriptLoad];
+            } else {
+                [weakSelf.performance setValue:0 forTag:ThreshPerformanceScriptLoad];
+            }
+            
             __strong typeof(weakSelf) strongSelf = weakSelf;
+            [weakSelf.performance markStartForTag:ThreshPerformanceScriptExecution];
             [strongSelf exportLifeCycle:ThreshAfterLoadBundle ext:@{}];
             NSString *dataJSString = [[NSString alloc] initWithData:response encoding:NSUTF8StringEncoding];
             if(dataJSString.length > 0) {
                 [strongSelf exportLifeCycle:ThreshBeforeEvalJS ext:@{}];
                 [strongSelf.jsCoreChannel evaluateJS:dataJSString callback:^{
+                    [weakSelf.performance markStopForTag:ThreshPerformanceScriptExecution];
                     [strongSelf exportLifeCycle:ThreshAfterEvalJS ext:@{}];
                     complete(YES);
                 }];
             } else {
+                [weakSelf.performance setValue:0 forTag:ThreshPerformanceScriptExecution];
                 complete(NO);
                 ThreshError(@"load js app error, js string length 0");
             }
         };
         
+        [weakSelf.performance markStartForTag:ThreshPerformanceScriptLoad];
         [self exportLifeCycle:ThreshBeforeLoadBundle ext:@{}];
         if (safeRespondsForProtocol(self.config, @selector(loader), @selector(loadType), nil) &&
             self.config.loader.loadType == LoadWithURL) {
-            [[ThreshJSLoader sharedLoader] loadJSWithAddress:(safeRespondsForProtocol(self.config, @selector(loader), @selector(serverAddress), nil) ? self.config.loader.serverAddress : @"") response:callback];
+            MBJSLoaderOptions *options = [MBJSLoaderOptions new];
+            options.loaderType = MBJSLoader_Remote;
+            options.remoteAddr = safeRespondsForProtocol(self.config, @selector(loader), @selector(serverAddress), nil) ? self.config.loader.serverAddress : @"";
+            options.reponse = callback;
+            [[MBJSLoader sharedLoader] loadJSWithOptions:options];
         } else {
             if (safeRespondsForProtocol(self.config, @selector(loader), @selector(getJSDataWithModuleName:callback:), nil)) {
                 [self.config.loader getJSDataWithModuleName:self.moduleName callback:^(NSData *data) {
@@ -265,6 +378,9 @@ typedef void(^Callback)(BOOL success);
 - (void)_callFlutter:(NSString *)methodName arguments:(id _Nullable)arguments callback:(ThreshCompleteBlock)completeBlock {
     [self.flutterThreshChannel.channel invokeMethod:methodName arguments:arguments result:^(id  _Nullable result) {
         [self _handleFlutterResult: result];
+        if (completeBlock) {
+            completeBlock(result);
+        }
     }];
 }
 
@@ -374,13 +490,21 @@ typedef void(^Callback)(BOOL success);
             else {
                 ThreshError(@"params is nil");
             }
-        } else if([kMethodPageDidLoad isEqualToString:method]
-                  ||[kMethodPageDidShow isEqualToString:method]) {
+        } else if([kMethodPageDidShow isEqualToString:method]) {
+            [_performance markStopForTag:ThreshPerformanceThreshFirstShow];
             NSDictionary *params = [arguments isKindOfClass:[NSDictionary class]] ? arguments[kChannelParams] : nil;
-            [self exportLifeCycle:ThreshPageDidShow ext:params];
-            if ([kMethodPageDidShow isEqualToString:method]) {
-                // 如果Thresh异常，用户触发刷新还会走pageDidShow方法，导致脏数据，置为nil，则不会产生新的时间埋点
+            if (nil != params && [params[@"pageShowTimestamp"] isKindOfClass:NSNumber.class]) {
+                [_performance setStopValue:((NSNumber *)(params[@"pageShowTimestamp"])).unsignedLongValue forTag:ThreshPerformanceThreshFirstFrame];
+            } else {
+                [_performance setValue:0 forTag:ThreshPerformanceThreshFirstFrame];
             }
+
+            NSMutableDictionary *ext = (params ?: @{}).mutableCopy;
+            [ext addEntriesFromDictionary:@{
+                @"_valuesForTags": _performance.valuesForTags
+            }];
+            [self exportLifeCycle:ThreshPageDidShow ext:ext];
+            
         } else if ([method isEqualToString:kFlutterBridgeCallNative]) {
             if (safeRespondsForProtocol(self.config, @selector(nativeBridge), @selector(performBridge:callBack:), nil)) {
                 [self.config.nativeBridge performBridge:arguments[@"params"] callBack:^(NSDictionary *response) {
@@ -392,6 +516,11 @@ typedef void(^Callback)(BOOL success);
         } else if ([method isEqualToString:kInvokePlatformViewMethod]) {
             if (safeRespondsForProtocol(self.config, @selector(nativePlatform), @selector(invokeInstanceMethodWithArgs:), nil)) {
                 [self.config.nativePlatform invokeInstanceMethodWithArgs:arguments[@"params"]];
+            }
+        } else if ([method isEqualToString:kMethodThreshData]) {
+            if (safeRespondsForProtocol(self.config, @selector(nativeBridge), @selector(transferThreshData:), nil)) {
+                id data = [dic objectForKey:kChannelParams];
+                [self.config.nativeBridge transferThreshData:data];
             }
         } else {
             ThreshError(@"unknown method !!!! %@", method);
@@ -450,6 +579,18 @@ typedef void(^Callback)(BOOL success);
 
 - (void)invokeJSMethod:(NSString *)methodStr args:(id)args complete:(ThreshCompleteBlock)complete {
     [self.jsCoreChannel invokeMothod:methodStr args:args complete:complete];
+}
+
+- (void)invokeDartMethod:(NSString *)methodName arguments:(id _Nullable)arguments callback:(ThreshCompleteBlock)completeBlock {
+    [self _callFlutter:methodName arguments:arguments callback:^(NSDictionary *response) {
+        if (completeBlock) {
+            completeBlock(response);
+        }
+    }];
+}
+
+- (void)setInitialRoute:(NSString *)route {
+    [self.flutterThreshChannel setInitialRouteWithChannel:route];
 }
 
 - (void)releaseEngine {

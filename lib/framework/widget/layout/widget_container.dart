@@ -34,8 +34,7 @@ import 'package:thresh/framework/widget/layout/widget_dragable_scroll_view/index
 /// GestureDetector => Opacity => ClipRRect => Stack/Positioned => Column/Row/Wrap => Expanded => Container
 /// 以上除最后一级 Container 外，其余所有层级会根据条件判断是否需要，以保证达到层级嵌套最浅
 class DFContainer extends DFBasicWidget {
-  DFContainer(
-    DynamicModel model, {
+  DFContainer(DynamicModel model, {
     Key key,
     this.row = false,
     // this.parentContainerIsRow = false,
@@ -54,11 +53,13 @@ class DFContainer extends DFBasicWidget {
     this.runAlignment,
     this.children,
   }) : super(model, key: key);
+
   // 使 Container 默认宽度撑满
   // 如果父组件为具有 row 属性的 Container ，其 width 则默认不撑满
   // super(model, key: key, width: parentContainerIsRow ? width : width ?? double.infinity);
 
   final bool row;
+
   // final bool parentContainerIsRow;
   final bool wrap;
   final bool reverse;
@@ -90,35 +91,55 @@ class DFContainer extends DFBasicWidget {
   }
 
   Widget buildDirectionWidget(List<Widget> widgets) {
-    if (widgets.length == 1 &&
-        (DFScrollView.isScrollView(widgets.first) ||
-            DFListView.isListView(widgets.first))) {
+    if (widgets.length == 1
+        && (DFScrollView.isScrollView(widgets.first)
+            || DFListView.isListView(widgets.first))) {
       return widgets.first;
     }
+
+    MainAxisAlignment mainAxis = Util.getMainAxisAlignment(mainAxisAlignment);
+    CrossAxisAlignment crossAxis = Util.getCrossAxisAlignment(crossAxisAlignment);
+    TextBaseline textBaseline;
+    if (crossAxis == CrossAxisAlignment.baseline) {
+      textBaseline = TextBaseline.alphabetic;
+    }
+
+    final Column Function() createColumn = () {
+      return Column(
+        mainAxisSize: height == null && flex == null
+            ? MainAxisSize.min
+            : MainAxisSize.max,
+        mainAxisAlignment: mainAxis,
+        crossAxisAlignment: crossAxis,
+        textBaseline: textBaseline,
+        children: widgets,
+      );
+    };
+
+    final Row Function() createRow = () {
+      return Row(
+        mainAxisSize:
+        width == null && flex == null ? MainAxisSize.min : MainAxisSize.max,
+        mainAxisAlignment: mainAxis,
+        crossAxisAlignment: crossAxis,
+        textBaseline: textBaseline,
+        children: widgets,
+      );
+    };
+
+    final Widget Function() createChild = () {
+      if (wrap) {
+        return buildWrapWidget(widgets);
+      }
+      if (row) {
+        return createRow();
+      } else {
+        return createColumn();
+      }
+    };
+
     return Container(
-      child: !wrap
-          ? !row
-              ? Column(
-                  mainAxisSize: height == null && flex == null
-                      ? MainAxisSize.min
-                      : MainAxisSize.max,
-                  mainAxisAlignment:
-                      Util.getMainAxisAlignment(mainAxisAlignment),
-                  crossAxisAlignment:
-                      Util.getCrossAxisAlignment(crossAxisAlignment),
-                  children: widgets,
-                )
-              : Row(
-                  mainAxisSize: width == null && flex == null
-                      ? MainAxisSize.min
-                      : MainAxisSize.max,
-                  mainAxisAlignment:
-                      Util.getMainAxisAlignment(mainAxisAlignment),
-                  crossAxisAlignment:
-                      Util.getCrossAxisAlignment(crossAxisAlignment),
-                  children: widgets,
-                )
-          : buildWrapWidget(widgets),
+      child: createChild()
     );
   }
 
@@ -139,9 +160,9 @@ class DFContainer extends DFBasicWidget {
     List<Widget> absoluteWidgets = [];
     children.map((child) {
       bool isAbsolute = ((child is DynamicWidget)
-                  ? (child.model.dynamicWidget.widgetInstance as DFBasicWidget)
-                  : (child as DFBasicWidget))
-              ?.isAbsolute ??
+          ? (child.model.dynamicWidget.widgetInstance as DFBasicWidget)
+          : (child as DFBasicWidget))
+          ?.isAbsolute ??
           false;
       // if (isDragableScrollView) widgetInstance = Positioned.fill(child: widgetInstance);
       if (!isAbsolute)
@@ -183,9 +204,9 @@ class ProxyDFContainer extends ProxyBase {
       left: Util.getDouble(props['left']),
       right: Util.getDouble(props['right']),
       mainAxisAlignment:
-          Util.getString(props['justifyContent'] ?? props['mainAxisAlignment']),
+      Util.getString(props['justifyContent'] ?? props['mainAxisAlignment']),
       crossAxisAlignment:
-          Util.getString(props['alignItems'] ?? props['crossAxisAlignment']),
+      Util.getString(props['alignItems'] ?? props['crossAxisAlignment']),
       runAlignment: Util.getString(props['alignContent']),
       children: Util.getWidgetList(buildProps['children']),
     );

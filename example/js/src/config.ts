@@ -24,6 +24,10 @@ import SwitchDemo from './pages/basic/SwitchDemo'
 import PickerDemo from './pages/basic/PickerDemo'
 import TimerDemo from './pages/examples/timer'
 import DrawerScrollViewDemo from './pages/basic/DragableScrollViewDemo'
+import { TabView } from 'thresh-lib/src/core/basicWidget'
+import TabControllerDemo from './pages/basic/TabControllerDemo'
+import TabViewDemo from './pages/basic/TabControllerDemo'
+import GridViewDemo from './pages/basic/GridViewDemo'
 
 interface IPageConfig {
   title?: string,
@@ -34,6 +38,7 @@ interface IPageConfig {
 }
 
 export const Colors = {
+  Transparent: 0x00000000,
   Black: 0xff000000,
   White: 0xffffffff,
   Primary: 0xff649ef4,
@@ -57,6 +62,12 @@ export const widgetList: IPageConfig[] = [
     pageBuilder: () => ContainerDemo
   },
   {
+    title: 'GirdView',
+    desc: '网格视图组件',
+    pageName: 'widget-gridview',
+    pageBuilder: () => GridViewDemo
+  },
+  {
     title: 'Text',
     desc: '文本组件',
     pageName: 'widget-text',
@@ -69,11 +80,11 @@ export const widgetList: IPageConfig[] = [
     pageBuilder: () => ImageDemo
   },
   {
-      title: 'QrImage',
-      desc: '二维码组件',
-      pageName: 'widget-qrimage',
-      pageBuilder: () => QrImageDemo
-    },
+    title: 'QrImage',
+    desc: '二维码组件',
+    pageName: 'widget-qrimage',
+    pageBuilder: () => QrImageDemo
+  },
   {
     title: 'Icon',
     desc: '图标组件',
@@ -105,15 +116,22 @@ export const widgetList: IPageConfig[] = [
     pageBuilder: () => ListViewDemo
   },
   {
+    title: 'TabController',
+    desc: '顶部tab控制器',
+    pageName: 'widget-tabController',
+    pageBuilder: () => TabViewDemo
+  },
+  {
     title: 'NestScrollView',
     desc: '富交互滚动视图组件',
+    // useInject: true,
     pageName: 'widget-nestScrollview',
     pageBuilder: () => NestScrollViewDemo
   },
   {
     title: 'DragableScrollView',
     desc: '底部拖拽滚动视图组件',
-    // useInject: true,
+    useInject: true,
     pageName: 'widget-dragableScrollview',
     pageBuilder: () => DrawerScrollViewDemo
   },
@@ -184,7 +202,7 @@ export const apiList: IPageConfig[] = [
   {
     title: 'Modal Actions',
     desc: '模态页面操作',
-    useInject: false,
+    // useInject: true,
     pageName: 'api-modal-actions',
     pageBuilder: () => ModalActions
   },

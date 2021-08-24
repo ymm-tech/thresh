@@ -88,8 +88,8 @@ class DynamicChannel {
     _channel.setMethodCallHandler((MethodCall call) async {
       if (dynamicApp == null) return;
 
-      final String jsContextId = call.arguments['contextId'];
-      if (jsContextId != null && dynamicApp.jsContextId != jsContextId) return;
+      // final String jsContextId = call.arguments['contextId'];
+      // if (jsContextId != null && dynamicApp.jsContextId != jsContextId) return;
 
       if (call.method == 'methodChannel_js_call_flutter') {
         final String method = call.arguments['method'];
@@ -103,7 +103,7 @@ class DynamicChannel {
                 title: 'Method Channel Handler\nMethod: $method',
                 content: _simplyPrintChannelMethodHandler.contains(method)
                     ? null
-                    : 'Params: $params',
+                    : 'Params: ${params == null ? null : jsonEncode(params)}',
               ),
             );
           }
@@ -132,7 +132,7 @@ class DynamicChannel {
           title: Util.formatMutipulLineText(
               ['Method Channel Invoke', 'Method: ${channelMethod.method}']),
           content: Util.formatMutipulLineText(
-              ['Method: ${channelMethod.method}', 'Params: $params']),
+              ['Params: ${params == null ? null : jsonEncode(params)}']),
         ),
       );
     }

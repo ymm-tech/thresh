@@ -13,15 +13,13 @@
 		225990AD254416DE0088BAC5 /* SettingViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 225990AC254416DE0088BAC5 /* SettingViewController.m */; };
 		229A6D5F25826EB20012ACFC /* Logger.m in Sources */ = {isa = PBXBuildFile; fileRef = 229A6D5B25826EB20012ACFC /* Logger.m */; };
 		229A6D6025826EB20012ACFC /* NativeBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 229A6D5E25826EB20012ACFC /* NativeBridge.m */; };
+		22B7F76126A81097003B49C8 /* NativeScrollPlatformView.m in Sources */ = {isa = PBXBuildFile; fileRef = 22B7F76026A81097003B49C8 /* NativeScrollPlatformView.m */; };
+		22B7F76426A819D7003B49C8 /* ThreshScrollView.m in Sources */ = {isa = PBXBuildFile; fileRef = 22B7F76326A819D7003B49C8 /* ThreshScrollView.m */; };
 		22C1CD0C259098D00011769A /* InfoCollector.m in Sources */ = {isa = PBXBuildFile; fileRef = 22C1CD0B259098D00011769A /* InfoCollector.m */; };
 		22C1CFC5259316890011769A /* ThreshConfig.m in Sources */ = {isa = PBXBuildFile; fileRef = 22C1CFC4259316880011769A /* ThreshConfig.m */; };
 		22E8EDF1254A5AD700A6AD75 /* NativeImagePlatformView.m in Sources */ = {isa = PBXBuildFile; fileRef = 22E8EDF0254A5AD700A6AD75 /* NativeImagePlatformView.m */; };
 		3B3967161E833CAA004F5970 /* AppFrameworkInfo.plist in Resources */ = {isa = PBXBuildFile; fileRef = 3B3967151E833CAA004F5970 /* AppFrameworkInfo.plist */; };
-		3B80C3941E831B6300D905FE /* App.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3B80C3931E831B6300D905FE /* App.framework */; };
-		3B80C3951E831B6300D905FE /* App.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 3B80C3931E831B6300D905FE /* App.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		48FE376B5B486540A15FBF14 /* libPods-Runner.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 312B8AA1E3C09BB52FDD2F8C /* libPods-Runner.a */; };
-		9705A1C61CF904A100538489 /* Flutter.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9740EEBA1CF902C7004384FC /* Flutter.framework */; };
-		9705A1C71CF904A300538489 /* Flutter.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 9740EEBA1CF902C7004384FC /* Flutter.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		5DFCF79506E77ABC405CB793 /* Pods_Runner.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1B2577BD25880F9D44A34164 /* Pods_Runner.framework */; };
 		9740EEB41CF90195004384FC /* Debug.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 9740EEB21CF90195004384FC /* Debug.xcconfig */; };
 		978B8F6F1D3862AE00F588F7 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 7AFFD8EE1D35381100E5BB4D /* AppDelegate.m */; };
 		97C146F31CF9000F007C117D /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 97C146F21CF9000F007C117D /* main.m */; };
@@ -37,8 +35,6 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				3B80C3951E831B6300D905FE /* App.framework in Embed Frameworks */,
-				9705A1C71CF904A300538489 /* Flutter.framework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -48,6 +44,7 @@
 /* Begin PBXFileReference section */
 		1498D2321E8E86230040F4C2 /* GeneratedPluginRegistrant.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GeneratedPluginRegistrant.h; sourceTree = "<group>"; };
 		1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GeneratedPluginRegistrant.m; sourceTree = "<group>"; };
+		1B2577BD25880F9D44A34164 /* Pods_Runner.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Runner.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		2240E414258A61C700DD2D15 /* Loader.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Loader.h; sourceTree = "<group>"; };
 		2240E415258A61C700DD2D15 /* Loader.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Loader.m; sourceTree = "<group>"; };
 		225407EB25465DF400433A77 /* JS.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = JS.bundle; sourceTree = "<group>"; };
@@ -57,6 +54,10 @@
 		229A6D5C25826EB20012ACFC /* NativeBridge.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NativeBridge.h; sourceTree = "<group>"; };
 		229A6D5D25826EB20012ACFC /* Logger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Logger.h; sourceTree = "<group>"; };
 		229A6D5E25826EB20012ACFC /* NativeBridge.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NativeBridge.m; sourceTree = "<group>"; };
+		22B7F75F26A81097003B49C8 /* NativeScrollPlatformView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = NativeScrollPlatformView.h; sourceTree = "<group>"; };
+		22B7F76026A81097003B49C8 /* NativeScrollPlatformView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = NativeScrollPlatformView.m; sourceTree = "<group>"; };
+		22B7F76226A819D7003B49C8 /* ThreshScrollView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ThreshScrollView.h; sourceTree = "<group>"; };
+		22B7F76326A819D7003B49C8 /* ThreshScrollView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ThreshScrollView.m; sourceTree = "<group>"; };
 		22C1CD0A259098D00011769A /* InfoCollector.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = InfoCollector.h; sourceTree = "<group>"; };
 		22C1CD0B259098D00011769A /* InfoCollector.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = InfoCollector.m; sourceTree = "<group>"; };
 		22C1CFC3259316880011769A /* ThreshConfig.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ThreshConfig.h; sourceTree = "<group>"; };
@@ -64,9 +65,7 @@
 		22E8EDEF254A5AD600A6AD75 /* NativeImagePlatformView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = NativeImagePlatformView.h; sourceTree = "<group>"; };
 		22E8EDF0254A5AD700A6AD75 /* NativeImagePlatformView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = NativeImagePlatformView.m; sourceTree = "<group>"; };
 		2F90481F74AA4D7F4EEA4F31 /* Pods-Runner.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.profile.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.profile.xcconfig"; sourceTree = "<group>"; };
-		312B8AA1E3C09BB52FDD2F8C /* libPods-Runner.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Runner.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		3B3967151E833CAA004F5970 /* AppFrameworkInfo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = AppFrameworkInfo.plist; path = Flutter/AppFrameworkInfo.plist; sourceTree = "<group>"; };
-		3B80C3931E831B6300D905FE /* App.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = App.framework; path = Flutter/App.framework; sourceTree = "<group>"; };
 		7AFA3C8E1D35360C0083082E /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Release.xcconfig; path = Flutter/Release.xcconfig; sourceTree = "<group>"; };
 		7AFFD8ED1D35381100E5BB4D /* AppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		7AFFD8EE1D35381100E5BB4D /* AppDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
@@ -74,7 +73,6 @@
 		8C80E9414EC337B3ED67081C /* Pods-Runner.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.debug.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.debug.xcconfig"; sourceTree = "<group>"; };
 		9740EEB21CF90195004384FC /* Debug.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = Debug.xcconfig; path = Flutter/Debug.xcconfig; sourceTree = "<group>"; };
 		9740EEB31CF90195004384FC /* Generated.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = Generated.xcconfig; path = Flutter/Generated.xcconfig; sourceTree = "<group>"; };
-		9740EEBA1CF902C7004384FC /* Flutter.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Flutter.framework; path = Flutter/Flutter.framework; sourceTree = "<group>"; };
 		97C146EE1CF9000F007C117D /* Runner.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Runner.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		97C146F21CF9000F007C117D /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		97C146FB1CF9000F007C117D /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
@@ -88,9 +86,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				9705A1C61CF904A100538489 /* Flutter.framework in Frameworks */,
-				3B80C3941E831B6300D905FE /* App.framework in Frameworks */,
-				48FE376B5B486540A15FBF14 /* libPods-Runner.a in Frameworks */,
+				5DFCF79506E77ABC405CB793 /* Pods_Runner.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -127,7 +123,7 @@
 		42EAD728C6F1248A1854E48E /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				312B8AA1E3C09BB52FDD2F8C /* libPods-Runner.a */,
+				1B2577BD25880F9D44A34164 /* Pods_Runner.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -135,9 +131,7 @@
 		9740EEB11CF90186004384FC /* Flutter */ = {
 			isa = PBXGroup;
 			children = (
-				3B80C3931E831B6300D905FE /* App.framework */,
 				3B3967151E833CAA004F5970 /* AppFrameworkInfo.plist */,
-				9740EEBA1CF902C7004384FC /* Flutter.framework */,
 				9740EEB21CF90195004384FC /* Debug.xcconfig */,
 				7AFA3C8E1D35360C0083082E /* Release.xcconfig */,
 				9740EEB31CF90195004384FC /* Generated.xcconfig */,
@@ -174,6 +168,10 @@
 				225990AC254416DE0088BAC5 /* SettingViewController.m */,
 				22E8EDEF254A5AD600A6AD75 /* NativeImagePlatformView.h */,
 				22E8EDF0254A5AD700A6AD75 /* NativeImagePlatformView.m */,
+				22B7F75F26A81097003B49C8 /* NativeScrollPlatformView.h */,
+				22B7F76026A81097003B49C8 /* NativeScrollPlatformView.m */,
+				22B7F76226A819D7003B49C8 /* ThreshScrollView.h */,
+				22B7F76326A819D7003B49C8 /* ThreshScrollView.m */,
 				225407EB25465DF400433A77 /* JS.bundle */,
 				97C146FA1CF9000F007C117D /* Main.storyboard */,
 				97C146FD1CF9000F007C117D /* Assets.xcassets */,
@@ -282,7 +280,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "/bin/sh \"$FLUTTER_ROOT/packages/flutter_tools/bin/xcode_backend.sh\" thin\n";
+			shellScript = "/bin/sh \"$FLUTTER_ROOT/packages/flutter_tools/bin/xcode_backend.sh\" embed_and_thin\n";
 		};
 		9740EEB61CF901F6004384FC /* Run Script */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -304,9 +302,26 @@
 			files = (
 			);
 			inputPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-frameworks.sh",
+				"${BUILT_PRODUCTS_DIR}/AFNetworking/AFNetworking.framework",
+				"${BUILT_PRODUCTS_DIR}/FMDB/FMDB.framework",
+				"${BUILT_PRODUCTS_DIR}/MBJSCore_iOS/MBJSCore_iOS.framework",
+				"${BUILT_PRODUCTS_DIR}/SSZipArchive/SSZipArchive.framework",
+				"${BUILT_PRODUCTS_DIR}/device_info/device_info.framework",
+				"${BUILT_PRODUCTS_DIR}/path_provider/path_provider.framework",
+				"${BUILT_PRODUCTS_DIR}/sqflite/sqflite.framework",
+				"${BUILT_PRODUCTS_DIR}/thresh/thresh.framework",
 			);
 			name = "[CP] Embed Pods Frameworks";
 			outputPaths = (
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/AFNetworking.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/FMDB.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/MBJSCore_iOS.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/SSZipArchive.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/device_info.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/path_provider.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/sqflite.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/thresh.framework",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -343,11 +358,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				229A6D5F25826EB20012ACFC /* Logger.m in Sources */,
+				22B7F76426A819D7003B49C8 /* ThreshScrollView.m in Sources */,
 				978B8F6F1D3862AE00F588F7 /* AppDelegate.m in Sources */,
 				22C1CD0C259098D00011769A /* InfoCollector.m in Sources */,
 				2240E416258A61C700DD2D15 /* Loader.m in Sources */,
 				229A6D6025826EB20012ACFC /* NativeBridge.m in Sources */,
 				97C146F31CF9000F007C117D /* main.m in Sources */,
+				22B7F76126A81097003B49C8 /* NativeScrollPlatformView.m in Sources */,
 				22E8EDF1254A5AD700A6AD75 /* NativeImagePlatformView.m in Sources */,
 				22C1CFC5259316890011769A /* ThreshConfig.m in Sources */,
 				1498D2341E8E89220040F4C2 /* GeneratedPluginRegistrant.m in Sources */,
@@ -379,7 +396,6 @@
 /* Begin XCBuildConfiguration section */
 		249021D3217E4FDB00AE95B9 /* Profile */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 7AFA3C8E1D35360C0083082E /* Release.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -455,7 +471,6 @@
 		};
 		97C147031CF9000F007C117D /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 9740EEB21CF90195004384FC /* Debug.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -513,7 +528,6 @@
 		};
 		97C147041CF9000F007C117D /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 7AFA3C8E1D35360C0083082E /* Release.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;

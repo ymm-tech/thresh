@@ -1,4 +1,4 @@
-import Thresh, { basicWidgets, ui } from 'thresh-lib'
+import Thresh, { basicWidgets, ui, Util } from 'thresh-lib'
 import { Colors } from '../../config'
 import Title from '../../widgets/Title'
 import Box from '../../widgets/Box'

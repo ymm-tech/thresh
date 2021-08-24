@@ -350,7 +350,8 @@ class Util {
     }
     List<double> stops = [];
     for (dynamic stop in value['stops'] ?? []) {
-      final double stopValue = Util.getDouble(stop,range: Range(min:0.0,max:1.0));
+      final double stopValue =
+          Util.getDouble(stop, range: Range(min: 0.0, max: 1.0));
       if (stopValue != null) stops.add(stopValue);
     }
     if (colors.isEmpty) return null;
@@ -462,6 +463,7 @@ class Util {
       decoration: decoration,
       decorationColor: color,
       height: lineHeight,
+      textBaseline: TextBaseline.alphabetic,
     );
   }
 
@@ -576,6 +578,10 @@ class Util {
             startPosition: Position(bottom: 50, left: 50, right: 50)));
   }
 
+  static void inputBlur() {
+    FocusScope.of(dynamicApp.context).requestFocus(FocusNode());
+  }
+
   /// 节流函数，默认 32ms
   static Function throttle(Function callback, [int delay = 16]) {
     bool canInvoke = true;
@@ -665,13 +671,15 @@ class Util {
     return random;
   }
 
-  // 处理 df 异常
+  // 处理 thresh 异常
   static void onError(ThreshError error) {
     devtools.insert(
-        InfoType.error,
-        DevInfo(
-            title: error.message.toString(),
-            content: (error.trace ?? error.stackTrace)?.toString() ?? ''));
+      InfoType.error,
+      DevInfo(
+        title: error.message.toString(),
+        content: (error.trace ?? error.stackTrace)?.toString() ?? '',
+      ),
+    );
     if (dynamicApp?.errorHandler != null)
       dynamicApp.errorHandler(error);
     else

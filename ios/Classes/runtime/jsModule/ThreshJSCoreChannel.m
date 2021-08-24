@@ -24,7 +24,7 @@
 
 #import "ThreshJSCoreChannel.h"
 #import "ThreshDef.h"
-#import "ThreshJSExecutor.h"
+#import <MBJSCore_iOS/MBJSCore.h>
 #import "ThreshJSTimerManager.h"
 
 @interface ThreshJSCoreChannel()
@@ -36,7 +36,7 @@
 // js环境是否准备完毕
 @property (nonatomic, assign) BOOL envReady;
 
-@property (nonatomic, strong) ThreshJSExecutor *jsExe;
+@property (nonatomic, strong) MBJSExecutor *jsExe;
 
 @property (nonatomic, strong) NSMapTable *delegateMap;
 
@@ -49,7 +49,7 @@
 - (instancetype)init {
     if(self = [super init]) {
         _delegateMap = [[NSMapTable alloc] initWithKeyOptions:NSPointerFunctionsStrongMemory valueOptions:NSPointerFunctionsWeakMemory capacity:0];
-        self.jsExe = [[ThreshJSExecutor alloc] init];
+        self.jsExe = [[MBJSExecutor alloc] init];
         __weak typeof(self) weakSelf = self;
         self.jsExe.exceptionHandler = ^(NSString *exception) {
             weakSelf.exceptionHandler(exception);
@@ -150,7 +150,7 @@
     if (jsString && [jsString isKindOfClass:[NSString class]] && jsString.length > 0) {
         
         __weak typeof(self) weakSelf = self;
-        [self.jsExe evaluateScript:jsString complete:^{
+        [self.jsExe mbEvaluateScript:jsString complete:^{
             weakSelf.envReady = YES;
             if (complete) {
                 complete();
@@ -232,6 +232,12 @@
         id<ThreshJSChannelDelegate> obj;
         if ([reqDic.allKeys containsObject:@"contextId"]) {
             obj = [_delegateMap objectForKey:@([reqDic[@"contextId"] integerValue])];
+        }
+        if (!obj && [reqDic[@"method"] isEqualToString:@"stopAlwaysRender"]) {
+            return;
+        }
+        if (!obj && [reqDic[@"method"] isEqualToString:@"onDestroyed"]) {
+            return;
         }
         if (!obj) {
             obj = _delegate;

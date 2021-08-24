@@ -32,6 +32,9 @@
 @property (nonatomic, strong) UIButton *localBundleBtn;
 @property (nonatomic, strong) UIButton *localServerBtn;
 
+@property (nonatomic, strong) UILabel *opaqueLabel;
+@property (nonatomic, strong) UISwitch *opaqueSwitch;
+
 @property (nonatomic, strong) UILabel *localLabel;
 @property (nonatomic, strong) UISwitch *s;
 @property (nonatomic, strong) UILabel *tips;
@@ -44,6 +47,8 @@
 @property (nonatomic, assign) NSTimeInterval t;
 
 @property (nonatomic, strong) ThreshConfig *config;
+
+@property (nonatomic, assign) BOOL needOpaque;
 @end
 
 @implementation SettingViewController
@@ -53,6 +58,7 @@
     // Do any additional setup after loading the view.
     self.t = 0;
     self.title = @"Thresh";
+    _needOpaque = YES;
     self.config = [ThreshConfig new];
     [self constructViews];
 //    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardWillShow:) name:UIKeyboardWillShowNotification object:nil];
@@ -101,13 +107,23 @@
     _localServerBtn.layer.masksToBounds = YES;
     [_scrollview addSubview:_localServerBtn];
     
-    _localLabel = [[UILabel alloc] initWithFrame:CGRectMake(margin, _localServerBtn.frame.origin.y + _localServerBtn.frame.size.height + margin, 0, 0)];
+    _opaqueLabel = [[UILabel alloc] initWithFrame:CGRectMake(margin, _localServerBtn.frame.origin.y + _localServerBtn.frame.size.height + margin, 0, 0)];
+    _opaqueLabel.font = [UIFont systemFontOfSize:16.0f];
+    _opaqueLabel.text = @"透明页面";
+    [_opaqueLabel sizeToFit];
+    [_scrollview addSubview:_opaqueLabel];
+    
+    _opaqueSwitch = [[UISwitch alloc] initWithFrame:CGRectMake(width - margin - 50.0f, _localServerBtn.frame.origin.y + _localServerBtn.frame.size.height + margin, 50.0f, 30.0f)];
+    [_opaqueSwitch addTarget:self action:@selector(opaqueSwitchChange) forControlEvents:UIControlEventValueChanged];
+    [_scrollview addSubview:_opaqueSwitch];
+    
+    _localLabel = [[UILabel alloc] initWithFrame:CGRectMake(margin, _opaqueLabel.frame.origin.y + _opaqueLabel.frame.size.height + margin, 0, 0)];
     _localLabel.font = [UIFont systemFontOfSize:16.0f];
     _localLabel.text = @"启动沙盒模式调试";
     [_localLabel sizeToFit];
     [_scrollview addSubview:_localLabel];
     
-    _s = [[UISwitch alloc] initWithFrame:CGRectMake(width - margin - 50.0f, _localServerBtn.frame.origin.y + _localServerBtn.frame.size.height + margin, 50.0f, 30.0f)];
+    _s = [[UISwitch alloc] initWithFrame:CGRectMake(width - margin - 50.0f, _opaqueLabel.frame.origin.y + _opaqueLabel.frame.size.height + margin, 50.0f, 30.0f)];
     [_s addTarget:self action:@selector(switchValueChange) forControlEvents:UIControlEventValueChanged];
     [_scrollview addSubview:_s];
     
@@ -145,7 +161,7 @@
     _portTextField.textColor = [UIColor blackColor];
     [_scrollview addSubview:_portTextField];
     
-    _ipTextField.text = @"127.0.0.1";
+    _ipTextField.text = @"10.190.84.15";
     _portTextField.text = @"12345";
 }
 
@@ -154,7 +170,11 @@
     [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"local"];
     
     ThreshViewController *vc = [[ThreshViewController alloc] initWithConfig:self.config];
-    [self.navigationController pushViewController:vc animated:YES];
+    if (_needOpaque) {
+        [self.navigationController pushViewController:vc animated:YES];
+    } else {
+        [self.navigationController presentViewController:vc animated:NO completion:^{}];
+    }
 }
 
 - (void)onClickLocalServerBtn {
@@ -173,7 +193,11 @@
         [[NSUserDefaults standardUserDefaults] setObject:addressStr forKey:@"addressStr"];
         
         ThreshViewController *vc = [[ThreshViewController alloc] initWithConfig:self.config];
-        [self.navigationController pushViewController:vc animated:YES];
+        if (_needOpaque) {
+            [self.navigationController pushViewController:vc animated:YES];
+        } else {
+            [self.navigationController presentViewController:vc animated:NO completion:^{}];
+        }
     } else {
         NSLog(@"请开启沙盒调试");
     }
@@ -187,6 +211,17 @@
     } else {
         _ipTextField.userInteractionEnabled = YES;
         _portTextField.userInteractionEnabled = YES;
+    }
+}
+
+- (void)opaqueSwitchChange {
+    
+    if (_opaqueSwitch.isOn) {
+        _needOpaque = NO;
+        self.config = [[ThreshConfig alloc] initWithOpaque:NO];
+    } else {
+        _needOpaque = YES;
+        self.config = [ThreshConfig new];
     }
 }
 

@@ -169,9 +169,8 @@ class _DraggableSheetExtent {
     DragableScrollPositionType type,
     ScrollController scrollController,
   ) async {
-    if (positionType != type) {
-      onDragPositionChange?.call(type);
-    }
+    if (positionType != type) onDragPositionChange?.call(type);
+
     positionType = type;
     if (positionType == DragableScrollPositionType.min && ignoreMinExtend)
       positionType = DragableScrollPositionType.initial;
@@ -186,8 +185,7 @@ class _DraggableSheetExtent {
       duration: animationController.duration,
       curve: Curves.easeInOut,
     );
-    if (positionType != DragableScrollPositionType.max)
-      scrollController.jumpTo(0);
+    if (!isAtMax) scrollController.jumpTo(0);
   }
 
   void addPixelDelta(double delta, BuildContext context) {

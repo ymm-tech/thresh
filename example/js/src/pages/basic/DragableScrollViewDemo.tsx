@@ -51,6 +51,7 @@ class InnerView extends Widget {
     return (
       <DragableScrollView
             ref={e => this.$view = e}
+            maxSize={0.8}
             initialSize={0.5}
             minSize={0.2}
             backgroundColor={Colors.White}

@@ -32,6 +32,7 @@ typedef NS_ENUM(NSInteger, ThreshLifeCycle) {
     ThreshAfterLoadBundle,
     ThreshBeforeEvalJS,
     ThreshAfterEvalJS,
+    ThreshPageDidLoad,
     ThreshPageDidShow,
     ThreshFlutterFirstFrame,
 };

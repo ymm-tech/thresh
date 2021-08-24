@@ -33,8 +33,12 @@
 
 - (void)performBridge:(NSDictionary *)bridgeInfo callBack:(ThreshBridgeCallBack)callBack {
     if (bridgeInfo[@"method"] && [bridgeInfo[@"method"] isEqualToString:@"closeWindow"]) {
-        UIViewController *rvc = [UIApplication sharedApplication].keyWindow.rootViewController;
-        [((UINavigationController *)rvc) popViewControllerAnimated:YES];
+        UINavigationController *rvc = (UINavigationController *)[UIApplication sharedApplication].keyWindow.rootViewController;
+        if (rvc && rvc.viewControllers.count > 1) {
+            [rvc popViewControllerAnimated:YES];
+        } else if (rvc.presentationController) {
+            [rvc dismissViewControllerAnimated:NO completion:nil];
+        }
     } else if (bridgeInfo[@"method"] && [bridgeInfo[@"method"] isEqualToString:@"jsbundlePath"]) {
         NSDictionary *dic = @{
             @"code": @0,

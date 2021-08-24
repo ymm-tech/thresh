@@ -4,7 +4,7 @@
 
 Thresh provides a simple and efficient application development framework and rich components and APIs to help developers have native APP experience services in front-end development. It is a set of stable and high-performance cross-end dynamic solutions open sourced by Manbang Group .
 
-### Demo Download Url [Thresh_v0.0.6.apk](https://github.com/ymm-tech/thresh/tree/main/example/apk/Thresh_v0.0.6.apk)
+### Demo Download Url [Thresh_v0.0.4.apk](https://github.com/ymm-tech/thresh/tree/main/example/apk/Thresh_v0.0.4.apk)
 
 ### First、Main Core Highlights
 
@@ -78,7 +78,7 @@ Android side environment: Android Studio iOS side: XCode
 
 JS: VSCode + node + npm/yarn
 
-Flutter SDK: **flutter 1.22.5** [Note: The new version will be gradually supported in the future [Flutter environment installation please move](https://flutter.dev/docs/get-started/install)]
+Flutter SDK: **flutter1.9.1-hotfix.6** [Note: The new version will be gradually supported in the future [Flutter environment installation please move](https://flutter.dev/docs/get-started/install)]
 
 #### 3.2、Github description
 
@@ -290,12 +290,11 @@ After the dependencies are added, you can directly refer to the article **Apis/F
 
 * [Basic Components](Documentation/基础组件/组件说明.md) The following is the basic component documents:
 
-  | [Container](Documentation/基础组件/Container.md)             | [AppBar](Documentation/基础组件/AppBar.md)         | [Page](Documentation/基础组件/Page.md)                       | [Button](Documentation/基础组件/Button.md) |
-  | ------------------------------------------------------------ | -------------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------ |
-  | [Checkbox](Documentation/基础组件/Checkbox.md)               | [Icon](Documentation/基础组件/Icon.md)             | [Image](Documentation/基础组件/Image.md)                     | [Input](Documentation/基础组件/Input.md)   |
-  | [ListView](Documentation/基础组件/ListView.md)               | [NativeView](Documentation/基础组件/NativeView.md) | [NestScrollView](Documentation/基础组件/NestScrollView.md)   | [Radio](Documentation/基础组件/Radio.md)   |
-  | [Refresh](Documentation/基础组件/Refreshmd)                  | [ScrollView](Documentation/基础组件/ScrollView.md) | [SwipeActionsView](Documentation/基础组件/SwipeActionsView.md) | [Text](Documentation/基础组件/Text.md)     |
-  | [DragableScrollView](Documentation/基础组件/DragableScrollView.md) | [Picker](Documentation/基础组件/Picker.md)         | [Switch](Documentation/基础组件/Switch.md)                   |                                            |
+  | [Container](Documentation/基础组件/Container.md) | [AppBar](Documentation/基础组件/AppBar.md)         | [Page](Documentation/基础组件/Page.md)                       | [Button](Documentation/基础组件/Button.md) |
+  | ------------------------------------------------ | -------------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------ |
+  | [Checkbox](Documentation/基础组件/Checkbox.md)   | [Icon](Documentation/基础组件/Icon.md)             | [Image](Documentation/基础组件/Image.md)                     | [Input](Documentation/基础组件/Input.md)   |
+  | [ListView](Documentation/基础组件/ListView.md)   | [NativeView](Documentation/基础组件/NativeView.md) | [NestScrollView](Documentation/基础组件/NestScrollView.md)   | [Radio](Documentation/基础组件/Radio.md)   |
+  | [Refresh](Documentation/基础组件/Refreshmd)      | [ScrollView](Documentation/基础组件/ScrollView.md) | [SwipeActionsView](Documentation/基础组件/SwipeActionsView.md) | [Text](Documentation/基础组件/Text.md)     |
 
 ### Sixth、Access case
 
@@ -328,7 +327,6 @@ Friends who are interested in Thresh can join the group for communication. Dingd
 * Liang.xu - Core developer - [TroyXL](https://github.com/TroyXL)
 * Wei.zhang - Core developer - [snowfall]( https://github.com/snowfall)
 * Jingdong.tang - Core developer - [JD-Tang](https://github.com/JD-Tang)
-* Zheng.zhang - Core developer - [long831302](https://github.com/long8313002/)
 * Junking.mao - Core developer - [maojunlong](https://github.com/maojunlong)
 
 ### Ninth、Open source agreement

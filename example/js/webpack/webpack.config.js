@@ -48,6 +48,8 @@ module.exports = {
         include: !isDev ? [
           path.resolve(__dirname, '../src'),
           path.resolve(__dirname, '../node_modules/thresh-lib'),
+          path.resolve(__dirname, '../node_modules/thresh-component'),
+          path.resolve(__dirname, '../node_modules/thresh-theme-provider'),
         ] : void 0,
         use: [
           {

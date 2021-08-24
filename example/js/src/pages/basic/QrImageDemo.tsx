@@ -16,7 +16,19 @@ export default class QrImageDemo extends Thresh.Widget <any, any> {
       >
         <Title title="二维码" />
           <Box>
-            <QrImage text="http://dmimg.5054399.com/allimg/pkm/pk/22.jpg" backgroundColor={0xffFFFBF9}  foregroundColor={0xffFF5B00}/>
+            <QrImage text="http://dmimg.5054399.com/allimg/pkm/pk/22.jpg" 
+                    backgroundColor={0xffFFFBF9}  
+                    foregroundColor={0xff333333} 
+                    />
+          </Box>
+          <Box>
+            <QrImage text="http://dmimg.5054399.com/allimg/pkm/pk/22.jpg" 
+                    backgroundColor={0xffFFFBF9}  
+                    foregroundColor={0xff333333} 
+                    embeddedImageUrl="http://dmimg.5054399.com/allimg/pkm/pk/22.jpg"
+                    embeddedImageHeight={25}
+                    embeddedImageWidth={25}
+                    />
           </Box>
       </Page>
     )

@@ -22,7 +22,6 @@
 import 'package:flutter/material.dart';
 import 'package:thresh/basic/global_def.dart';
 import 'package:thresh/basic/util.dart';
-import 'package:thresh/basic/bus.dart';
 import 'package:thresh/framework/channel/basic.dart';
 import 'package:thresh/framework/core/dynamic_app.dart';
 import 'package:thresh/framework/core/dynamic_model.dart';
@@ -123,7 +122,7 @@ class DynamicPageState extends State<DynamicPage> {
     if (dynamicApp?.placeholderPageBuilder != null) {
       return dynamicApp.placeholderPageBuilder(context);
     } else {
-      return Scaffold(backgroundColor: Colors.white);
+      return Scaffold(backgroundColor: Colors.transparent);
     }
   }
 

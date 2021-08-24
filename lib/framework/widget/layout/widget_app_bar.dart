@@ -19,7 +19,6 @@
 /// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 /// SOFTWARE.
 
-import 'package:thresh/framework/channel/basic.dart';
 import 'package:thresh/framework/widget/widget_basic.dart';
 import 'package:flutter/material.dart';
 import 'package:thresh/framework/core/dynamic_app.dart';
@@ -33,6 +32,8 @@ class DFAppBar extends DFBasicWidget implements PreferredSizeWidget {
     this.model, {
     Key key,
     this.elevation = false,
+    this.elevationValue,
+    this.elevationColor,
     this.isLight = true,
     this.backgroundColor,
     this.centerTitle = true,
@@ -43,6 +44,8 @@ class DFAppBar extends DFBasicWidget implements PreferredSizeWidget {
 
   final DynamicModel model;
   final bool elevation;
+  final double elevationValue;
+  final Color elevationColor;
   final bool isLight;
   final Color backgroundColor;
   final bool centerTitle;
@@ -57,7 +60,8 @@ class DFAppBar extends DFBasicWidget implements PreferredSizeWidget {
       preferredSize: preferredSize,
       child: AppBar(
         automaticallyImplyLeading: false,
-        elevation: elevation ? 1 : 0,
+        elevation: elevationValue ?? (elevation ? 1 : 0),
+        shadowColor: elevationColor,
         centerTitle: centerTitle,
         backgroundColor: backgroundColor,
         brightness: isLight ? Brightness.dark : Brightness.light,
@@ -108,6 +112,8 @@ class ProxyDFAppBar extends ProxyBase {
       model,
       key: model.key,
       elevation: Util.getBoolean(props['elevation']),
+      elevationValue: Util.getDouble(props['elevationValue']),
+      elevationColor: Util.getColor(props['elevationColor']),
       isLight: isLight,
       backgroundColor: Util.getColor(props['backgroundColor']) ?? Colors.white,
       leading: buildProps['leading'] ??

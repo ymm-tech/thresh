@@ -25,8 +25,8 @@ package io.manbang.frontend.thresh.runtime;
 
 import java.util.Map;
 
-import io.manbang.frontend.thresh.runtime.jscore.bundle.BundleCallback;
-import io.manbang.frontend.thresh.runtime.jscore.runtime.JSCallback;
+import io.manbang.frontend.jscore.bundle.BundleCallback;
+import io.manbang.frontend.jscore.runtime.JSCallback;
 import io.manbang.frontend.thresh.channel.BridgeCallback;
 
 public interface EngineService {

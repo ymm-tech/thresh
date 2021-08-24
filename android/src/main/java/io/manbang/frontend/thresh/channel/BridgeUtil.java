@@ -126,17 +126,9 @@ public class BridgeUtil {
                     for (Iterator<Map.Entry<String, Object>> iterator = (((HashMap )((HashMap )(((HashMap )params.get(
                             MethodConstants.CALL_PARAMS)).get("request"))).get(MethodConstants.CALL_PARAMS))).entrySet().iterator(); iterator.hasNext(); ) {
                         Map.Entry<String, Object> entry = iterator.next();
-                        if ("data".equals(entry.getKey())){
-                            dataParam.put("data",entry.getValue());
-                        }else {
-                            if (entry.getValue() != null){
-                                dataParam.put(entry.getKey(), entry.getValue());
-                            }
+                        if (entry.getValue() != null){
+                            dataParam.put(entry.getKey(), entry.getValue());
                         }
-                    }
-                    //
-                    if (!dataParam.containsKey("data")){
-                        dataParam.put("data",new HashMap<>());
                     }
                     args.put("params",dataParam);
                 }

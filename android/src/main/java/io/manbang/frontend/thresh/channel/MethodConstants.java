@@ -65,6 +65,9 @@ public final class MethodConstants {
     public static final String BRIDGE_REQUEST = "bridgeRequest";
 
     public static final String BRIDGE_RESPONSE = "bridgeResponse";
+
+    public static final String BRIDGE_SEND_RESULT= "sendData";
+
     /**
      * 用于flutter调用native的bridge方法
      */

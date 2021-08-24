@@ -65,8 +65,10 @@ export enum FlutterMethodChannelType {
   closeActions = 'closeActions',
   swipeTo = 'swipeTo',
   setValue = 'setValue',
+  triggerFocus = 'triggerFocus',
   jumpTo = 'jumpTo',
   animateTo = 'animateTo',
+  switchTo = 'switchTo',
   setNestScrollViewStatus = 'setNestScrollViewStatus',
   dragPositionAnimateTo = 'dragPositionAnimateTo',
 }
@@ -79,6 +81,7 @@ export enum NativeMethodChannelType {
   pageDidShow = 'pageDidShow',
   invokeNativeViewMethod = 'invokeNativeViewMethod',
   bridgeRequest = 'bridgeRequest',
+  sendData = 'sendData',
 }
 /**
  * JS 接收到的消息类型枚举
@@ -120,30 +123,30 @@ const methodChannelConsole = (channelParams: ChannelParams) => {
  * js与native和flutter通信的方法
  * methodChannel_js_call_flutter methodChannel_js_call_native 为 native 注入到当前 js context 中的方法
  */
-function jsCallNative (channelParams: ChannelParams) {
+function jsCallNative(channelParams: ChannelParams) {
   try {
     channelParams = formatChannelParams(channelParams)
     if (channelParams.method === FlutterMethodChannelType.none) return
     methodChannel_js_call_native(channelParams)
-  } catch (e) {} finally {
+  } catch (e) { } finally {
     // if (threshApp.debugMode && process.env.NODE_ENV === 'development') {
     //   methodChannelConsole(channelParams)
     // }
   }
 }
-function jsCallFlutter (channelParams: ChannelParams) {
+function jsCallFlutter(channelParams: ChannelParams) {
   try {
     channelParams = formatChannelParams(channelParams)
     if (channelParams.method === FlutterMethodChannelType.none) return
     methodChannel_js_call_flutter(channelParams)
-  } catch (e) {} finally {
+  } catch (e) { } finally {
     // if (threshApp.debugMode && process.env.NODE_ENV === 'development') {
     //   methodChannelConsole(channelParams)
     // }
   }
 }
 
-function formatChannelParams (channelParams: ChannelParams, stringifyParams: boolean = false): ChannelParams {
+function formatChannelParams(channelParams: ChannelParams, stringifyParams: boolean = false): ChannelParams {
   let { params } = channelParams
   if (Util.isNil(params)) params = {}
   if (!Util.isObject(params)) {
@@ -168,7 +171,7 @@ export default class MethodChannel {
   static MAX_CHUNK_SIZE: number = 1024 * 10
 
   // 调用注入方法
-  static call ({
+  static call({
     method,
     params = {},
     contextId,
@@ -185,7 +188,7 @@ export default class MethodChannel {
   }
 
   // 页面初次渲染完成时通知 native
-  static pageDidShow (networkTime: number = 0) {
+  static pageDidShow(networkTime: number = 0) {
     const performanceInfo: PerformanceInfo | undefined = appContainer.getPagePerformanceInfo()
     if (!performanceInfo || performanceInfo.hasReported) return
 
@@ -193,7 +196,7 @@ export default class MethodChannel {
 
     const pageShowTimestamp = Date.now()
     const pageName = threshApp.pageName || 'unknown'
-    
+
     jsCallNative({
       method: NativeMethodChannelType.pageDidShow,
       params: {
@@ -218,21 +221,21 @@ export default class MethodChannel {
     })
   }
   // 输出到native
-  static print (params: any = {}) {
+  static print(params: any = {}) {
     jsCallNative({
       method: NativeMethodChannelType.print,
       params
     })
   }
   // 重载bundle.js
-  static reload () {
+  static reload() {
     jsCallNative({
       method: NativeMethodChannelType.reload,
       params: {}
     })
   }
   // 触发 NativeView 方法
-  static invokeNativeViewMethod ({
+  static invokeNativeViewMethod({
     methodName,
     methodParams = {},
     viewType,
@@ -254,7 +257,7 @@ export default class MethodChannel {
     })
   }
   // bridge方法
-  static bridge (methodId: string, params: BridgeParams) {
+  static bridge(methodId: string, params: BridgeParams) {
     if (!Util.isProd && BridgeManager.isNetworkRequest(params)) {
       jsCallFlutter({
         method: FlutterMethodChannelType.bridgeRequest,
@@ -271,6 +274,14 @@ export default class MethodChannel {
         methodId,
         request: params,
       }
+    })
+  }
+
+  // 向Native侧传数据
+  static sendDataToNative(params: any = {}) {
+    jsCallNative({
+      method: NativeMethodChannelType.sendData,
+      params
     })
   }
 }

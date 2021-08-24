@@ -160,7 +160,7 @@ class _DFSwipeActionsViewState extends State<_DFSwipeActionsView> with SingleTic
     if (!hasSwipeItems) return widget.content;
     return Stack(
       children: <Widget>[
-        Opacity(opacity: 0, child: widget.content,), // 该组件用来撑起 Stack 高度
+        AnimatedOpacity(opacity: 0, duration: Duration(milliseconds: 100),child: widget.content,), // 该组件用来撑起 Stack 高度
         buildSwipeItems(),
         Positioned(
           left: isHorizontal

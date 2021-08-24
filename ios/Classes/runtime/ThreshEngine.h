@@ -30,6 +30,25 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+// Keep this in sync with _labelsForTags
+typedef NS_ENUM(NSUInteger, ThreshPerformanceTag) {
+  ThreshPerformanceScriptLoad = 0, // 脚本加载时间
+  ThreshPerformanceScriptExecution, // 脚本执行时间
+  ThreshPerformanceFlutterFirstFrame, // flutter首帧时间
+  ThreshPerformanceThreshFirstFrame, // thresh首帧时间 引擎开始到pageDidLoad耗时
+  ThreshPerformanceThreshFirstShow, // thresh页面首次显示 引擎开始到pageDidShow耗时
+  ThreshPerformanceSize // This is used to count the size
+};
+
+@interface ThreshPerformance : NSObject
+
+@property (nonatomic, strong, readonly) NSDictionary<NSString *, NSNumber *> *valuesForTags;
+
+- (void)markStartForTag:(ThreshPerformanceTag)tag;
+- (void)markStopForTag:(ThreshPerformanceTag)tag;
+
+@end
+
 @interface ThreshEngine : NSObject
 
 // 初始化
@@ -53,7 +72,14 @@ NS_ASSUME_NONNULL_BEGIN
 // 方法调用
 - (void)invokeJSMethod:(NSString *)methodStr args:(id)args complete:(ThreshCompleteBlock)complete;
 
+// Dart channel
+- (void)invokeDartMethod:(NSString *)methodName arguments:(id _Nullable)arguments callback:(ThreshCompleteBlock)completeBlock;
+
+- (void)setInitialRoute:(NSString *)route;
+
 @property (nonatomic, assign) NSUInteger contextId;
+
+@property (nonatomic, readonly, strong) ThreshPerformance *performance;
 
 @end
 

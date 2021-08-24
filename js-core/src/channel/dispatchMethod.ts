@@ -34,6 +34,7 @@ import bus from '../shared/bus'
 import Util from '../shared/Util'
 import { ChannelParams } from '../types/type'
 import { Page } from '../core/basicWidget'
+import TimerManager from '../manager/TimerManager'
 
 declare const __LOCAL_BUNDLE_DIR__: string
 declare const __BIZ_NAME__: string
@@ -48,7 +49,7 @@ enum DispatcherFromType {
  */
 export class Dispatcher {
   // 事件分发中心
-  dispatch (channelParams: ChannelParams, from: DispatcherFromType) {
+  dispatch(channelParams: ChannelParams, from: DispatcherFromType) {
     let { method, params, contextId } = channelParams
 
     // 来自 flutter 的消息是被 stringify 的
@@ -71,7 +72,7 @@ export class Dispatcher {
    * flutter_call_js
    * flutter 在获取到设备媒介参数后会通过该消息发送给 js
    */
-  async [MethodChannelReceiveType.mediaQuery] (params: any) {
+  async [MethodChannelReceiveType.mediaQuery](params: any) {
     // 防止重复获取
     if (threshApp.envReady) return
 
@@ -130,7 +131,7 @@ export class Dispatcher {
    * flutter 端环境准备完成后发送该消息
    * 该消息可能会携带需要显示的页面数据
    */
-  async [MethodChannelReceiveType.ready] (params: any) {
+  async [MethodChannelReceiveType.ready](params: any) {
     if (!threshApp.envReady) {
       RenderManager.getMediaQuery(threshApp.jsVersion)
       return
@@ -150,7 +151,7 @@ export class Dispatcher {
    * flutter_call_js
    * flutter 通过该消息通知 js 显示某个页面
    */
-  [MethodChannelReceiveType.setupPage] (params: any) {
+  [MethodChannelReceiveType.setupPage](params: any) {
     const pageName = params ? params.pageName : void 0
     const query: object = params ? params.params || {} : void 0
     threshApp.pushPage(pageName, query)
@@ -162,7 +163,7 @@ export class Dispatcher {
    * flutter 本身触发的 popPage 不生效，通过 js 触发的 popPage 才生效
    * 以便执行 popPage 前的一些额外操作
    */
-  [MethodChannelReceiveType.needPopPage] () {
+  [MethodChannelReceiveType.needPopPage]() {
     threshApp.popPage()
   }
 
@@ -170,7 +171,7 @@ export class Dispatcher {
    * flutter_call_js
    * 执行该方法时 flutter 实际 hasPopPage 已完成
    */
-  [MethodChannelReceiveType.hasPopPage] (params: any = {}) {
+  [MethodChannelReceiveType.hasPopPage](params: any = {}) {
     let hidePageName = params.pageName
     // 获取到当前被退出页面的名字
     if (!hidePageName) hidePageName = appContainer.currentShowName
@@ -200,7 +201,7 @@ export class Dispatcher {
    * flutter_call_js
    * 触发组件事件
    */
-  [MethodChannelReceiveType.triggerEvent] (params: any) {
+  [MethodChannelReceiveType.triggerEvent](params: any) {
     if (!params) return
     const { pageName, widgetId, eventId, eventType, args } = params
     const pageNode: VNode | void = appContainer.getPageDataWithPageName(pageName)
@@ -212,7 +213,7 @@ export class Dispatcher {
    * flutter_call_js
    * 触发组件生命周期
    */
-  [MethodChannelReceiveType.lifeCycle] (params: any) {
+  [MethodChannelReceiveType.lifeCycle](params: any) {
     if (!params) return
     const pageName = params.pageName
     const lifeStep: string = params.lifeStep
@@ -234,7 +235,7 @@ export class Dispatcher {
    * flutter_call_js native_call_js
    * bridge 响应
    */
-  [MethodChannelReceiveType.bridgeResponse] (params: any) {
+  [MethodChannelReceiveType.bridgeResponse](params: any) {
     const { methodId, response } = params
     // response 内部还包装了一层，需要读取内层
     const res = response.data || response
@@ -242,7 +243,7 @@ export class Dispatcher {
       if (res.data && (typeof res.data === 'string')) {
         res.data = JSON.parse(res.data)
       }
-    } catch (e) {}
+    } catch (e) { }
     BridgeManager.response(methodId, res)
   }
 
@@ -250,9 +251,10 @@ export class Dispatcher {
    * flutter_call_js
    * 关闭当前 native 窗口
    */
-  [MethodChannelReceiveType.closeWindow] () {
+  [MethodChannelReceiveType.closeWindow]() {
     BridgeManager.invoke({
-      module: 'base',
+      module: 'app',
+      business: 'ui',
       method: 'closeWindow'
     })
   }
@@ -261,7 +263,7 @@ export class Dispatcher {
    * flutter_call_js
    * flutter 通知 js 当前页面首帧加载已完成
    */
-  [MethodChannelReceiveType.pageDidLoad] (params: any) {
+  [MethodChannelReceiveType.pageDidLoad](params: any) {
     const { pageName, loadTimestamp } = params
     appContainer.setPagePerformanceInfo(pageName, loadTimestamp)
   }
@@ -270,7 +272,7 @@ export class Dispatcher {
    * native_call_js
    * native 通知 js 当前 flutter 容器已销毁
    */
-  [MethodChannelReceiveType.onDestroyed] (_: any, contextId: string) {
+  [MethodChannelReceiveType.onDestroyed](_: any, contextId: string) {
     // 销毁当前 flutter 容器中的无限渲染组件
     // 如：Spin gif ...
     RenderManager.stopAlwaysRender(contextId)
@@ -282,7 +284,10 @@ export class Dispatcher {
     appContainer.destroyPageContainer(contextId)
     // 如果当前 app container 中不存在页面
     // 则清空 threshApp 的相关数据
-    if (appContainer.isEmpty) threshApp.clear()
+    if (appContainer.isEmpty) {
+      threshApp.clear()
+      TimerManager.clearAllTimers()
+    }
   }
 }
 

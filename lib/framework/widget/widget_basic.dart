@@ -46,6 +46,7 @@ class DFBasicWidget extends StatelessWidget {
   final BorderRadius _borderRadius;
   final List<BoxShadow> _boxShadow;
   final bool _disabled;
+  final bool _ignorePointer;
   final double _opacity;
   final double _tapOpacity;
   final Matrix4 _transform;
@@ -80,6 +81,7 @@ class DFBasicWidget extends StatelessWidget {
     BorderRadius borderRadius,
     List<BoxShadow> boxShadow,
     bool disabled = false,
+    bool ignorePointer = false,
     double opacity = 1.0,
     double tapOpacity,
     Matrix4 transform,
@@ -137,6 +139,9 @@ class DFBasicWidget extends StatelessWidget {
         _disabled = model != null
             ? (Util.getBoolean(model.props['disabled']))
             : disabled,
+        _ignorePointer = model != null
+            ? (Util.getBoolean(model.props['ignorePointer']))
+            : ignorePointer,
         _transform = model != null
             ? Util.getTransform(model.props['transform']) ?? transform
             : transform,
@@ -200,6 +205,7 @@ class DFBasicWidget extends StatelessWidget {
     if (isDragableScrollView) return buildTouchWidget(context);
 
     if (_absolute != null) {
+      print('======== _absolute');
       return Positioned(
         top: _absolute['top'],
         bottom: _absolute['bottom'],
@@ -217,9 +223,11 @@ class DFBasicWidget extends StatelessWidget {
   }
 
   Widget buildTouchWidget(BuildContext context) {
-    if (_disabled) return buildOpacityWidget(context);
+    final Widget current = IgnorePointer(
+        child: buildOpacityWidget(context), ignoring: _ignorePointer);
+    if (_disabled) return current;
     if (_onTap == null && _onLongTap == null && (_onPan == null))
-      return buildOpacityWidget(context);
+      return current;
     return DFTouchable(
       opacity: _opacity,
       tapOpacity: _tapOpacity,
@@ -227,13 +235,14 @@ class DFBasicWidget extends StatelessWidget {
       onLongTap: _onLongTap,
       onPan: _onPan,
       margin: _margin,
-      child: buildOpacityWidget(context),
+      child: current,
     );
   }
 
   Widget buildOpacityWidget(BuildContext context) {
-    return Opacity(
+    return AnimatedOpacity(
       opacity: _opacity,
+      duration: Duration(milliseconds: 100),
       child: buildLayoutListener(context),
     );
   }
@@ -315,7 +324,7 @@ class DFBasicWidget extends StatelessWidget {
 
   BoxDecoration getBoxDecoration() {
     return BoxDecoration(
-      color: _backgroundColor ?? Colors.transparent,
+      color: _backgroundColor,
       gradient: _backgroundGradient,
       boxShadow: _boxShadow,
       border: _border,
@@ -404,8 +413,9 @@ class DFTouchableState extends State<DFTouchable> {
           'dy': e.delta.dy.toInt(),
         });
       },
-      child: Opacity(
+      child: AnimatedOpacity(
         opacity: opacity,
+        duration: Duration(milliseconds: 100),
         child: widget.child,
       ),
     );

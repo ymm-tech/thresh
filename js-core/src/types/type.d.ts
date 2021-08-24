@@ -22,7 +22,8 @@
  *
  */
 
-import { FlutterMethodChannelType, NativeMethodChannelType, MethodChannelReceiveType } from "../channel/MethodChannel"
+import { FlutterMethodChannelType, NativeMethodChannelType, MethodChannelReceiveType } from "../channel/MethodChannel";
+import { Container } from "../core/basicWidget";
 
 export interface RenderData {
   name: string

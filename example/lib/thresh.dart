@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:thresh/thresh.dart';
 import 'package:thresh/devtools/dev_tools.dart';
+import 'package:thresh/basic/device_info.dart';
 
 import 'page/not_found_page.dart';
 import 'page/white_screen_page.dart';
@@ -16,6 +17,8 @@ void main() async {
 /// 宿主包入口
 void initPlugin(dynamic url) async {
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+  await Device.initDeviceInfo();
+
   Map params = _parseRoute(url);
   runZoned<void>(() {
     initThreshChannel();
@@ -75,9 +78,9 @@ Widget initThresh(bool local, [Map<String, dynamic> params]) {
         );
       },
       onWhiteScreen: (dynamic reason) => WhiteScreenPage(),
-      placeholderPageBuilder: (BuildContext context) {
-        return _placeholderPageBuilder(context, routePageName);
-      },
+      // placeholderPageBuilder: (BuildContext context) {
+      //   return _placeholderPageBuilder(context, routePageName);
+      // },
       errorHandler: (ThreshError error) {
         print(error);
         devtools.insert(

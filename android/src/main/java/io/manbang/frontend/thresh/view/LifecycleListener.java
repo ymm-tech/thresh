@@ -29,6 +29,8 @@ package io.manbang.frontend.thresh.view;
  */
 public interface LifecycleListener {
 
+    void onCreate();
+
     /**
      * Callback for when {@link android.app.Fragment#onPause()}} or {@link
      *  android.app.Activity#onPause()} is called.
@@ -49,4 +51,6 @@ public interface LifecycleListener {
      * Callback for when{@link android.app.Activity#onBackPressed()} is called.
      */
     void onBackPressed();
+
+    void onLowMemory();
 }

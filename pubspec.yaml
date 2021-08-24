@@ -1,23 +1,26 @@
 name: thresh
 description: Thresh is a flutter plugin for cross-platform dynamic framework
-version: 0.0.6
+version: 1.0.24
 author: ManBangGroup <weishun.xu@amh-group.com>
 homepage: https://github.com/ymm-tech/thresh
 #publish_to: https://pub.dartlang.org
 #publish_to: http://dev-flutter-pub.amh-group.com
 
 environment:
-  sdk: ">=2.7.0 <3.0.0"
-  flutter: ">=1.20.0"
+  sdk: ">=2.10.0 <3.0.0"
+  flutter: ">=2.2.0"
 
 dependencies:
   flutter:
     sdk: flutter
+#  flutter_localizations:
+#    sdk: flutter
   cupertino_icons: ^1.0.0
   dio: ^3.0.10
   flutter_cache_manager: '2.1.0'
   cached_network_image: ^2.5.0
   qr_flutter: ^3.2.0
+  device_info: 1.0.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

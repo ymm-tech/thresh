@@ -6,6 +6,7 @@ import Thresh, {
 import Box from '../../widgets/Box'
 import Title from '../../widgets/Title'
 import { Colors } from '../../config'
+import { NativeView } from 'thresh-lib/src/core/basicWidget'
 
 const {
   Page,
@@ -18,10 +19,14 @@ const {
 export default class ScrollViewDemo extends Widget <any, any> {
 
   renderContent () {
-    return (new Array(20)).fill(1).map(() => (
-      <Container borderRadius={5} width={20} height={20} backgroundColor={Colors.Primary} margin={5} />
+    return (new Array(20)).fill(1).map((_, index) => (
+      <NativeView
+        gesture={['HorizontalDrag']}
+        type={"thresh/native_text_view"} params={{ "text": "我是NativeTextView，测试" }} width={ui.screenWidth} height={ui.rpx(300)} backgroundColor={0xffFFFBF9} />
     ))
   }
+
+  $ref
 
   render () {
     return (
@@ -30,9 +35,9 @@ export default class ScrollViewDemo extends Widget <any, any> {
         backgroundColor={Colors.Pagebg}
       >
         <Title title="竖向滚动" />
-        <Box contentWidth={30}>
-          <Container width={30} height={ui.screenHeight / 3}>
-            <ScrollView>
+        <Box contentWidth={300}>
+          <Container width={300} height={ui.screenHeight / 3}>
+            <ScrollView ref={e => this.$ref = e}>
               {this.renderContent()}
             </ScrollView>
           </Container>

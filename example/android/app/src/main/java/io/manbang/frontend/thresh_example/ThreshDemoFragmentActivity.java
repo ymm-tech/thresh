@@ -95,7 +95,7 @@ public class ThreshDemoFragmentActivity extends FragmentActivity implements Spla
     }
 
     /**
-     * Creates an {@link NewEngineIntentBuilder}, which can be used to
+     * Creates an {@link ThreshDemoFragmentActivity.NewEngineIntentBuilder}, which can be used to
      * configure an {@link Intent} to launch a {@code ThreshDemoFragmentActivity} that internally creates
      * a new {@link FlutterEngine} using the desired Dart entrypoint, initial route, etc.
      */
@@ -340,14 +340,15 @@ public class ThreshDemoFragmentActivity extends FragmentActivity implements Spla
             // and add a new FlutterFragment to this Activity.
             flutterFragment = new ThreshDemoFragment();
             Bundle bundle = new Bundle();
-            bundle.putBoolean("should_attach_engine_to_activity",true);
+            bundle.putBoolean(ThreshFragment.ARG_SHOULD_ATTACH_ENGINE_TO_ACTIVITY,true);
+            bundle.putBoolean(ThreshFragment.ARG_DESTROY_ENGINE_WITH_FRAGMENT,true);
             bundle.putString(ThreshFragment.ARG_INITIAL_ROUTE,getIntent().getStringExtra(EXTRA_INITIAL_ROUTE));
-
             flutterFragment.setArguments(bundle);
             fragmentManager
                     .beginTransaction()
                     .add(FRAGMENT_CONTAINER_ID, flutterFragment, TAG_FLUTTER_FRAGMENT)
                     .commit();
+            
         }
     }
 

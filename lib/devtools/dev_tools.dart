@@ -32,10 +32,16 @@ _Devtools devtools = _Devtools();
 class _Devtools {
   int lastPanelIndex = 0;
   bool panelIsShow = false;
+  String remoteDevtoolAddress;
   BuildContext panelContext;
   DevPanelState panelState;
   List<InfoType> panels;
   Map<InfoType, PanelHolder> _panelHolders = {};
+
+  setRemoteDevtool(String remoteAddress) {
+    if (remoteAddress == null || remoteAddress.isEmpty) return;
+    remoteDevtoolAddress = remoteAddress.trim();
+  }
 
   showDevtools() {
     if (panelIsShow) {
@@ -106,6 +112,7 @@ class _Devtools {
     // if (info.title != null) print('[[ devtools print ]]: ${info.title}');
     // if (info.content != null) print('[[ devtools print ]]: ${info.content}');
     if (panels == null || !panels.contains(type)) return;
+    _sendToRemoteDevtool(type, info);
     PanelHolder panelHolder = _panelHolders[type];
     if (panelHolder == null) return;
     _panelHolders[type].infoStack.insert(0, info);
@@ -116,8 +123,7 @@ class _Devtools {
         if (InfoType.isError(panels[i])) {
           lastPanelIndex = i;
           if (!panelIsShow) {
-            panelIsShow = true;
-            Timer(Duration(milliseconds: 200), () {
+            Future.microtask(() {
               showDevtools();
             });
           } else {
@@ -141,6 +147,19 @@ class _Devtools {
         content: otherInfos,
       ),
     );
+  }
+
+  _sendToRemoteDevtool(InfoType type, DevInfo info) {
+    if (remoteDevtoolAddress == null || remoteDevtoolAddress.isEmpty) return;
+    Util.request({
+      'url': 'http://$remoteDevtoolAddress/log',
+      'data': {
+        'type': type.type,
+        'title': info?.title,
+        'content': info.content,
+        'timestamp': DateTime.now().millisecondsSinceEpoch,
+      },
+    });
   }
 }
 

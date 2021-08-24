@@ -100,7 +100,8 @@ export class ThreshAppContext {
       // 如果上一个异常与当前异常相同则忽略
       if (ThreshAppContext._lastErrorMessage === messages[0]) return
       ThreshAppContext._lastErrorMessage = messages[0]
-      const message = messages.join('\n')
+      const message = messages.join('\n').trim()
+      const stack = (error.stack || '').trim()
 
       // 开发模式下向 flutter 发送异常，将会显示在调试面板上
       if (threshApp.debugMode) {
@@ -108,16 +109,13 @@ export class ThreshAppContext {
           method: FlutterMethodChannelType.onError,
           params: {
             message,
-            stack: error.stack || '',
+            stack,
             pageName: threshApp.pageName || 'unknown',
             referPageName: threshApp.referPageName || 'unknown'
           },
         })
       }
-      threshApp.onError({
-        message,
-        stack: error.stack || ''
-      })
+      threshApp.onError({ message, stack })
     }))
 
     ThreshAppContext.addUniquePropToGlobal('debug_get_appContainer', () => appContainer)

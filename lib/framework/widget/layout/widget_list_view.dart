@@ -33,9 +33,9 @@ class DFListView extends DFBasicWidget {
   DFListView(
     DynamicModel model, {
     Key key,
-    this.scrollable = true,
     this.direction = 'vertical',
     this.padding,
+    this.physics,
     this.controller,
     this.childrenModels,
     this.refreshColor,
@@ -45,9 +45,9 @@ class DFListView extends DFBasicWidget {
     this.onLoadMore,
   }) : super(model, key: key);
 
-  final bool scrollable;
   final String direction;
   final EdgeInsets padding;
+  final ScrollPhysics physics;
   final ListViewController controller;
   final List<DynamicModel> childrenModels;
   final Color refreshColor;
@@ -58,9 +58,9 @@ class DFListView extends DFBasicWidget {
 
   Widget buildMainWidget(BuildContext context) {
     return _DFListView(
-      scrollable: scrollable,
       direction: direction,
       padding: padding,
+      physics: physics,
       controller: controller,
       childrenModels: childrenModels,
       refreshColor: refreshColor,
@@ -79,9 +79,9 @@ class DFListView extends DFBasicWidget {
 
 class _DFListView extends StatefulWidget {
   _DFListView({
-    this.scrollable = true,
     this.direction = 'vertical',
     this.padding,
+    this.physics,
     this.controller,
     this.childrenModels,
     this.refreshColor,
@@ -91,9 +91,9 @@ class _DFListView extends StatefulWidget {
     this.onLoadMore,
   });
 
-  final bool scrollable;
   final String direction;
   final EdgeInsets padding;
+  final ScrollPhysics physics;
   final ListViewController controller;
   final List<DynamicModel> childrenModels;
   final Color refreshColor;
@@ -116,19 +116,6 @@ class _DFListViewState extends State<_DFListView> {
   void initState() {
     super.initState();
     childrenModels = widget.childrenModels;
-    ListViewController controller = widget.controller;
-    if (widget.onScroll != null || widget.onLoadMore != null) {
-      controller.addListener(() {
-        ScrollPosition position = controller.position;
-        if (widget.onScroll != null) widget.onScroll(position.pixels.toInt());
-        if (widget.onLoadMore != null && !isAndroid) {
-          double offset = position.pixels - position.maxScrollExtent;
-          if (offset > 20 && offset < 25) {
-            triggerLoadMore();
-          }
-        }
-      });
-    }
   }
 
   @override
@@ -139,66 +126,71 @@ class _DFListViewState extends State<_DFListView> {
     });
   }
 
+  Widget buildListViewListener(BuildContext context) {
+    Widget $listView = buildRefreshIndicator(context);
+    if (widget.onScroll == null && widget.onLoadMore == null) return $listView;
+    bool shouldTriggerLoadMoreOnScrollEnd = false;
+    return NotificationListener(
+      child: $listView,
+      onNotification: (notification) {
+        if (notification.runtimeType == ScrollUpdateNotification) {
+          final int pixels = notification.metrics.pixels.toInt();
+          widget.onScroll?.call(pixels);
+          final int offset = (pixels - notification.metrics.maxScrollExtent).toInt();
+          if (widget.onLoadMore == null || pixels < 0 || offset < 0) {
+            shouldTriggerLoadMoreOnScrollEnd = false;
+            return true;
+          }
+
+          if (offset > 20) shouldTriggerLoadMoreOnScrollEnd = true;
+        }
+        if (notification.runtimeType == ScrollEndNotification &&
+            shouldTriggerLoadMoreOnScrollEnd) {
+          shouldTriggerLoadMoreOnScrollEnd = false;
+          triggerLoadMore();
+        }
+        return true;
+      },
+    );
+  }
+
   Widget buildRefreshIndicator(BuildContext context) {
     Widget $listView = buildListView(context);
 
     if (widget.onRefresh != null) {
       $listView = RefreshIndicator(
-          color: widget.refreshColor,
-          backgroundColor: widget.refreshBackgroundColor,
-          child: $listView,
-          onRefresh: () {
-            if (widget.controller.canTriggerOperate()) {
-              widget.onRefresh();
-              return widget.controller
-                  .startAsyncOperate(ListViewOperateType.refresh);
-            }
-            return Future.value();
-          });
+        color: widget.refreshColor,
+        backgroundColor: widget.refreshBackgroundColor,
+        child: $listView,
+        onRefresh: () {
+          if (widget.controller.canTriggerOperate()) {
+            widget.onRefresh();
+            return widget.controller
+                .startAsyncOperate(ListViewOperateType.refresh);
+          }
+          return Future.value();
+        },
+      );
     }
-
-    if (widget.onLoadMore != null && isAndroid) {
-      double totalOffset = 0;
-      $listView = NotificationListener(
-          onNotification: (OverscrollNotification e) {
-            if (e.dragDetails != null) {
-              totalOffset += e.dragDetails.delta.dy;
-              if (totalOffset <= -20) {
-                triggerLoadMore();
-                totalOffset = 0;
-              }
-            }
-            return true;
-          },
-          child: NotificationListener(
-            onNotification: (ScrollEndNotification e) {
-              totalOffset = 0;
-              return true;
-            },
-            child: $listView,
-          ));
-    }
-
     return $listView;
   }
 
   Widget buildListView(BuildContext context) {
     return ListView.builder(
-        padding: widget.padding,
-        controller: widget.controller,
-        scrollDirection:
-            widget.direction == 'vertical' ? Axis.vertical : Axis.horizontal,
-        physics: widget.scrollable
-            ? AlwaysScrollableScrollPhysics()
-            : NeverScrollableScrollPhysics(),
-        itemCount: childrenModels.length,
-        itemBuilder: (BuildContext context, int index) {
-          DynamicModel model = childrenModels[index];
-          return _DFListViewItem(
-            builder: (BuildContext context) => model.buildDynamicWidget(
-                context: context, isInListViewBuilder: true),
-          );
-        });
+      padding: widget.padding,
+      controller: widget.controller,
+      scrollDirection:
+          widget.direction == 'vertical' ? Axis.vertical : Axis.horizontal,
+      physics: widget.physics,
+      itemCount: childrenModels.length,
+      itemBuilder: (BuildContext context, int index) {
+        DynamicModel model = childrenModels[index];
+        return _DFListViewItem(
+          builder: (BuildContext context) => model.buildDynamicWidget(
+              context: context, isInListViewBuilder: true),
+        );
+      },
+    );
   }
 
   @override
@@ -207,7 +199,7 @@ class _DFListViewState extends State<_DFListView> {
       removeTop: true,
       removeBottom: true,
       context: context,
-      child: buildRefreshIndicator(context),
+      child: buildListViewListener(context),
     );
   }
 
@@ -253,13 +245,20 @@ class ProxyDFListView extends ProxyBase {
       model.controller = controller;
     }
 
+    final bool scrollable =
+        Util.getBoolean(props['scrollable'], nullIsTrue: true);
+    ScrollPhysics physics =
+        AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics());
+    if (!scrollable)
+      physics = NeverScrollableScrollPhysics(parent: BouncingScrollPhysics());
+
     return DFListView(
       model,
       controller: controller,
       direction: Util.getDirection(props['direction']),
       padding: Util.getEdgeInsets(props['padding']),
-      scrollable: Util.getBoolean(props['scrollable'], nullIsTrue: true),
       childrenModels: Util.getDynamicModelList(props['children']),
+      physics: physics,
       onScroll: getOnScrollDebouncedMethod(eventGlobalHandlerWithParam(
           pageName: model.pageName,
           widgetId: model.widgetId,

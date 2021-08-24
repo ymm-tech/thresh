@@ -19,6 +19,7 @@
 /// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 /// SOFTWARE.
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:thresh/framework/core/dynamic_model.dart';
@@ -35,6 +36,11 @@ class DFQrImage extends DFBasicWidget {
     this.size,
     this.gapless,
     this.foregroundColor,
+    this.embeddedImageUrl,
+    this.embeddedImageWidth,
+    this.embeddedImageHeight,
+    this.embeddedImageColor,
+    this.errorCorrectionLevel
   }) : super(model, key: key);
 
   final String text;
@@ -43,15 +49,42 @@ class DFQrImage extends DFBasicWidget {
   final bool gapless;
   // The foreground color (default is black).
   final Color foregroundColor;
+  // 内嵌居中的图片
+  final String embeddedImageUrl;
+  // 内嵌图片宽度
+  final double embeddedImageWidth;
+  // 内嵌图片高度
+  final double embeddedImageHeight;
+  // 内嵌的图片颜色
+  final Color embeddedImageColor;
+  // 定义的值QrErrorCorrectLevel
+  final int errorCorrectionLevel;
+
 
   @override
   Widget buildMainWidget(BuildContext context) {
-    return QrImage(
-      data: text,
-      size: size,
-      gapless: gapless,
-      foregroundColor:foregroundColor,
-    );
+    if(embeddedImageUrl != null && embeddedImageUrl.isNotEmpty){
+      return QrImage(
+        data: text,
+        size: size,
+        gapless: gapless,
+        errorCorrectionLevel: errorCorrectionLevel,
+        foregroundColor:foregroundColor,
+        embeddedImage: CachedNetworkImageProvider(embeddedImageUrl),
+        embeddedImageStyle : QrEmbeddedImageStyle(
+          size: Size(embeddedImageWidth,embeddedImageHeight),
+          color: embeddedImageColor,
+        ),
+      );
+    }else{
+      return QrImage(
+        data: text,
+        size: size,
+        gapless: gapless,
+        foregroundColor:foregroundColor,
+        errorCorrectionLevel: errorCorrectionLevel,
+      );
+    }
   }
 }
 
@@ -70,8 +103,13 @@ class ProxyDFQrImage extends ProxyBase {
       model,
       text: Util.getSafeString(props['text']),
       size: Util.getDouble(props['size']) ?? 100,
+      errorCorrectionLevel: Util.getInt(props['errorCorrectionLevel']) ?? QrErrorCorrectLevel.L,
       gapless:Util.getBoolean(props['gapless'],nullIsTrue: true),
       foregroundColor: Util.getColor(props['foregroundColor']),
+      embeddedImageUrl: Util.getString(props['embeddedImageUrl']),
+      embeddedImageWidth: Util.getDouble(props['embeddedImageWidth']),
+      embeddedImageHeight: Util.getDouble(props['embeddedImageHeight']),
+      embeddedImageColor: Util.getColor(props['embeddedImageColor']),
     );
   }
 }

@@ -27,6 +27,7 @@ import ChildrenRule from './ChildrenRule'
 import scheduleUpdate from './scheduleUpdate'
 import VNode from './VNode'
 import Util from '../shared/Util'
+import { RefCallback, ThreshWidget } from '../types/widget'
 
 /**
  * 校验object是否合法
@@ -79,7 +80,7 @@ export default class Widget <P = {}, S = {}> {
    * @param {any} state
    */
   setState (state?: S) {
-    if (!this.__vNode__.isMount || !checkObjectValid(state)) return
+    if (!this.__vNode__.hasMount || !checkObjectValid(state)) return
     if (state) Object.assign(this.state, state)
     scheduleUpdate(this.__vNode__)
   }

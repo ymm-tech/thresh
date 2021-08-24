@@ -30,9 +30,25 @@
 @property (nonatomic, strong) Loader *dataLoader;
 @property (nonatomic, strong) NativeBridge *bridge;
 
+@property (nonatomic, assign) BOOL _opaque;
+
 @end
 
 @implementation ThreshConfig
+
+- (instancetype)init {
+    if (self = [super init]) {
+        __opaque = YES;
+    }
+    return self;
+}
+
+- (instancetype)initWithOpaque:(BOOL)opaque {
+    if (self = [super init]) {
+        __opaque = opaque;
+    }
+    return self;
+}
 
 - (InfoCollector *)infoCollector {
     if (!_infoCollector) {
@@ -77,6 +93,10 @@
     return [self bridge];
 }
 
+- (id<ThreshOptions>)options {
+    return self;
+}
+
 #pragma mark - ThreshRouterParams
 - (NSString *)pageName {
     return @"thresh-page";
@@ -94,8 +114,15 @@
 
 - (NSDictionary *)platformViewConfig {
     return @{
-        @"thresh/native_text_view": @"NativeImagePlatformView"
+        @"thresh/native_text_view": @"NativeImagePlatformView",
+        @"thresh/scroll_view": @"NativeScrollPlatformView",
     };
+}
+
+#pragma mark - ThreshOptions
+
+- (BOOL)opaque {
+    return __opaque;
 }
 
 @end

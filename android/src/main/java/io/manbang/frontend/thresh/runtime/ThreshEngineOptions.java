@@ -23,7 +23,7 @@
  */
 package io.manbang.frontend.thresh.runtime;
 
-import io.manbang.frontend.thresh.runtime.jscore.bundle.BundleOptions;
+import io.manbang.frontend.jscore.bundle.BundleOptions;
 /**
  * Contains and exposes a variety of non type specific options that can be applied to a load in
  * Thresh.

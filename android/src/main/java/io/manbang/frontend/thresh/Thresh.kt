@@ -22,11 +22,15 @@
  */
 package io.manbang.frontend.thresh
 
+import android.content.Context
 import io.manbang.frontend.thresh.manager.config.IParseConfig
 import io.manbang.frontend.thresh.manager.config.ThreshConfig
 import io.manbang.frontend.thresh.manager.config.ThreshConfigManager
+import io.manbang.frontend.thresh.manager.flutterengine.*
 import io.manbang.frontend.thresh.manager.handler.ThreshHandlerManager
 import io.manbang.frontend.thresh.manager.handler.interfaces.IReportHandler
+import io.manbang.frontend.thresh.runtime.release.JsModuleReleaseConfig
+import io.manbang.frontend.thresh.runtime.release.ModuleRelease
 
 /**
  * 门面类，唯一负责对外交流入口
@@ -34,14 +38,21 @@ import io.manbang.frontend.thresh.manager.handler.interfaces.IReportHandler
  */
 object Thresh {
 
+    var flutterEngineExecute = FlutterEngineExecute()
+
+
+    fun init(context: Context) {
+        flutterEngineExecute.init(context)
+    }
+
     /**
      * 初始化配置
      */
-    fun initConfig(configParse:IParseConfig){
+    fun initConfig(configParse: IParseConfig) {
         ThreshConfigManager.getInstance().init(configParse)
     }
 
-    fun initConfig(config: ThreshConfig){
+    fun initConfig(config: ThreshConfig) {
         ThreshConfigManager.getInstance().init(config)
     }
 
@@ -49,16 +60,23 @@ object Thresh {
      * 初始化Thresh内部策略
      * 有些能力需求外部注入进来
      */
-    fun initThreshHandler(reportHandler:IReportHandler? = null){
-        if(reportHandler!=null){
+    fun initThreshHandler(reportHandler: IReportHandler? = null) {
+        if (reportHandler != null) {
             ThreshHandlerManager.setReportHandler(reportHandler)
         }
     }
 
-    /**
-     * 释放Thresh相关资源
-     */
-    fun release() {
-
+    fun setModuleReleaseConfig(config: JsModuleReleaseConfig) {
+        ModuleRelease.getInstance().init(config)
     }
+
+    /**
+     * 优化加载FlutterEngine
+     * Flutter 2.2版本 引入FlutterEngineGroup对多页面内存占用优化
+     */
+    fun flutterEngineExecute(): IFlutterEngineExecute {
+        return flutterEngineExecute
+    }
+
+
 }

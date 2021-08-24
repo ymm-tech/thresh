@@ -79,7 +79,7 @@ class PageContainer {
    */
   get currentShowIsModal (): boolean {
     if (this.isEmpty) return false
-    return PageContainer.pageIsModal(this.namesCache[this.namesCache.length - 1])
+    return PageContainer.pageIsModal(this.namesCache[0])
   }
   /**
    * 当前显示视图的名称
@@ -87,14 +87,14 @@ class PageContainer {
    */
   get currentShowName (): string | void {
     if (this.isEmpty) return
-    return this.namesCache[this.namesCache.length - 1]
+    return this.namesCache[0]
   }
   /**
    * 当前显示页面的名称
    */
   get currentPageName (): string | void {
     if (this.isEmpty) return
-    return this.pageNamesCache[this.pageNamesCache.length - 1]
+    return this.pageNamesCache[0]
   }
   /**
    * 当前显示页面的 vnode
@@ -109,17 +109,17 @@ class PageContainer {
    */
   get referPageName (): string | void {
     if (this.pageNamesCache.length < 2) return
-    return this.pageNamesCache[this.pageNamesCache.length - 2]
+    return this.pageNamesCache[1]
   }
   /**
    * 销毁容器
    */
   destroy () {
-    let name: string | void = this.namesCache.pop()
+    let name: string | void = this.namesCache.shift()
     // 从后往前一次处罚所有 页面/modal 的 unmount 事件
     while (name) {
       this.nodeDataCache.get(name).invokeLifeCycle(LifeCycle.widgetDidUnmount)
-      name = this.namesCache.pop()
+      name = this.namesCache.shift()
     }
     this.pageNamesCache = []
     this.modalNamesCache = []
@@ -140,8 +140,8 @@ class PageContainer {
    */
   pushPage (pageName: string, vnodeTree: VNode, createTimestamp: number) {
     if (this.namesCache.includes(pageName)) throw new Error(`Route name "${pageName}" has already exist!`);
-    this.namesCache.push(pageName)
-    this.pageNamesCache.push(pageName)
+    this.namesCache.unshift(pageName)
+    this.pageNamesCache.unshift(pageName)
     this.nodeDataCache.set(pageName, vnodeTree)
     this.pagePerformanceInfos.set(pageName, {
       hasReported: false,
@@ -153,18 +153,18 @@ class PageContainer {
    */
   showModal (modalName: string, vnodeTree: VNode) {
     if (this.namesCache.includes(modalName)) throw new Error(`Route name "${modalName}" has already exist!`);
-    this.namesCache.push(modalName)
+    this.namesCache.unshift(modalName)
     this.nodeDataCache.set(modalName, vnodeTree)
-    this.modalNamesCache.push(modalName)
+    this.modalNamesCache.unshift(modalName)
   }
   /**
    * 移除当前显示的页面或 modal
    */
   removeCurrentShow () {
     if (this.isEmpty) return
-    const name: string = this.namesCache.pop()
-    if (!PageContainer.pageIsModal(name)) this.pageNamesCache.pop()
-    else this.modalNamesCache.pop()
+    const name: string = this.namesCache.shift()
+    if (!PageContainer.pageIsModal(name)) this.pageNamesCache.shift()
+    else this.modalNamesCache.shift()
     this.nodeDataCache.delete(name)
     this.pagePerformanceInfos.delete(name)
   }

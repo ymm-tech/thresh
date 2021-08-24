@@ -1,5 +1,5 @@
 /// MIT License
-/// 
+///
 /// Copyright (c) 2020 ManBang Group
 /// Permission is hereby granted, free of charge, to any person obtaining a copy
 /// of this software and associated documentation files (the "Software"), to deal
@@ -7,10 +7,10 @@
 /// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 /// copies of the Software, and to permit persons to whom the Software is
 /// furnished to do so, subject to the following conditions:
-/// 
+///
 /// The above copyright notice and this permission notice shall be included in all
 /// copies or substantial portions of the Software.
-/// 
+///
 /// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 /// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 /// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -34,9 +34,9 @@ class DynamicBottomSheet extends StatefulWidget {
     this.animationController,
     this.elevation = 0.0,
     @required this.builder,
-  }) : assert(builder != null),
-       assert(elevation != null && elevation >= 0.0),
-       super(key: key);
+  })  : assert(builder != null),
+        assert(elevation != null && elevation >= 0.0),
+        super(key: key);
 
   final AnimationController animationController;
 
@@ -90,15 +90,17 @@ class _DynamicModalBottomSheetLayout extends SingleChildLayoutDelegate {
 }
 
 class _DynamicModalBottomSheet<T> extends StatefulWidget {
-  const _DynamicModalBottomSheet({ Key key, this.route }) : super(key: key);
+  const _DynamicModalBottomSheet({Key key, this.route}) : super(key: key);
 
   final _DynamicModalBottomSheetRoute<T> route;
 
   @override
-  _DynamicModalBottomSheetState<T> createState() => _DynamicModalBottomSheetState<T>();
+  _DynamicModalBottomSheetState<T> createState() =>
+      _DynamicModalBottomSheetState<T>();
 }
 
-class _DynamicModalBottomSheetState<T> extends State<_DynamicModalBottomSheet<T>> {
+class _DynamicModalBottomSheetState<T>
+    extends State<_DynamicModalBottomSheet<T>> {
   @override
   Widget build(BuildContext context) {
     final MediaQueryData mediaQuery = MediaQuery.of(context);
@@ -106,7 +108,9 @@ class _DynamicModalBottomSheetState<T> extends State<_DynamicModalBottomSheet<T>
     return AnimatedBuilder(
       animation: widget.route.animation,
       builder: (BuildContext context, Widget child) {
-        final double animationValue = mediaQuery.accessibleNavigation ? 1.0 : widget.route.animation.value;
+        final double animationValue = mediaQuery.accessibleNavigation
+            ? 1.0
+            : widget.route.animation.value;
         return ClipRect(
           child: CustomSingleChildLayout(
             delegate: _DynamicModalBottomSheetLayout(animationValue),
@@ -149,19 +153,21 @@ class _DynamicModalBottomSheetRoute<T> extends PopupRoute<T> {
   @override
   AnimationController createAnimationController() {
     assert(_animationController == null);
-    _animationController = BottomSheet.createAnimationController(navigator.overlay);
+    _animationController =
+        BottomSheet.createAnimationController(navigator.overlay);
     return _animationController;
   }
 
   @override
-  Widget buildPage(BuildContext context, Animation<double> animation, Animation<double> secondaryAnimation) {
+  Widget buildPage(BuildContext context, Animation<double> animation,
+      Animation<double> secondaryAnimation) {
     Widget bottomSheet = MediaQuery.removePadding(
       context: context,
       removeTop: true,
+      removeBottom: true,
       child: _DynamicModalBottomSheet<T>(route: this),
     );
-    if (theme != null)
-      bottomSheet = Theme(data: theme, child: bottomSheet);
+    if (theme != null) bottomSheet = Theme(data: theme, child: bottomSheet);
     return bottomSheet;
   }
 }
@@ -174,9 +180,12 @@ Future<T> showDynamicModalBottomSheet<T>({
   assert(context != null);
   assert(builder != null);
   assert(debugCheckHasMaterialLocalizations(context));
-  return Navigator.push(context, _DynamicModalBottomSheetRoute<T>(
-    builder: builder,
-    theme: Theme.of(context, shadowThemeOnly: true),
-    barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
-  ));
+  return Navigator.push(
+    context,
+    _DynamicModalBottomSheetRoute<T>(
+      builder: builder,
+      theme: Theme.of(context),
+      barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
+    ),
+  );
 }

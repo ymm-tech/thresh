@@ -25,7 +25,7 @@
 import bus from '../shared/bus'
 import Util from '../shared/Util'
 import devtools, { InfoType } from './DevtoolsManager'
-import { Page } from '../core/basicWidget'
+import { Page } from '../core/basicWidget';
 
 // thresh 内建事件
 export enum BuiltInEventType {

@@ -28,6 +28,8 @@ import Util from '../shared/Util'
 import { RenderData, ThreshProvider } from '../types/type'
 import threshApp from './ThreshApp'
 import appContainer from './AppContainer'
+import TimerManager from '../manager/TimerManager'
+import UtilManager from '../manager/UtilManager'
 
 export type PropChildrenVNodeType = VNode | VNode[]
 const ChildrenKey: string = 'children'
@@ -78,15 +80,21 @@ export default class VNode {
   // 子节点中存在 Page 时保存 Page Node
   pageNode: VNode | void
   // 节点是否已挂载
-  isMount: boolean = false
+  hasMount: boolean = false
   // context id
   contextId: string = appContainer.contextId as string
+
+  isPageNode: boolean = false
+  isNativeViewNode: boolean = false
+  isInputNode: boolean = false
 
   key?: Key
   parentKey?: Key
   ref?: Ref
   updateInfo?: VNodeUpdateInfo
   shouldRender: boolean = true
+
+  private _refHasMount: boolean = false
 
   static nodeIdIndex: number = 0
   static getNodeId(type: string): string {
@@ -108,10 +116,12 @@ export default class VNode {
     'onBlur',
     'onActionsOpen',
     'onActionsClose',
+    'willDragStatusChange',
     'onDragStatusChange',
     'onDragPositionChange',
     'onOpen',
     'onSubmitted',
+    'onClicked',
     ...VNode.asyncEventTypes,
   ]
   static throttledEventTypes: string[] = ['onTap']
@@ -148,7 +158,13 @@ export default class VNode {
     this.ref = ref
     this.nodeId = VNode.getNodeId(type)
 
-    if (this.isNativeViewNode()) {
+    if (isBasicWidget) {
+      this.isPageNode = type === 'Page'
+      this.isNativeViewNode = type === 'NativeView'
+      this.isInputNode = type === 'Input'
+    }
+
+    if (this.isNativeViewNode) {
       this.nativeViewId = `${this.nodeId}#${this.props.type}#${Date.now()}`
     }
 
@@ -223,7 +239,7 @@ export default class VNode {
   // 新旧节点融合
   doMerge(oldNode: VNode) {
     this.contextId = oldNode.contextId
-    this.isMount = true
+    this.hasMount = true
     this.nodeId = oldNode.nodeId
     this.nativeViewId = oldNode.nativeViewId
     this.widget = oldNode.widget
@@ -236,7 +252,6 @@ export default class VNode {
     if (this.pageNode) this.pageNode = void 0
     this.findEventsInProps()
     this.doRender()
-    if (this.ref) this.ref(this.widget)
 
     if (!this.isBasicWidget) {
       // 非原子组件，children 只有 1 个元素
@@ -261,15 +276,12 @@ export default class VNode {
         }
       })
 
-      if (this.isPageNode()) {
+      if (this.isPageNode) {
         const rootNode: VNode = this.fetchRootNode()
-        if (rootNode.pageNode) {
-          throw new Error('Each page only has one <Page />')
-        }
         rootNode.pageNode = this
       }
 
-      if (this.isNativeViewNode()) {
+      if (this.isNativeViewNode) {
         const params = this.props.params || {}
         if (!params.__viewId__) {
           params.__viewId__ = this.nativeViewId
@@ -354,14 +366,6 @@ export default class VNode {
     return this.type === otherNode.type && this.key === otherNode.key
   }
 
-  isPageNode() {
-    return this.isBasicWidget && this.type === 'Page'
-  }
-
-  isNativeViewNode() {
-    return this.isBasicWidget && this.type === 'NativeView'
-  }
-
   // 触发组件上的事件
   async invokeEvent(targetNodeId: string, eventId: string, eventType: string, params: any) {
     const targetNode: VNode = this.fetch(targetNodeId)
@@ -372,8 +376,13 @@ export default class VNode {
     else {
       try {
         await eventFn(params)
-      } catch (err) { } finally {
-        this.stopAsyncEvent(targetNode, eventType)
+      } finally {
+        // Hack fix
+        // 异步操作完成后的32毫秒再发送停止异步操作的通知
+        // 异步操作中可能含有setState，从而保证停止通知在setState后再发送
+        TimerManager.setTimeout(() => {
+          this.stopAsyncEvent(targetNode, eventType)
+        }, 32)
       }
     }
   }
@@ -389,18 +398,46 @@ export default class VNode {
   // 触发组件生命周期方法
   invokeLifeCycle(lifeStep: string) {
     if (!this.widget || !LifeCycle.isExist(lifeStep)) return
-    if (!this.isMount && lifeStep === LifeCycle.widgetDidUpdate) {
-      this.isMount = true
+
+    const lifeStepIsDidUnmount = lifeStep === LifeCycle.widgetDidUnmount
+
+    // 当生命周期不是卸载时，从子组件向父组件依次触发
+    if (!lifeStepIsDidUnmount) {
+      this._invokeChildrenLifeCycle(lifeStep)
+    }
+    
+    if (!this.hasMount && lifeStep === LifeCycle.widgetDidUpdate) {
+      this.hasMount = true
+      this._invokeMountRef()
       this.widget.widgetDidMount()
     } else {
-      if (lifeStep !== LifeCycle.widgetDidUnmount) this.isMount = true
-      else this.isMount = false
+      this.hasMount = !lifeStepIsDidUnmount
+      this._invokeMountRef()
       this.widget[lifeStep]()
     }
 
+    // 当组件卸载时，didUnmount从父组件向子组件触发
+    if (lifeStepIsDidUnmount) {
+      this._invokeChildrenLifeCycle(lifeStep)
+    }
+  }
+
+  private _invokeChildrenLifeCycle(lifeStep: string) {
     this.mapChildren((vNode: VNode) => {
       vNode.invokeLifeCycle(lifeStep)
     })
+  }
+
+  private _invokeMountRef() {
+    if (!this.ref) return
+    if (this.hasMount && !this._refHasMount) {
+      this.ref(this.widget)
+      this._refHasMount = true
+    }
+    else if (!this.hasMount && this._refHasMount) {
+      this.ref(undefined)
+      this._refHasMount = false
+    }
   }
 
   // 向数组尾部添加子节点

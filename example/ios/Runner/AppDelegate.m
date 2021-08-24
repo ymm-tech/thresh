@@ -38,7 +38,8 @@
 - (BOOL)application:(UIApplication *)application
     didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     
-    [[ThreshAppDelegate sharedInstance] startThreshWithLogger:[Logger new]];
+    FlutterEngineGroup *engineGroup = [[FlutterEngineGroup alloc] initWithName:@"thresh.engine.group" project:nil];
+    [[ThreshAppDelegate sharedInstance] startThreshWithLogger:[Logger new] engineGroup:engineGroup];
     
     SettingViewController *vc = [[SettingViewController alloc] init];
     UINavigationController *nvc = [[UINavigationController alloc] initWithRootViewController:vc];

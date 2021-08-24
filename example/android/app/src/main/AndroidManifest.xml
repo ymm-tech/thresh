@@ -46,9 +46,13 @@
             android:theme="@style/thresh_activity_translucent"
             android:windowSoftInputMode="adjustResize"/>
 
-        <meta-data android:name="flutterEmbedding"
-            android:value="2">
-        </meta-data>
+        <meta-data
+            android:name="flutterEmbedding"
+            android:value="2"/>
+        <!-- Hybrid composition -->
+        <meta-data
+            android:name="io.flutter.embedded_views_preview"
+            android:value="true" />
     </application>
 </manifest>
 

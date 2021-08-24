@@ -2,6 +2,7 @@ import Thresh, { basicWidgets, ui } from 'thresh-lib'
 import { Colors } from '../../config'
 import Title from '../../widgets/Title'
 import Box from '../../widgets/Box'
+import ModalAbnormalInfo from './TestModal'
 
 const {
   Page,
@@ -11,7 +12,7 @@ const {
   Text
 } = basicWidgets
 
-function buttonStyles () {
+function buttonStyles() {
   return {
     width: 200,
     padding: 10,
@@ -20,25 +21,38 @@ function buttonStyles () {
   }
 }
 
-export default class ModalActions extends Thresh.Widget <any, any> {
-  showModalScrollView (popup) {
+export default class ModalActions extends Thresh.Widget<any, any> {
+  showModalScrollView(popup) {
     Thresh.showModal(
       <ModalExample popup={popup} />,
       { popup }
     )
   }
 
-  render () {
+  showInputDialog() {
+    Thresh.showModal(
+      <Container
+        width={ui.screenWidth}
+        height={ui.screenHeight}
+        backgroundColor={0x60000000}
+      >
+        <Container flex={1} />
+        <ModalAbnormalInfo />
+      </Container>
+    )
+  }
+
+  render() {
     return (
       <Page
-      backgroundColor={0x0000000}
+        // backgroundColor={Colors.Primary}
         appBar={
           <AppBar title="模态页面操作" />
         }
       >
         <Title title="显示普通模态页面" />
         <Box>
-          <Button {...buttonStyles()} onTap={() => { this.showModalScrollView(false) }}>
+          <Button {...buttonStyles()} onTap={() => { this.showInputDialog() }}>
             <Text color={Colors.White}>显示普通模态页面</Text>
           </Button>
         </Box>
@@ -59,12 +73,12 @@ export default class ModalActions extends Thresh.Widget <any, any> {
   }
 }
 
-class ModalExample extends Thresh.Widget <any> {
+class ModalExample extends Thresh.Widget<any> {
   state = {
     counter: 10
   }
 
-  widgetDidMount () {
+  widgetDidMount() {
     const t = setInterval(() => {
       if (this.state.counter === 0) {
         clearInterval(t)
@@ -75,10 +89,10 @@ class ModalExample extends Thresh.Widget <any> {
     }, 1000)
   }
 
-  render () {
+  render() {
     return (
       <Container>
-        <Container height={ui.screenHeight * 0.8} width={ui.screenWidth} backgroundColor={this.props.popup ? 0x00000000 : 0x80000000} onTap={() => { Thresh.hideModal() }} />
+        <Container height={ui.screenHeight * 0.8} width={ui.screenWidth} onTap={() => { Thresh.hideModal() }} />
         <Container height={ui.screenHeight * 0.2} width={ui.screenWidth} justifyContent="center" alignItems="center" backgroundColor={0xffffffff}>
           <Button {...buttonStyles()} onTap={() => { Thresh.hideModal() }}>
             <Text color={Colors.White}>关闭模态页面 - {this.state.counter}</Text>
