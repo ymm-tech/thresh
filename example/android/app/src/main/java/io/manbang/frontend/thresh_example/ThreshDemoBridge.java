@@ -30,6 +30,9 @@ import android.content.SharedPreferences;
 import android.os.Handler;
 import android.text.TextUtils;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -37,6 +40,7 @@ import io.manbang.frontend.thresh.channel.BridgeCallback;
 import io.manbang.frontend.thresh.channel.nativemodule.NativeModule;
 import io.manbang.frontend.thresh.containers.ThreshFlutterActivityLaunchConfigs;
 import io.manbang.frontend.thresh.runtime.jscore.bundle.BundleType;
+import io.manbang.frontend.thresh.util.IOUtil;
 import io.manbang.frontend.thresh.util.ThreshLogger;
 
 public class ThreshDemoBridge extends NativeModule {
@@ -100,7 +104,31 @@ public class ThreshDemoBridge extends NativeModule {
             // thresh业务
             if ("jsbundlePath".equals(method)){
                 // 测试方法
-                data.put("data","/sdcard/data");
+                data.put("data","assets:/");
+                // data.put("data","/sdcard/data");
+            }
+        }else if ("dynamicFlutter".equals(module)){
+            if ("getNativeImage".equals(method)){
+                HashMap realParams = (HashMap) params.get("params");
+                if (realParams!=null){
+                    String imagePath = (String) realParams.get("imagePath");
+                    InputStream inputStream = null;
+                    ByteArrayOutputStream bos = null;
+                    try {
+                        inputStream = context.getAssets().open(imagePath.substring(imagePath.lastIndexOf("/")+1));
+                        bos = new ByteArrayOutputStream();
+                        int bit;
+                        while ((bit = inputStream.read()) != -1){
+                            bos.write(bit);
+                        }
+                        data.put("data", bos.toByteArray());
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }finally {
+                        IOUtil.closeQuietly(inputStream);
+                        IOUtil.closeQuietly(bos);
+                    }
+                }
             }
         }else {
             // 其他业务
