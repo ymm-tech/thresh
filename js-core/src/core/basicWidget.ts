@@ -55,7 +55,10 @@ import {
   SwitchProps,
   PickerProps,
   TabViewProps,
-  GridViewProps
+  GridViewProps,
+  RepaintViewProps,
+  BreathProps,
+  WebViewProps
 } from '../types/widget'
 
 const AnimationDuration = 150
@@ -227,6 +230,12 @@ Spin.childrenRule = new ChildrenRule({
   widgetName: 'Spin',
   length: 0,
 })
+// 呼吸组件旋转组件
+export class Breath extends BasicWidget <BreathProps, any> {}
+Breath.childrenRule = new ChildrenRule({
+  widgetName: 'Breath',
+  length: 0,
+})
 // 旋转刷新组件
 export class Refresh extends BasicWidget<RefreshProps, any> { }
 Refresh.childrenRule = new ChildrenRule({
@@ -237,6 +246,25 @@ Refresh.childrenRule = new ChildrenRule({
 export class NoticeBar extends BasicWidget<NoticeBarProps, any> { }
 NoticeBar.childrenRule = new ChildrenRule({
   widgetName: 'NoticeBar',
+})
+
+// 视图保存组件
+export class RepaintView extends BasicWidget <RepaintViewProps, any> {
+  setValue (path: string, name: string) {
+    __setNavProps(this, FlutterMethodChannelType.saveRepaintView , { path, name })
+  }
+}
+RepaintView.childrenRule = new ChildrenRule({
+  widgetName: 'RepaitView',
+  name: 'child',
+  length: 1,
+})
+
+// 浏览器组件
+export class WebView extends BasicWidget <WebViewProps, any> {}
+WebView.childrenRule = new ChildrenRule({
+  widgetName: 'WebView',
+  length: 0,
 })
 
 /**

@@ -1,4 +1,5 @@
 import 'package:thresh/framework/widget/layout/widget_dragable_scroll_view/dragable_scroll_view.dart';
+import 'package:thresh/framework/widget/layout/widget_repaint_view.dart';
 
 /// MIT License
 ///
@@ -391,5 +392,20 @@ void registerControllerChannelMethods() {
         (model.controller as ThreshTabController).animateTo(index);
       }
     },
+    'saveRepaintView': (params) {
+      String pageName = Util.getString(params['pageName']);
+      String widgetId = Util.getString(params['widgetId']);
+      String path = Util.getString(params['path']);
+      String name = Util.getString(params['name']);
+      List<DynamicModel> targetModels = _findTargetModels(
+          params, ['RepaintView'], _ControllerDevInfo('saveRepaintView', '''
+            Page/Modal Name: $pageName
+            Widget Id: $widgetId
+            path: $path
+            name: $name'''));
+      for (DynamicModel model in targetModels) {
+        (model.controller as RepaintViewController).saveRepaintView(path, name);
+      }
+    }
   });
 }

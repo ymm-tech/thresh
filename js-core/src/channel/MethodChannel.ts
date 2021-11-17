@@ -71,6 +71,7 @@ export enum FlutterMethodChannelType {
   switchTo = 'switchTo',
   setNestScrollViewStatus = 'setNestScrollViewStatus',
   dragPositionAnimateTo = 'dragPositionAnimateTo',
+  saveRepaintView = 'saveRepaintView',
 }
 /**
  * JS 向  Native 发出消息的类型枚举
