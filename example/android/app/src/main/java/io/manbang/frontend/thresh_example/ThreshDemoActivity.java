@@ -58,6 +58,7 @@ public class ThreshDemoActivity extends ThreshActivity {
     private void initThreshEngine(){
         long startTime = System.currentTimeMillis();
         int loadMode = getIntent().getIntExtra("load_mode", BundleType.ASSETS_FILE.getType());
+        String bundleName = getIntent().getStringExtra("bundle_name");
         BundleType bundleType;
         if (loadMode == BundleType.ASSETS_FILE.getType()){
             bundleType = BundleType.ASSETS_FILE;
@@ -72,8 +73,9 @@ public class ThreshDemoActivity extends ThreshActivity {
         bundleBuilder.withDebugServerIp(getIntent().getStringExtra("debug_local_ip"));
         bundleBuilder.withDebugServerPort(getIntent().getStringExtra("debug_local_port"));
         bundleBuilder.withBundleType(bundleType);
+        bundleBuilder.withBundleName(bundleName);
         ThreshEngineOptions.Builder builder = new ThreshEngineOptions.Builder(bundleBuilder.build());
-        builder.moduleName("test-activity-business-module");
+        builder.moduleName("test-activity-business-module"+bundleName);
         builder.setPageStartTime(startTime);
         engine = new ThreshEngine(builder.build(), getContextId());
         engine.bindThreshMethodCall(new ThreshDemoMethodChannel(getFlutterEngine(),engine));

@@ -61,7 +61,25 @@ public class MainActivity extends AppCompatActivity {
                         //                      .putExtra(ThreshFlutterActivityLaunchConfigs.EXTRA_BACKGROUND_MODE, ThreshFlutterActivityLaunchConfigs.BackgroundMode.transparent)
                         .putExtra(
                                 ThreshFlutterActivityLaunchConfigs.EXTRA_DESTROY_ENGINE_WITH_ACTIVITY,
-                                true);
+                                true)
+                        .putExtra("bundle_name","bundle_demo.js");
+                startActivity(intent);
+            }
+        });
+
+        findViewById(R.id.tv_open_yc_activity).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                sharedPreferences.edit().remove("debug_local_ip").apply();
+                Intent intent = new Intent(MainActivity.this, ThreshDemoActivity.class);
+                intent.putExtra("load_mode", BundleType.ASSETS_FILE.getType()).putExtra(
+                        ThreshFlutterActivityLaunchConfigs.EXTRA_INITIAL_ROUTE,
+                        "thresh/thresh-page?page=homePage&jsBundlePath=assets:/")
+                        //                      .putExtra(ThreshFlutterActivityLaunchConfigs.EXTRA_BACKGROUND_MODE, ThreshFlutterActivityLaunchConfigs.BackgroundMode.transparent)
+                        .putExtra(
+                                ThreshFlutterActivityLaunchConfigs.EXTRA_DESTROY_ENGINE_WITH_ACTIVITY,
+                                true)
+                        .putExtra("bundle_name","bundle.js");
                 startActivity(intent);
             }
         });
@@ -71,6 +89,7 @@ public class MainActivity extends AppCompatActivity {
                 sharedPreferences.edit().remove("debug_local_ip").apply();
                 Intent intent = new Intent(MainActivity.this, ThreshDemoFragmentActivity.class);
                 intent.putExtra("load_mode", BundleType.ASSETS_FILE.getType());
+                intent.putExtra("bundle_name", "bundle_demo.js");
                 intent.putExtra(ThreshFlutterActivityLaunchConfigs.EXTRA_INITIAL_ROUTE, "thresh/thresh-page?page=homePage");
                 startActivity(intent);
             }

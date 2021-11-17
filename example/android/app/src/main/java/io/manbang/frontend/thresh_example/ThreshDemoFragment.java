@@ -45,6 +45,7 @@ public class ThreshDemoFragment extends ThreshFragment {
 
     private void initThreshEngine(){
         int loadMode = getActivity().getIntent().getIntExtra("load_mode", BundleType.ASSETS_FILE.getType());
+        String bundleName = getActivity().getIntent().getStringExtra("bundle_name");
         BundleType bundleType;
         if (loadMode == BundleType.ASSETS_FILE.getType()){
             bundleType = BundleType.ASSETS_FILE;
@@ -59,6 +60,7 @@ public class ThreshDemoFragment extends ThreshFragment {
         bundleBuilder.withDebugServerIp(getActivity().getIntent().getStringExtra("debug_local_ip"));
         bundleBuilder.withDebugServerPort(getActivity().getIntent().getStringExtra("debug_local_port"));
         bundleBuilder.withBundleType(bundleType);
+        bundleBuilder.withBundleName(bundleName);
         ThreshEngineOptions.Builder builder = new ThreshEngineOptions.Builder(bundleBuilder.build());
         builder.moduleName("test-fragment-business-module");
         builder.setPageStartTime(startTime);

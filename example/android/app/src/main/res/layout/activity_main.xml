@@ -56,6 +56,21 @@
         android:textStyle="bold" />
 
     <TextView
+        android:id="@+id/tv_open_yc_activity"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginLeft="20dp"
+        android:layout_marginTop="20dp"
+        android:layout_marginRight="20dp"
+        android:background="@drawable/btn_shape_roundrect"
+        android:gravity="center"
+        android:text="启动扬春三月"
+        android:textColor="#ffffff"
+        android:textSize="16sp"
+        android:textStyle="bold" />
+
+    <TextView
         android:id="@+id/tv_open_debug_page"
         android:layout_width="match_parent"
         android:layout_height="60dp"
