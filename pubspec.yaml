@@ -21,6 +21,8 @@ dependencies:
   cached_network_image: ^2.5.0
   qr_flutter: ^3.2.0
   device_info: 1.0.0
+  path_provider: ^1.5.0
+  webview_flutter: ^1.0.7
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

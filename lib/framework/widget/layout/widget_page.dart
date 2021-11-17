@@ -22,6 +22,7 @@
 import 'package:flutter/material.dart';
 import 'package:thresh/framework/core/dynamic_model.dart';
 import 'package:thresh/framework/core/dynamic_proxy.dart';
+import 'package:thresh/framework/widget/layout/widget_web_view.dart';
 import 'package:thresh/framework/widget/widget_basic.dart';
 import 'package:thresh/framework/widget/layout/widget_scroll_view.dart';
 import 'package:thresh/framework/widget/layout/widget_list_view.dart';
@@ -63,7 +64,7 @@ class DFPage extends DFBasicWidget {
     if (children.length == 0) return null;
     if (children.length == 1) {
       Widget child = children.first;
-      if (DFScrollView.isScrollView(child) || DFListView.isListView(child)) {
+      if (DFScrollView.isScrollView(child) || DFListView.isListView(child) || DFWebView.isWebView(child)) {
         return child;
       }
       return Column(

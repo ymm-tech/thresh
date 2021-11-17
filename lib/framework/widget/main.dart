@@ -19,6 +19,7 @@
 /// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 /// SOFTWARE.
 
+import 'package:thresh/framework/widget/data/widget_breath.dart';
 import 'package:thresh/framework/widget/data/widget_notice_bar.dart';
 import 'package:thresh/framework/widget/data/widget_qr_image.dart';
 import 'package:thresh/framework/widget/data/widget_picker.dart';
@@ -26,6 +27,7 @@ import 'package:thresh/framework/widget/layout/widget_grid_view.dart';
 import 'package:thresh/framework/widget/layout/widget_page.dart';
 import 'package:thresh/framework/widget/layout/widget_app_bar.dart';
 import 'package:thresh/framework/widget/layout/widget_container.dart';
+import 'package:thresh/framework/widget/layout/widget_repaint_view.dart';
 import 'package:thresh/framework/widget/layout/widget_scroll_view.dart';
 import 'package:thresh/framework/widget/layout/widget_list_view.dart';
 import 'package:thresh/framework/widget/layout/widget_drawer_scroll_view.dart';
@@ -46,6 +48,8 @@ import 'package:thresh/framework/widget/form/widget_checkbox.dart';
 import 'package:thresh/framework/widget/form/widget_input.dart';
 import 'package:thresh/framework/widget/form/widget_switch.dart';
 import 'package:thresh/framework/widget/layout/widget_tabbar_controller_view.dart';
+import 'package:thresh/framework/widget/layout/widget_web_view.dart';
+
 
 void registeBasicWidgets() {
   ProxyDFPage.register();
@@ -60,12 +64,15 @@ void registeBasicWidgets() {
   ProxyDFSwipeActionsView.register();
   ProxyDFSwiperView.register();
   ProxyDFNativeView.register();
+  ProxyDFRepaintView.register();
+  ProxyDFWebView.register();
 
   ProxyDFText.register();
   ProxyDFIcon.register();
   ProxyDFImage.register();
   ProxyDFQrImage.register();
   ProxyDFSpin.register();
+  ProxyDFBreath.register();
   ProxyDFRefresh.register();
   ProxyDFNoticeBar.register();
 
